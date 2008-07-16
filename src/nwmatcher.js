@@ -177,7 +177,7 @@ NW.Dom = function() {
 				}
 				// E F (E ancestor of F)
 				else if (match = selector.match(Patterns.ancestor)) {
-					j = 'if(e){while((e=e.parentNode)){'+j+';break;}}';
+					j = 'if(e){while(e.parentNode.nodeType==1){e=e.parentNode;'+j+';break;}}';
 				}
 				// CSS3 :root, :empty, :enabled, :disabled, :checked, :target
 				// CSS2 :active, :focus, :hover (no way yet)
@@ -452,36 +452,37 @@ NW.Dom = function() {
 	// check if cached snapshot has changed
 	getCache=
 		function(f){
-			var document, elements = Snapshot.Elements;
+			var document, snapshot = Snapshot, elements = snapshot.Elements;
 			if (elements.length) {
 				document = elements[0].ownerDocument || elements[0].document;
 				// DOM is say not to change but
 				// will do a simple check anyway
 				if(cachingLevel==STATIC &&
-					(c.length == s.ChildIndexes.length ||
-					 c.length == s.TwinIndexes.length)) {
-					Snapshot.isValid = true;
+					(elements.length == snapshot.ChildIndexes.length ||
+					 elements.length == snapshot.TwinIndexes.length)) {
+					snapshot.isValid = true;
 				// DOM is say not to change, but may be
 				} else if (cachingLevel==RELAXED &&
-					Snapshot.HtmlSrc == document.body.innerHTML) {
-					Snapshot.isValid = true;
+					snapshot.HtmlSrc == document.body.innerHTML) {
+					snapshot.isValid = true;
 				} else {
 					if (cachingLevel == RELAXED) {
-						Snapshot.HtmlSrc = document.body.innerHTML;
+						snapshot.HtmlSrc = document.body.innerHTML;
 					}
 					cachedResults={
 						from:[],
 						items:[]
 					};
-					Snapshot.isValid=false;
+					snapshot.isValid=false;
 				}
 			} else {
 				cachedResults={
 					from: [],
 					items: []
 				};
-				Snapshot.isValid = false;
+				snapshot.isValid = false;
 			}
+			Snapshot = snapshot;
 		};
 
 	// ********** begin public methods **********
@@ -527,7 +528,7 @@ NW.Dom = function() {
 		select:
 			function(selector, from) {
 				var elements = [], match;
-				
+
 				if(!(from && (from.nodeType == 1 || from.nodeType == 9))) {
 					from = document;
 				}
@@ -573,11 +574,11 @@ NW.Dom = function() {
 						if (Snapshot.isValid === false) {
 							if (selector.match(oftype_pseudo)) {
 								// special of-type pseudo selectors
-								getTwins(from, selector);
+								getTwins(from, elements);
 								
 							} else {
 								// normal nth/child pseudo selectors
-								getChilds(from, selector);
+								getChilds(from, elements);
 							}
 						}
 					}
@@ -589,7 +590,7 @@ NW.Dom = function() {
 					if(cachingLevel == DYNAMIC) {
 						// caching of results disabled
 						return compiledSelectors[selector](elements, Snapshot);
-						
+
 					} else {
 						// caching of results enabled
 						if (!(cachedResults.items[selector] && cachedResults.from[selector] == from)) {
@@ -598,7 +599,7 @@ NW.Dom = function() {
 						}
 						return cachedResults.items[selector];
 					}
-					
+
 				} else {
 					throw new Error('NW.Dom.select: "'+selector+'" is not a valid CSS selector.');
 				}
