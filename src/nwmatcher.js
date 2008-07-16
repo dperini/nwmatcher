@@ -106,11 +106,11 @@ NW.Dom = function() {
 		// 'N': /^([\w]+)(\#|\.|\[)?/
 	},
 
-	// convert nodeList to array
+	// convert nodeList to array (implementation from Prototype)
 	toArray = 
 	  function(iterable) {
 			var length = iterable.length, array = new Array(length);
-			while (length--) array[i] = iterable[i];
+			while (length--) array[length] = iterable[length];
 			return array;
 		},
 
@@ -142,7 +142,7 @@ NW.Dom = function() {
 				else if (match = selector.match(Patterns.attribute)) {
 					// fix common misCased attribute names
 					for (i = 0; i < camelProps.length; ++i) {
-						if(camelProps[i].toLowerCase().indexOf(match[1]) === 0) {
+						if(camelProps[i].toLowerCase().indexOf(match[1]) == 0) {
 							match[1] = camelProps[i];
 							break;
 						}
@@ -192,7 +192,7 @@ NW.Dom = function() {
 							j = 'if(e&&e==(e.ownerDocument||e.document||e).documentElement){'+ j +'}';
 							break;
 						case 'empty':
-							j = 'if(e&&e.getElementsByTagName("*").length===0&&(e.childNodes.length===0||e.childNodes[0].nodeValue.replace(/\\s+/g,"").length===0)){'+ j +'}';
+							j = 'if(e&&e.getElementsByTagName("*").length==0&&(e.childNodes.length==0||e.childNodes[0].nodeValue.replace(/\\s+/g,"").length==0)){'+ j +'}';
 							break;
 						case 'contains':
 							j = 'if(e&&(e.textContent||e.innerText||"").indexOf("'+ match[2].replace(/\(|\)/g,'') +'")!=-1){'+ j +'}';
@@ -536,7 +536,7 @@ NW.Dom = function() {
 					// BEGIN REDUCE/OPTIMIZE
 					// * (all elements selector)
 					if (match = selector.match(Optimizations.all)) {
-						var nodes, node, i;
+						var nodes, node, i = -1;
 						// fix IE comments as element
 						nodes = from.getElementsByTagName('*');
 						while ((nodes = nodes[++i])) {
