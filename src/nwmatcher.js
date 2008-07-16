@@ -251,7 +251,7 @@ NW.Dom = function() {
 						else if (match[5] == 'odd')  a = 2, b = 1;
 						else {
 							// assumes correct "an+b" format
-							a = match[5].match(/^-/) ? -1 : m[5].match(/^n/) ? 1 : 0;
+							a = match[5].match(/^-/) ? -1 : match[5].match(/^n/) ? 1 : 0;
 							a = a || ((t = match[5].match(/(-?\d{1,})n/)) ? parseInt(t[1], 10) : 0);
 							b = b || ((t = match[5].match(/(-?\d{1,})$/)) ? parseInt(t[1], 10) : 0);
 						}
@@ -309,7 +309,7 @@ NW.Dom = function() {
 					}
 				}
 				else{
-					throw new Error('NW.Dom.compileSelector: syntax error, unknown selector rule "'+s+'"');
+					throw new Error('NW.Dom.compileSelector: syntax error, unknown selector rule "'+selector+'"');
 				}
 				selector = match[match.length - 1];
 			}
@@ -453,7 +453,7 @@ NW.Dom = function() {
 	getCache=
 		function(f){
 			var document, elements = Snapshot.Elements;
-			if (element.length) {
+			if (elements.length) {
 				document = elements[0].ownerDocument || elements[0].document;
 				// DOM is say not to change but
 				// will do a simple check anyway
@@ -539,7 +539,7 @@ NW.Dom = function() {
 						var nodes, node, i = -1;
 						// fix IE comments as element
 						nodes = from.getElementsByTagName('*');
-						while ((nodes = nodes[++i])) {
+						while ((node = nodes[++i])) {
 							if (node.nodeType == 1) {
 								elements[elements.length] = node;
 							}
