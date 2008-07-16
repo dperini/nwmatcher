@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head>
+
+
+
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"><title>SlickSpeed Selectors Test</title>
+	
+	<link rel="stylesheet" href="slick_speed/style.css" type="text/css" media="screen">
+	
+	<script type="text/javascript">
+		window.selectors = ['*','div:only-child','div:contains(CELIA)','div:nth-child(even)','div:nth-child(2n)','div:nth-child(odd)','div:nth-child(2n+1)','div:nth-child(n)','div:last-child','div:first-child','div > div','div + div','div ~ div','body','body div','div','div div','div div div','div, div, div','div, a, span','.dialog','div.dialog','div .dialog','div.character, div.dialog','#speech5','div#speech5','div #speech5','div.scene div.dialog','div#scene1 div.dialog div','#scene1 #speech1','div[%class]','div[%class=dialog]','div[%class^=dia]','div[%class$=log]','div[%class*=sce]','div[%class|=dialog]','div[%class!=madeup]','div[%class~=dialog]']	</script>
+	
+	<script src="slick_speed/slickspeed.js" type="text/javascript"></script></head><body>
+	
+<div id="container">
+	
+	<div id="controls">
+		<a class="stop" href="#">stop tests</a>
+		<a class="start" href="#">start tests</a>
+	</div>
+	
+<h1><span>SlickSpeed</span></h1>
+<h2>speed/validity selectors test for frameworks.</h2>
+<p>Every framework runs in his own iFrame, thus no conflicts can
+happen. Tests are run selector by selector, with an interval to prevent
+the browser from freeezing.</p>
+<p>Tests are run in a neutral environment, no library or framework is included in the main javascript test, to avoid favoritism.</p>
+<iframe name="nwmatcher 0.99.7" src="slick_speed/template.html"></iframe>
+
+<iframe name="prototype 1.6.0.2" src="slick_speed/template_002.html"></iframe>
+
+<iframe name="jQuery 1.2.6" src="slick_speed/template_003.html"></iframe>
+
+<iframe name="MooTools 1.2" src="slick_speed/template_004.html"></iframe>
+
+<iframe name="ext 2.1" src="slick_speed/template_005.html"></iframe>
+
+<iframe name="dojo 1.0.2" src="slick_speed/template_006.html"></iframe>
+
+
+<table>
+
+	<thead id="thead">
+		<tr>
+			<th class="selectors-title">selectors</th>
+			<th class="framework">nwmatcher 0.99.7</th><th class="framework">prototype 1.6.0.2</th><th class="framework">jQuery 1.2.6</th><th class="framework">MooTools 1.2</th><th class="framework">ext 2.1</th><th class="framework">dojo 1.0.2</th>		</tr>
+	</thead>
+
+	<tbody id="tbody">
+		<tr><th class="selector">*</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div:only-child</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div:contains(CELIA)</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div:nth-child(even)</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div:nth-child(2n)</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div:nth-child(odd)</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div:nth-child(2n+1)</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div:nth-child(n)</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div:last-child</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div:first-child</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div &gt; div</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div + div</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div ~ div</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">body</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">body div</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div div</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div div div</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div, div, div</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div, a, span</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">.dialog</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div.dialog</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div .dialog</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div.character, div.dialog</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">#speech5</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div#speech5</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div #speech5</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div.scene div.dialog</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div#scene1 div.dialog div</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">#scene1 #speech1</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div[class]</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div[class=dialog]</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div[class^=dia]</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div[class$=log]</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div[class*=sce]</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div[class|=dialog]</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div[class!=madeup]</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr><tr><th class="selector">div[class~=dialog]</th><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td></tr>	</tbody>
+	
+	<tfoot id="tfoot">
+		<tr>
+		<th class="score-title"><strong>final time (less is better)</strong></th>
+		<td class="score">0</td><td class="score">0</td><td class="score">0</td><td class="score">0</td><td class="score">0</td><td class="score">0</td>		</tr>
+	</tfoot>
+
+</table>
+
+<h2>Legend</h2>
+
+<table id="legend">
+
+	<tbody><tr>
+		<th>the faster</th>
+		<th>the slower</th>
+		<th>exception thrown or zero elements found</th>
+		<th>different returned elements</th>
+	</tr>
+
+	<tr>
+		<td class="good"></td>
+		<td class="bad"></td>
+		<td class="exception"></td>
+		<td class="mismatch"></td>
+	</tr>
+
+</tbody></table>
+
+<div id="footer">
+	<p class="footer">copyright © 2007 <a href="http://mootools.net/">http://mootools.net</a> | MIT License | <a href="http://slickspeed.googlecode.com/svn/trunk">download from googlecode</a></p>
+</div></div>
+
+</body></html>
