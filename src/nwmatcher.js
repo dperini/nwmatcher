@@ -78,7 +78,9 @@ NW.Dom = function() {
 		// E F
 		ancestor: /^(\s+)(.*)/,
 		// attribute
-		attribute: /^\[([\w-:]+)(\~|\^|\*|\$|\!|\|)?(\=)?(["'])?([^\4]+)?\4\](.*)/,
+//		attribute: /^\[([\w-]+)(\~|\^|\*|\$|\!|\|)?(\=)?"?([^\"\]]+)?"?\](.*)/
+		attribute: /^\[((?:[\w-]*:)?[\w-]+)\s*([!^$*~|])?(\=)?\s*(\x22|\x29)?([^\4]*?)\4\](.*)/,
+//		attribute: /\[((?:[\w-]*:)?[\w-]+)\s*(?:([!^$*~|]?=)\s*((['"])([^\4]*?)\4|([^'"][^\]]*?)))?\]/,
 		// class
 		className: /^\.([\w-]+)(.*)/,
 		// id
@@ -128,7 +130,7 @@ NW.Dom = function() {
 				}
 				// #Foo Id case sensitive
 				else if ((match = selector.match(Patterns.id))) {
-					source = 'if(e&&e.getAttribute&&e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
+					source = 'if(e&&e.id=="' + match[1] + '"){' + source + '}';
 				}
 				// Foo Tag case insensitive (?)
 				else if ((match = selector.match(Patterns.tagName))) {
@@ -148,7 +150,21 @@ NW.Dom = function() {
 					// 		break;
 					// 	}
 					// }
-					var attributeValue = '(e.getAttribute&&e.getAttribute("' + match[1] + '")||"").toLowerCase()',
+/*
+alert(
+	match[1] + '\n' +
+	match[2] + '\n' +
+	match[3] + '\n' +
+	match[4] + '\n' +
+	match[5] + '\n' +
+	match[6] + '\n'
+);
+*/
+					var attributeValue = '(e.getAttribute("' + match[1] + '")||"").toLowerCase()',
+					// match[1] - attribute
+					// match[2] - operator
+					// match[3] - equals
+					// match[4] - value
 					source = 'if(e&&' +
 						// change behavior for [class!=madeup]
 						//(match[2] == '!' ? 'e.' + match[1] + '&&' : '') +
@@ -162,7 +178,7 @@ NW.Dom = function() {
 							(match[2] == '$' ? '$' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
 								(match[2] == '|' || match[2] == '~' ? '")>-1' : '/)') :
 							(match[3] && match[5] ? attributeValue + (match[2] == '!' ? '!' : '=') + '="' +
-								match[5].toLowerCase() + '"' : 'e.hasAttribute&&e.hasAttribute("'+ match[1] +'")')) +
+								match[5].toLowerCase() + '"' : 'e.hasAttribute("'+ match[1] +'")')) +
 					'){' + source + '}';
 				}
 				// E + F (F adiacent sibling of E)
@@ -194,17 +210,17 @@ NW.Dom = function() {
 							source = 'if(e&&e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
 							break;
 						case 'empty':
-							source = 'if(e&&e.getElementsByTagName("*").length==0&&(e.childNodes.length==0||e.childNodes[0].nodeValue.length==0)){' + source + '}';
+							source = 'if(e&&e.getElementsByTagName("*").length==0&&(e.childNodes.length==0||e.childNodes[0].nodeValue.replace(/\\s+/g,"").length==0)){' + source + '}';
 							break;
 						case 'contains':
 							source = 'if(e&&(e.textContent||e.innerText||"").indexOf("' + match[2].replace(/\(|\)/g, '') + '")!=-1){' + source + '}';
 							break;
 						// CSS3 part of UI element states
 						case 'enabled':
-							source = 'if(e&&!e.disabled){' + source + '}';
+							source = 'if(e&&!e.disable){' + source + '}';
 							break;
 						case 'disabled':
-							source = 'if(e&&e.disabled){' + source + '}';
+							source = 'if(e&&e.disable){' + source + '}';
 							break;
 						case 'checked':
 							source = 'if(e&&e.checked){' + source + '}';
