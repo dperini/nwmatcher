@@ -86,9 +86,18 @@
     
     
     <script type="text/javascript" charset="utf-8">
+      /* Plug NW.Matcher on Prototype methods */
       function $$() {
-        return NW.Dom.select($A(arguments).join(', '));
+        return NW.Dom.select($A(arguments).join(', ')).collect(Element.extend);
       }
+      
+      Element.addMethods({
+        match: function(element, selector) {
+          return Object.isFunction(selector.match) ?
+            selector.match($(element)) :
+            NW.Dom.match(element, selector);
+        }
+      });
     
       var $RunBenchmarks = false;
 
