@@ -93,7 +93,7 @@
       
       Element.addMethods({
         match: function(element, selector) {
-          return Object.isFunction(selector.match) ?
+          return !Object.isString(selector) && Object.isFunction(selector.match) ?
             selector.match($(element)) :
             NW.Dom.match(element, selector);
         }
