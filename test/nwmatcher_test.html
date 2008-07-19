@@ -88,6 +88,8 @@
     
     <script type="text/javascript" charset="utf-8">
       /* Plug NW.Matcher on Prototype methods */
+      NW.Dom.setCache(0);
+      
       function $$() {
         return NW.Dom.select($A(arguments).join(', ')).collect(Element.extend);
       }

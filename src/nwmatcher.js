@@ -148,7 +148,7 @@ NW.Dom = function() {
 					// 		break;
 					// 	}
 					// }
-					var attributeValue = '(e.getAttribute("' + match[1] + '")||"").toLowerCase()',
+					var attributeValue = '(e.getAttribute&&e.getAttribute("' + match[1] + '")||"").toLowerCase()',
 					source = 'if(e&&' +
 						// change behavior for [class!=madeup]
 						//(match[2] == '!' ? 'e.' + match[1] + '&&' : '') +
@@ -162,7 +162,7 @@ NW.Dom = function() {
 							(match[2] == '$' ? '$' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
 								(match[2] == '|' || match[2] == '~' ? '")>-1' : '/)') :
 							(match[3] && match[5] ? attributeValue + (match[2] == '!' ? '!' : '=') + '="' +
-								match[5].toLowerCase() + '"' : 'e.hasAttribute("'+ match[1] +'")')) +
+								match[5].toLowerCase() + '"' : 'e.hasAttribute&&e.hasAttribute("'+ match[1] +'")')) +
 					'){' + source + '}';
 				}
 				// E + F (F adiacent sibling of E)
@@ -194,17 +194,17 @@ NW.Dom = function() {
 							source = 'if(e&&e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
 							break;
 						case 'empty':
-							source = 'if(e&&e.getElementsByTagName("*").length==0&&(e.childNodes.length==0||e.childNodes[0].nodeValue.replace(/\\s+/g,"").length==0)){' + source + '}';
+							source = 'if(e&&e.getElementsByTagName("*").length==0&&(e.childNodes.length==0||e.childNodes[0].nodeValue.length==0)){' + source + '}';
 							break;
 						case 'contains':
 							source = 'if(e&&(e.textContent||e.innerText||"").indexOf("' + match[2].replace(/\(|\)/g, '') + '")!=-1){' + source + '}';
 							break;
 						// CSS3 part of UI element states
 						case 'enabled':
-							source = 'if(e&&!e.disable){' + source + '}';
+							source = 'if(e&&!e.disabled){' + source + '}';
 							break;
 						case 'disabled':
-							source = 'if(e&&e.disable){' + source + '}';
+							source = 'if(e&&e.disabled){' + source + '}';
 							break;
 						case 'checked':
 							source = 'if(e&&e.checked){' + source + '}';
