@@ -78,7 +78,7 @@ NW.Dom = function() {
 		// E F
 		ancestor: /^(\s+)(.*)/,
 		// attribute
-		attribute: /^\[([\w-]+)(\~|\^|\*|\$|\!|\|)?(\=)?"?([^\"\]]+)?"?\](.*)/,
+		attribute: /^\[([\w-:]+)(\~|\^|\*|\$|\!|\|)?(\=)?(["'])?([^\4]+)?\4\](.*)/,
 		// class
 		className: /^\.([\w-]+)(.*)/,
 		// id
@@ -142,25 +142,27 @@ NW.Dom = function() {
 				// [attr] [attr=value] [attr="value"] and !=, *=, ~=, |=, ^=, $=
 				else if ((match = selector.match(Patterns.attribute))) {
 					// fix common misCased attribute names
-					for (var i = 0; i < camelProps.length; ++i) {
-						if (camelProps[i].toLowerCase().indexOf(match[1]) == 0) {
-							match[1] = camelProps[i];
-							break;
-						}
-					}
+					// for (var i = 0; i < camelProps.length; ++i) {
+					// 	if (camelProps[i].toLowerCase().indexOf(match[1]) == 0) {
+					// 		match[1] = camelProps[i];
+					// 		break;
+					// 	}
+					// }
+					var attributeValue = '(e.getAttribute("' + match[1] + '")||"").toLowerCase()',
 					source = 'if(e&&' +
 						// change behavior for [class!=madeup]
 						//(match[2] == '!' ? 'e.' + match[1] + '&&' : '') +
 						// match attributes or property
-						(match[2] && match[3] && match[4] && match[2] != '!' ?
-							(match[2] == '~' ? '(" "+' : (match[2] == '|' ? '("-"+' : '')) + 'e.' + match[1] +
-								(match[2] == '|' || match[2] == '~' ? '.replace(/\s+/g," ")' : '') +
+						(match[2] && match[3] && match[5] && match[2] != '!' ?
+							(match[2] == '~' ? '(" "+' : (match[2] == '|' ? '("-"+' : '')) + attributeValue +
+								(match[2] == '|' || match[2] == '~' ? '.replace(/\\s+/g," ")' : '') +
 							(match[2] == '~' ? '+" ")' : (match[2] == '|' ? '+"-")' : '')) +
 							 	(match[2] == '!' || match[2] == '|' || match[2] == '~' ? '.indexOf("' : '.match(/') +
-							(match[2] == '^' ? '^' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') + match[4] +
+							(match[2] == '^' ? '^' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') + match[5].toLowerCase() +
 							(match[2] == '$' ? '$' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
 								(match[2] == '|' || match[2] == '~' ? '")>-1' : '/)') :
-							(match[3] && match[4] ? 'e.' + match[1] + (match[2] == '!' ? '!' : '=') + '="' + match[4] + '"' : 'e.' + match[1])) +
+							(match[3] && match[5] ? attributeValue + (match[2] == '!' ? '!' : '=') + '="' +
+								match[5].toLowerCase() + '"' : 'e.hasAttribute("'+ match[1] +'")')) +
 					'){' + source + '}';
 				}
 				// E + F (F adiacent sibling of E)
@@ -186,7 +188,7 @@ NW.Dom = function() {
 					switch (match[1]) {
 						// CSS3 part of structural pseudo-classes
 						case 'not':
-							source = compileGroup(match[2].replace(/\((.*)\)/, '$1'), '' , select) + 'else{' + source + '}';
+							source = compileSelector(match[2].replace(/\((.*)\)/, '$1'), select ? '' : 'return false', select) + 'else {'+ source +'}';
 							break;
 						case 'root':
 							source = 'if(e&&e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
@@ -355,7 +357,7 @@ NW.Dom = function() {
 
 			if (select) {
 				// for select method
-				return new Function('c,s', 'var k=-1,e,r=[],n' + n + ';while((e=c[++k])){' + source + '}return r;');
+				return new Function('c,s', 'var k=-1,e,r=[],n' + n + ';while(e=c[++k]){' + source + '}return r;');
 			} else {
 				// for match method
 				return new Function('e', 'var n,u;' + source.replace('break;', '') + 'return false;');
@@ -497,7 +499,9 @@ NW.Dom = function() {
 
 	// ********** begin public methods **********
 	return {
-
+		compile: function(selector) {
+			return compileSelector(selector, document, true);
+		},
 		// set required caching level
 		// also invalidate current map
 		setCache:
@@ -559,7 +563,8 @@ NW.Dom = function() {
 					}
 					// #Foo Id (single id selector)
 					else if ((match = selector.match(Optimizations.id))) {
-						return [from.getElementById(match[1])];
+						var element = from.getElementById(match[1]);
+						return element ? [element] : [];
 					}
 					// Foo Tag (single tag selector)
 					else if ((match = selector.match(Optimizations.tagName))) {
