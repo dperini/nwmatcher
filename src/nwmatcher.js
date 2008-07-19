@@ -499,8 +499,9 @@ NW.Dom = function() {
 
 	// ********** begin public methods **********
 	return {
+		// for testing purposes only!
 		compile: function(selector) {
-			return compileSelector(selector, document, true);
+			return compileSelector(selector, "[existing source]", true);
 		},
 		// set required caching level
 		// also invalidate current map
