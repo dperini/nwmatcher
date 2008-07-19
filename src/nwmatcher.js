@@ -128,7 +128,7 @@ NW.Dom = function() {
 				}
 				// #Foo Id case sensitive
 				else if ((match = selector.match(Patterns.id))) {
-					source = 'if(e&&e.id=="' + match[1] + '"){' + source + '}';
+					source = 'if(e&&e.getAttribute&&e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
 				}
 				// Foo Tag case insensitive (?)
 				else if ((match = selector.match(Patterns.tagName))) {
