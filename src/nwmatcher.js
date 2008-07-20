@@ -182,8 +182,7 @@ NW.Dom = function() {
 							source = 'if(e&&e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
 							break;
 						case 'empty':
-//							source = 'if(e&&/^\s*$/.test(e.innerHTML)){' + source + '}';
-							source = 'if(e&&e.childNodes.length==0){' + source + '}';
+							source = 'if(e&&/^\s*$/.test(e.innerHTML)){' + source + '}';
 							break;
 						case 'contains':
 							source = 'if(e&&(e.textContent||e.innerText||"").indexOf("' + match[2].replace(/\(|\)/g, '') + '")!=-1){' + source + '}';
