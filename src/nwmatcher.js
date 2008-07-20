@@ -43,16 +43,6 @@ NW.Dom = function() {
 	// DOM will not be modified from now on (aggressive caching)
 	STATIC = 2,
 
-	// attribute names may be passed case insensitive
-	// accepts chopped attributes like "class" and "for"
-	// but I don't know if this is good for every token
-	camelProps =
-		[
-			'htmlFor', 'className', 'tabIndex', 'accessKey', 'maxLength',
-			'readOnly', 'longDesc', 'frameBorder', 'isMap', 'useMap', 'noHref', 'noWrap',
-			'colSpan', 'rowSpan', 'cellPadding', 'cellSpacing', 'marginWidth', 'marginHeight'
-		],
-
 	// nth pseudo selector (CSS3)
 	nth_pseudo = /\:(nth)\-/,
 	// child pseudo selector (CSS3)
@@ -78,9 +68,7 @@ NW.Dom = function() {
 		// E F
 		ancestor: /^(\s+)(.*)/,
 		// attribute
-//		attribute: /^\[([\w-]+)(\~|\^|\*|\$|\!|\|)?(\=)?"?([^\"\]]+)?"?\](.*)/
-		attribute: /^\[((?:[\w-]*:)?[\w-]+)\s*([!^$*~|])?(\=)?\s*(\x22|\x29)?([^\4]*?)\4\](.*)/,
-//		attribute: /\[((?:[\w-]*:)?[\w-]+)\s*(?:([!^$*~|]?=)\s*((['"])([^\4]*?)\4|([^'"][^\]]*?)))?\]/,
+		attribute:/^\[((?:[\w-]*:)?[\w-]+)\s*(?:([!^$*~|])?(\=)?\s*(["'])?([^\4]*?)\4|([^'"][^\]]*?))\](.*)/,
 		// class
 		className: /^\.([\w-]+)(.*)/,
 		// id
@@ -130,7 +118,7 @@ NW.Dom = function() {
 				}
 				// #Foo Id case sensitive
 				else if ((match = selector.match(Patterns.id))) {
-					source = 'if(e&&e.id=="' + match[1] + '"){' + source + '}';
+					source = 'if(e&&e.getAttribute&&e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
 				}
 				// Foo Tag case insensitive (?)
 				else if ((match = selector.match(Patterns.tagName))) {
@@ -143,28 +131,12 @@ NW.Dom = function() {
 				}
 				// [attr] [attr=value] [attr="value"] and !=, *=, ~=, |=, ^=, $=
 				else if ((match = selector.match(Patterns.attribute))) {
-					// fix common misCased attribute names
-					// for (var i = 0; i < camelProps.length; ++i) {
-					// 	if (camelProps[i].toLowerCase().indexOf(match[1]) == 0) {
-					// 		match[1] = camelProps[i];
-					// 		break;
-					// 	}
-					// }
-/*
-alert(
-	match[1] + '\n' +
-	match[2] + '\n' +
-	match[3] + '\n' +
-	match[4] + '\n' +
-	match[5] + '\n' +
-	match[6] + '\n'
-);
-*/
-					var attributeValue = '(e.getAttribute("' + match[1] + '")||"").toLowerCase()',
-					// match[1] - attribute
-					// match[2] - operator
-					// match[3] - equals
-					// match[4] - value
+					var attributeValue = '(e.getAttribute&&e.getAttribute("' + match[1] + '")||"").toLowerCase()',
+					// match[1] - attribute name
+					// match[2] - operator type
+					// match[3] - equal sign
+					// match[4] - quotes
+					// match[5] - value
 					source = 'if(e&&' +
 						// change behavior for [class!=madeup]
 						//(match[2] == '!' ? 'e.' + match[1] + '&&' : '') +
@@ -178,7 +150,7 @@ alert(
 							(match[2] == '$' ? '$' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
 								(match[2] == '|' || match[2] == '~' ? '")>-1' : '/)') :
 							(match[3] && match[5] ? attributeValue + (match[2] == '!' ? '!' : '=') + '="' +
-								match[5].toLowerCase() + '"' : 'e.hasAttribute("'+ match[1] +'")')) +
+								match[5].toLowerCase() + '"' : 'e.hasAttributes&&e.hasAttribute("'+ match[1] +'")')) +
 					'){' + source + '}';
 				}
 				// E + F (F adiacent sibling of E)
@@ -187,15 +159,15 @@ alert(
 				}
 				// E ~ F (F relative sibling of E)
 				else if ((match = selector.match(Patterns.relative))) {
-					source = 'if(e){while((e=e.previousSibling))if(e.nodeType==1){' + source + ';break;}}';
+					source = 'while(e.previousSibling&&(e=e.previousSibling))if(e.nodeType==1){' + source + ';break;}';
 				}
 				// E > F (F children of E)
 				else if ((match = selector.match(Patterns.children))) {
-					source = 'if(e&&(e=e.parentNode)){' + source + '}';
+					source = 'if(e.parentNode.nodeType==1){e=e.parentNode;' + source + '}';
 				}
 				// E F (E ancestor of F)
 				else if ((match = selector.match(Patterns.ancestor))) {
-					source = 'if(e){while(e.parentNode.nodeType==1){e=e.parentNode;' + source + ';break;}}';
+					source = 'while(e.parentNode.nodeType==1){e=e.parentNode;' + source + ';break;}';
 				}
 				// CSS3 :root, :empty, :enabled, :disabled, :checked, :target
 				// CSS2 :active, :focus, :hover (no way yet)
@@ -210,17 +182,18 @@ alert(
 							source = 'if(e&&e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
 							break;
 						case 'empty':
-							source = 'if(e&&e.getElementsByTagName("*").length==0&&(e.childNodes.length==0||e.childNodes[0].nodeValue.replace(/\\s+/g,"").length==0)){' + source + '}';
+//							source = 'if(e&&/^\s*$/.test(e.innerHTML)){' + source + '}';
+							source = 'if(e&&e.childNodes.length==0){' + source + '}';
 							break;
 						case 'contains':
 							source = 'if(e&&(e.textContent||e.innerText||"").indexOf("' + match[2].replace(/\(|\)/g, '') + '")!=-1){' + source + '}';
 							break;
 						// CSS3 part of UI element states
 						case 'enabled':
-							source = 'if(e&&!e.disable){' + source + '}';
+							source = 'if(e&&!e.disabled){' + source + '}';
 							break;
 						case 'disabled':
-							source = 'if(e&&e.disable){' + source + '}';
+							source = 'if(e&&e.disabled){' + source + '}';
 							break;
 						case 'checked':
 							source = 'if(e&&e.checked){' + source + '}';
@@ -515,10 +488,12 @@ alert(
 
 	// ********** begin public methods **********
 	return {
+
 		// for testing purposes only!
 		compile: function(selector) {
-			return compileSelector(selector, "[existing source]", true);
+			return compileSelector(selector, document, true);
 		},
+
 		// set required caching level
 		// also invalidate current map
 		setCache:
