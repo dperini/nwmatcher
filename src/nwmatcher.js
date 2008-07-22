@@ -58,7 +58,9 @@ NW.Dom = function() {
     // nth child pseudos
     npseudos: /^\:(nth-)?(child|first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
     // simple pseudos
-    pseudos: /^\:([\w]+)?(\(.*\))?(?:\s+|$)(.*)/,
+//    pseudos: /^\:([\w]+)?(\(.*?(\(.*?\))?[^(]*?\))?(\s|$)(.*)/,
+//    pseudos: /^\:([\w]+)?(\(.*\))?(?:\s+|$)(.*)/,
+    pseudos: /^\:([\w]+)?(\(.*\))?(\s|$)(.*)/,
     // E > F
     children: /^\s*\>\s*(.*)/,
     // E + F
@@ -68,7 +70,7 @@ NW.Dom = function() {
     // E F
     ancestor: /^(\s+)(.*)/,
     // attribute
-    attribute:/^\[((?:[\w-]*:)?[\w-]+)\s*(?:([!^$*~|])?(\=)?\s*(["'])?([^\4]*?)\4|([^'"][^\]]*?))\](.*)/,
+    attribute:/^\[([\w-]*:?[\w-]+)\s*(?:([!^$*~|])?(\=)?\s*(["'])?([^\4]*?)\4|([^'"][^\]]*?))\](.*)/,
     // class
     className: /^\.([\w-]+)(.*)/,
     // id
@@ -114,7 +116,7 @@ NW.Dom = function() {
         // * match all
         if ((match = selector.match(Patterns.all))) {
           // always matching
-          source = 'if(e){' + source + '}';
+//          source = 'if(e){' + source + '}';
         }
         // #Foo Id case sensitive
         else if ((match = selector.match(Patterns.id))) {
@@ -145,12 +147,12 @@ NW.Dom = function() {
               (match[2] == '~' ? '(" "+' : (match[2] == '|' ? '("-"+' : '')) + attributeValue +
                 (match[2] == '|' || match[2] == '~' ? '.replace(/\\s+/g," ")' : '') +
               (match[2] == '~' ? '+" ")' : (match[2] == '|' ? '+"-")' : '')) +
-                 (match[2] == '!' || match[2] == '|' || match[2] == '~' ? '.indexOf("' : '.match(/') +
+                (match[2] == '!' || match[2] == '|' || match[2] == '~' ? '.indexOf("' : '.match(/') +
               (match[2] == '^' ? '^' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') + match[5].toLowerCase() +
               (match[2] == '$' ? '$' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
                 (match[2] == '|' || match[2] == '~' ? '")>-1' : '/)') :
               (match[3] && match[5] ? attributeValue + (match[2] == '!' ? '!' : '=') + '="' +
-                match[5].toLowerCase() + '"' : 'e.hasAttributes&&e.hasAttribute("'+ match[1] +'")')) +
+                match[5].toLowerCase() + '"' : 'e.hasAttribute&&e.hasAttribute("'+ match[1] +'")')) +
           '){' + source + '}';
         }
         // E + F (F adiacent sibling of E)
@@ -176,7 +178,8 @@ NW.Dom = function() {
           switch (match[1]) {
             // CSS3 part of structural pseudo-classes
             case 'not':
-              source = compileSelector(match[2].replace(/\((.*)\)/, '$1'), select ? '' : 'return false', select) + 'else {'+ source +'}';
+              source = compileSelector(match[2].replace(/\((.*)\)/, '$1'), select ? '' : 'return false', select) + 'else {' + source + '}';
+//              source = compileGroup(match[2].replace(/\((.*)\)/, '$1'), '', select) + 'else{' + source + '}';
               break;
             case 'root':
               source = 'if(e&&e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
@@ -189,13 +192,13 @@ NW.Dom = function() {
               break;
             // CSS3 part of UI element states
             case 'enabled':
-              source = 'if(e&&!e.disabled){' + source + '}';
+              source = 'if(e&&!e.disabled&&e.type&&e.type!="hidden"){' + source + '}';
               break;
             case 'disabled':
-              source = 'if(e&&e.disabled){' + source + '}';
+              source = 'if(e&&e.disabled&&e.type&&e.type!="hidden"){' + source + '}';
               break;
             case 'checked':
-              source = 'if(e&&e.checked){' + source + '}';
+              source = 'if(e&&e.checked&&e.type&&e.type!="hidden"){' + source + '}';
               break;
             // CSS3 target element
             case 'target':
@@ -292,7 +295,7 @@ NW.Dom = function() {
 
             } else {
               // add function for match method (select=false)
-              source = 'if(n=e){' +
+              source = 'if((n=e)){' +
                 (match[4] ? 't=e.nodeName;' : '') +
                 'while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'Sibling)&&' +
                   'n.node' + (match[4] ? 'Name!=t' : 'Type!=1') + ');' +
@@ -345,7 +348,7 @@ NW.Dom = function() {
 
       if (select) {
         // for select method
-        return new Function('c,s', 'var k=-1,e,r=[],n' + n + ';while(e=c[++k]){' + source + '}return r;');
+        return new Function('c,s', 'var k=-1,e,r=[],n' + n + ';while((e=c[++k])){' + source + '}return r;');
       } else {
         // for match method
         return new Function('e', 'var n,u;' + source.replace('break;', '') + 'return false;');
