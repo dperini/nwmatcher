@@ -56,11 +56,10 @@ NW.Dom = function() {
   // precompiled Regular Expressions
   Patterns = {
     // nth child pseudos
-    npseudos: /^\:(nth-)?(child|first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
+    npseudos: /\:(nth-)?(child|first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
     // simple pseudos
-//    pseudos: /^\:([\w]+)?(\(.*?(\(.*?\))?[^(]*?\))?(\s|$)(.*)/,
-//    pseudos: /^\:([\w]+)?(\(.*\))?(?:\s+|$)(.*)/,
-    pseudos: /^\:([\w]+)?(\(.*\))?(\s|$)(.*)/,
+//    pseudos: /\:([\w]+)(\(.*?(\(.*?\))?[^(]*?\))?(\s|$|[:+~>].*)/,
+    pseudos: /\:([\w]+)(\(.*?\))?(\s|$|[:+~>].*)/,
     // E > F
     children: /^\s*\>\s*(.*)/,
     // E + F
@@ -112,15 +111,16 @@ NW.Dom = function() {
 
       var match, t;
 
-      while(selector) {
+      while (selector) {
+
         // * match all
         if ((match = selector.match(Patterns.all))) {
           // always matching
-//          source = 'if(e){' + source + '}';
+          source = 'if(e){' + source + '}';
         }
         // #Foo Id case sensitive
         else if ((match = selector.match(Patterns.id))) {
-          source = 'if(e&&e.getAttribute&&e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
+          source = 'if(e&&e.hasAttribute("id")&&e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
         }
         // Foo Tag case insensitive (?)
         else if ((match = selector.match(Patterns.tagName))) {
@@ -133,7 +133,7 @@ NW.Dom = function() {
         }
         // [attr] [attr=value] [attr="value"] and !=, *=, ~=, |=, ^=, $=
         else if ((match = selector.match(Patterns.attribute))) {
-          var attributeValue = '(e.getAttribute&&e.getAttribute("' + match[1] + '")||"").toLowerCase()',
+          var attributeValue = '(e.hasAttribute("' + match[1] + '")&&e.getAttribute("' + match[1] + '")||"").toLowerCase()',
           // match[1] - attribute name
           // match[2] - operator type
           // match[3] - equal sign
@@ -152,7 +152,7 @@ NW.Dom = function() {
               (match[2] == '$' ? '$' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
                 (match[2] == '|' || match[2] == '~' ? '")>-1' : '/)') :
               (match[3] && match[5] ? attributeValue + (match[2] == '!' ? '!' : '=') + '="' +
-                match[5].toLowerCase() + '"' : 'e.hasAttribute&&e.hasAttribute("'+ match[1] +'")')) +
+                match[5].toLowerCase() + '"' : 'e.hasAttribute("'+ match[1] +'")')) +
           '){' + source + '}';
         }
         // E + F (F adiacent sibling of E)
@@ -178,8 +178,7 @@ NW.Dom = function() {
           switch (match[1]) {
             // CSS3 part of structural pseudo-classes
             case 'not':
-              source = compileSelector(match[2].replace(/\((.*)\)/, '$1'), select ? '' : 'return false', select) + 'else {' + source + '}';
-//              source = compileGroup(match[2].replace(/\((.*)\)/, '$1'), '', select) + 'else{' + source + '}';
+              source = compileSelector(match[2].replace(/\((.*)\)/, '$1'), source, select).replace(/if([^\{]+)/, 'if(!$1)');
               break;
             case 'root':
               source = 'if(e&&e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
@@ -315,6 +314,7 @@ NW.Dom = function() {
         }
         selector = match[match.length - 1];
       }
+
       return source;
     },
 
@@ -493,7 +493,7 @@ NW.Dom = function() {
 
     // for testing purposes only!
     compile: function(selector) {
-      return compileSelector(selector, document, true);
+      return compileGroup(selector, true).toString();
     },
 
     // set required caching level
