@@ -5,9 +5,9 @@
  * nwmatcher.js - A fast selector engine not using XPath
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 0.99.7
+ * Version: 0.99.8
  * Created: 20070722
- * Release: 20080718
+ * Release: 20080725
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -19,7 +19,7 @@ window.NW || (window.NW = {});
 
 NW.Dom = function() {
 
-  var version = '0.99.7',
+  var version = '0.99.8',
 
   // the selecting functions
   // used to test a collection
@@ -56,9 +56,8 @@ NW.Dom = function() {
   // precompiled Regular Expressions
   Patterns = {
     // nth child pseudos
-    npseudos: /\:(nth-)?(child|first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
+    npseudos: /\:(nth-)?(child|first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(\s|$|[:+~>].*)/,
     // simple pseudos
-//    pseudos: /\:([\w]+)(\(.*?(\(.*?\))?[^(]*?\))?(\s|$|[:+~>].*)/,
     pseudos: /\:([\w]+)(\(.*?\))?(\s|$|[:+~>].*)/,
     // E > F
     children: /^\s*\>\s*(.*)/,
@@ -69,15 +68,15 @@ NW.Dom = function() {
     // E F
     ancestor: /^(\s+)(.*)/,
     // attribute
-    attribute:/^\[([\w-]*:?[\w-]+)\s*(?:([!^$*~|])?(\=)?\s*(["'])?([^\4]*?)\4|([^'"][^\]]*?))\](.*)/,
-    // class
-    className: /^\.([\w-]+)(.*)/,
-    // id
-    id: /^\#([\w-]+)(.*)/,
-    // tag
-    tagName: /^([\w-]+)(.*)/,
+    attribute: /^\[([-\w]*:?[-\w]+)\s*(?:([!^$*~|])?(\=)?\s*(["'])?([^\4]*?)\4|([^'"][^\]]*?))\](.*)/,
     // all
-    all: /^\*(.*)/
+    all: /^\*(.*)/,
+    // id
+    id: /^\#([-\w]+)(.*)/,
+    // tag
+    tagName: /^([-\w]+)(.*)/,
+    // class
+    className: /^\.([-\w]+)(.*)/
   },
 
   // initial optimizations
@@ -87,15 +86,15 @@ NW.Dom = function() {
     // all with whitespaces
     // maybe the worst case
     // being "\r\n\t * \r\n"
-    all: /(^\s*\*\s*)$/,
+    all: /(^\*)$/,
     // single class, id, tag
-    className: /^\.([\w-]+)$/,
-    id: /^\#([\w-]+)$/,
-    tagName: /^([\w]+)$/
+    id: /^\#([-\w]+)$/,
+    tagName: /^([\w]+)$/,
+    className: /^\.([-\w]+)$/
   },
 
   // convert nodeList to array (implementation from Prototype)
-  toArray = 
+  toArray =
     function(iterable) {
       var length = iterable.length, array = new Array(length);
       while (length--) array[length] = iterable[length];
@@ -109,7 +108,13 @@ NW.Dom = function() {
     // and select (true) or match (false)
     function(selector, source, select) {
 
-      var match, t;
+      var a, b, // parsing of (an+b)
+          compare, // of-type matcher
+          match, // the matched parts
+          param, // parsing of (an+b)
+          test, // operator comparing
+          type, // type of collection
+          attributeValue; // attrValue
 
       while (selector) {
 
@@ -120,26 +125,27 @@ NW.Dom = function() {
         }
         // #Foo Id case sensitive
         else if ((match = selector.match(Patterns.id))) {
-          source = 'if(e&&e.hasAttribute("id")&&e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
+          source = 'if(e.hasAttribute("id")&&e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
         }
         // Foo Tag case insensitive (?)
         else if ((match = selector.match(Patterns.tagName))) {
-          source = 'if(e&&e.nodeName.toLowerCase()=="' + match[1].toLowerCase() + '"){' + source + '}';
+          source = 'if(e.nodeName.toLowerCase()=="' + match[1].toLowerCase() + '"){' + source + '}';
         }
         // .Foo Class case sensitive
         else if ((match = selector.match(Patterns.className))) {
-          source = 'if(e&&(" "+e.className+" ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
+          source = 'if((" "+e.className+" ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
           //source = 'if(((" "+e.className).replace(/\\s+/g," ") + " ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
         }
         // [attr] [attr=value] [attr="value"] and !=, *=, ~=, |=, ^=, $=
         else if ((match = selector.match(Patterns.attribute))) {
-          var attributeValue = '(e.hasAttribute("' + match[1] + '")&&e.getAttribute("' + match[1] + '")||"").toLowerCase()',
+
+          attributeValue = '(e.hasAttribute("' + match[1] + '")&&e.getAttribute("' + match[1] + '")||"").toLowerCase()',
           // match[1] - attribute name
           // match[2] - operator type
           // match[3] - equal sign
           // match[4] - quotes
           // match[5] - value
-          source = 'if(e&&' +
+          source = 'if(' +
             // change behavior for [class!=madeup]
             //(match[2] == '!' ? 'e.' + match[1] + '&&' : '') +
             // match attributes or property
@@ -157,11 +163,11 @@ NW.Dom = function() {
         }
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
-          source = 'if(e){while((e=e.previousSibling)&&e.nodeType!=1);if(e){' + source + '}}';
+          source = 'while((e=e.previousSibling)&&e.nodeType!=1);if(e){' + source + '}';
         }
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
-          source = 'while(e.previousSibling&&(e=e.previousSibling))if(e.nodeType==1){' + source + ';break;}';
+          source = 'while(e.previousSibling){(e=e.previousSibling);if(e.nodeType==1){' + source.replace(/\}$/, 'break;}') + '}}';
         }
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
@@ -169,7 +175,7 @@ NW.Dom = function() {
         }
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'while(e.parentNode.nodeType==1){e=e.parentNode;' + source + ';break;}';
+          source = 'while(e.parentNode.nodeType==1){e=e.parentNode;' + source.replace(/\}$/, 'break;}') + '}';
         }
         // CSS3 :root, :empty, :enabled, :disabled, :checked, :target
         // CSS2 :active, :focus, :hover (no way yet)
@@ -181,45 +187,45 @@ NW.Dom = function() {
               source = compileSelector(match[2].replace(/\((.*)\)/, '$1'), source, select).replace(/if([^\{]+)/, 'if(!$1)');
               break;
             case 'root':
-              source = 'if(e&&e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
+              source = 'if(e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
               break;
             case 'empty':
-              source = 'if(e&&/^\s*$/.test(e.innerHTML)){' + source + '}';
+              source = 'if(/^\s*$/.test(e.innerHTML)){' + source + '}';
               break;
             case 'contains':
-              source = 'if(e&&(e.textContent||e.innerText||"").indexOf("' + match[2].replace(/\(|\)/g, '') + '")!=-1){' + source + '}';
+              source = 'if((e.textContent||e.innerText||"").indexOf("' + match[2].replace(/\(|\)/g, '') + '")!=-1){' + source + '}';
               break;
             // CSS3 part of UI element states
             case 'enabled':
-              source = 'if(e&&!e.disabled&&e.type&&e.type!="hidden"){' + source + '}';
+              source = 'if(!e.disabled&&e.type&&e.type!="hidden"){' + source + '}';
               break;
             case 'disabled':
-              source = 'if(e&&e.disabled&&e.type&&e.type!="hidden"){' + source + '}';
+              source = 'if(e.disabled&&e.type&&e.type!="hidden"){' + source + '}';
               break;
             case 'checked':
-              source = 'if(e&&e.checked&&e.type&&e.type!="hidden"){' + source + '}';
+              source = 'if(e.checked&&e.type&&e.type!="hidden"){' + source + '}';
               break;
             // CSS3 target element
             case 'target':
-              source = 'if(e&&e.id==location.href.match(/#([_-\w]+)$/)[1]){' + source + '}';
+              source = 'if(e.id==location.href.match(/#([_-\w]+)$/)[1]){' + source + '}';
               break;
             // CSS1 & CSS2 link
             case 'link':
-              source = 'if(e&&e.nodeName.toUpperCase()=="A"&&e.href){' + source + '}';
+              source = 'if(e.nodeName.toUpperCase()=="A"&&e.href){' + source + '}';
               break;
             case 'visited':
-              source = 'if(e&&e.visited){' + source + '}';
+              source = 'if(e.visited){' + source + '}';
               break;
             // CSS1 & CSS2 user action
             case 'active':
               // IE, FF3 have native method, others may have it emulated,
               // this may be done in the event manager setting activeElement
-              source = 'if(e&&d.activeElement&&e===d.activeElement){' + source + '}';
+              source = 'if(d.activeElement&&e===d.activeElement){' + source + '}';
               break;
             case 'focus':
               // IE, FF3 have native method, others may have it emulated,
               // this may be done in the event manager setting focusElement
-              source = 'if(e&&((e.hasFocus&&e.hasFocus())||(d.focusElement&&d.focusElement===e))){' + source + '}';
+              source = 'if(((e.hasFocus&&e.hasFocus())||(d.focusElement&&d.focusElement===e))){' + source + '}';
               break;
             case 'hover':
               // not implemented (TODO)
@@ -234,64 +240,81 @@ NW.Dom = function() {
         // :nth-child(), :nth-last-child(), :nth-of-type(), :nth-last-of-type()
         else if ((match = selector.match(Patterns.npseudos))) {
 
-          var a, b;
+          // snapshot collection type Twin or Child
+          type = match[4] == 'of-type' ? 'Twin' : 'Child';
 
           if (match[5]) {
             // remove the ( ) grabbed above
             match[5] = match[5].replace(/\(|\)/g, '');
 
-            if (match[5] == 'even') a = 2, b = 0;
-            else if (match[5] == 'odd') a = 2, b = 1;
-            else {
+            if (match[5] == 'even') {
+              a = 2;
+              b = 0;
+            } else if (match[5] == 'odd') {
+              a = 2;
+              b = 1;
+            } else {
               // assumes correct "an+b" format
               a = match[5].match(/^-/) ? -1 : match[5].match(/^n/) ? 1 : 0;
-              a = a || ((t = match[5].match(/(-?\d{1,})n/)) ? parseInt(t[1], 10) : 0);
-              b = b || ((t = match[5].match(/(-?\d{1,})$/)) ? parseInt(t[1], 10) : 0);
+              a = a || ((param = match[5].match(/(-?\d{1,})n/)) ? parseInt(param[1], 10) : 0);
+              b = b || ((param = match[5].match(/(-?\d{1,})$/)) ? parseInt(param[1], 10) : 0);
             }
+
+            compare =
+              (match[2] == 'last' ?
+                '(s.' + type + 'Lengths[s.' + type + 'Parents[k+1]' + ']' +
+                (match[4] == 'of-type' ?
+                  '[e.nodeName.toUpperCase()]' :
+                  '') + '-' + (b - 1) + ')' : b);
+
             // handle 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
-            t = match[5] == 'even' ||
+            test = match[5] == 'even' ||
               match[5] == 'odd' ||
-              a > b ?
-                b >= 0 ?
-                  '%' + a + '===' + b :
-                  '===' + (a + b) :
-                a < 0 ?
-                  '<=' + b :
-                  '===' + b;
+              a > Math.abs(b) ?
+                ('%' + a + '===' + b) :
+              a < 0 ?
+                '<=' + compare :
+              a > 0 ?
+                '>=' + compare :
+              a == 0 ?
+                '==' + compare :
+                '';
+
             // boolean indicating select (true) or match (false) method
             if (select) {
               // add function for select method (select=true)
               // requires prebuilt arrays get[Childs|Twins]
-              source = 'if(e&&s.' + (match[4] ? 'Twin' : 'Child') + 'Indexes[NW.Dom.getIndex(c,e)+1]' + t + '){' + source + '}';
+              source = 'if(s.' + type + 'Indexes[k+1]' + test + '){' + source + '}';
             } else {
               // add function for "match" method (select=false)
               // this will not be in a loop, this is faster
               // for "match" but slower for "select" and it
               // also doesn't require prebuilt node arrays
               source = 'if((n=e)){' +
-                'u=1' + (match[4] ? ',t=e.nodeName;' : ';') +
+                'u=1' + (match[4] == 'of-type' ? ',t=e.nodeName;' : ';') +
                 'while((n=n.' + (match[2] == 'last' ? 'next' : 'previous') + 'Sibling)){' +
-                  'if(n.node' + (match[4] ? 'Name==t' : 'Type==1') + '){++u;}' +
+                  'if(n.node' + (match[4] == 'of-type' ? 'Name==t' : 'Type==1') + '){++u;}' +
                 '}' +
-                'if(u' + t + '){' + source + '}' +
+                'if(u' + test + '){' + source + '}' +
               '}';
             }
+
           } else {
             // handle 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
+            compare =
+              's.' + type + 'Lengths[s.' + type + 'Parents[k+1]]' +
+              (match[4] == 'of-type' ? '[e.nodeName]' : ''); 
+
             if (select) {
               // add function for select method (select=true)
-              t = match[4] ? 'Twin' : 'Child';
-              source = 'n=NW.Dom.getIndex(c,e)+1;' +
-                'if(e&&' +
+              source = 'if(' +
                 (match[2] == 'first' ?
-                  's.' + t + 'Indexes[n]===1' :
+                  's.' + type + 'Indexes[k+1]==1' :
                   match[2] == 'only' ?
-                    's.' + t + 'Lengths[s.' + t + 'Parents[n]]' + (match[4] ? '[e.nodeName]' : '') + '===1' :
+                    compare + '==1' :
                       match[2] == 'last' ?
-                      's.' + t + 'Indexes[n]===s.' + t + 'Lengths[s.' + t + 'Parents[n]]' + (match[4] ? '[e.nodeName]' : '') :
-                      '') +
+                        's.' + type + 'Indexes[k+1]===' + compare : '') +
                 '){' + source + '}';
-
             } else {
               // add function for match method (select=false)
               source = 'if((n=e)){' +
@@ -312,6 +335,7 @@ NW.Dom = function() {
         else {
           throw new Error('NW.Dom.compileSelector: syntax error, unknown selector rule "' + selector + '"');
         }
+
         selector = match[match.length - 1];
       }
 
@@ -323,36 +347,36 @@ NW.Dom = function() {
     // selector string for the compiled function,
     // boolean for select (true) or match (false)
     function(selector, select){
-      var i = 0, source = '', k, d = {}, n = '',
-        parts = selector.split(',');
-      // for each selector
+
+      var i = 0, source = '', token, cachedTokens = {},
+          parts = selector.split(','), extraVars = '';
+
+      // for each selector in the group
       for ( ; i < parts.length; ++i) {
-        k = parts[i].replace(TR, '');
-        // avoid repeating the same functions
-        if (!d[k]) {
-          d[k] = k;
-          // insert corresponding mode function
-          if (select) {
-            source = compileSelector(k, '{r[r.length]=c[k];', select) + '}' + source;
-          } else {
-            source = compileSelector(k, '{return true;', select) + '}' + source.replace('break;', '');
+        token = parts[i].replace(TR, '');
+        // if we have a selector string
+        if (token && token.length > 0) {
+          // avoid repeating the same functions
+          if (!cachedTokens[token]) {
+            cachedTokens[token] = token;
+            // insert corresponding mode function
+            if (select) {
+              source += compileSelector(token, 'r[r.length]=c[k];', select);
+            } else {
+              source += compileSelector(token, 'return true;', select);
+            }
           }
         }
       }
 
-      if (selector.match(nth_pseudo)) {
-        n = ',j,u,t,a';
-      } else if (selector.match(child_pseudo)) {
-        n = ',t';
-      }
-
       if (select) {
         // for select method
-        return new Function('c,s', 'var k=-1,e,r=[],n' + n + ';while((e=c[++k])){' + source + '}return r;');
+        return new Function('c,s', 'var k=-1,e,r=[],n,j,u,t,a;while((e=c[++k])){' + source + '}return r;');
       } else {
         // for match method
-        return new Function('e', 'var n,u;' + source.replace('break;', '') + 'return false;');
+        return new Function('e', 'var n,u;' + source  + 'return false;');
       }
+
     },
 
   IE = typeof document.fileSize != 'undefined',
@@ -455,37 +479,36 @@ NW.Dom = function() {
   // check if cached snapshot has changed
   getCache =
     function(f) {
-      var document, snapshot = Snapshot, elements = snapshot.Elements;
+      var document, elements = Snapshot.Elements;
       if (elements.length) {
         document = elements[0].ownerDocument || elements[0].document;
         // DOM is say not to change but
         // will do a simple check anyway
         if (cachingLevel == STATIC &&
-          (elements.length == snapshot.ChildIndexes.length ||
-           elements.length == snapshot.TwinIndexes.length)) {
-          snapshot.isValid = true;
+          (elements.length == Snapshot.ChildIndexes.length ||
+           elements.length == Snapshot.TwinIndexes.length)) {
+          Snapshot.isValid = true;
         // DOM is say not to change, but may be
         } else if (cachingLevel==RELAXED &&
-          snapshot.HtmlSrc == document.body.innerHTML) {
-          snapshot.isValid = true;
+          Snapshot.HtmlSrc == document.body.innerHTML) {
+          Snapshot.isValid = true;
         } else {
           if (cachingLevel == RELAXED) {
-            snapshot.HtmlSrc = document.body.innerHTML;
+            Snapshot.HtmlSrc = document.body.innerHTML;
           }
           cachedResults = {
             from: [],
             items: []
           };
-          snapshot.isValid = false;
+          Snapshot.isValid = false;
         }
       } else {
         cachedResults = {
           from: [],
           items: []
         };
-        snapshot.isValid = false;
+        Snapshot.isValid = false;
       }
-      Snapshot = snapshot;
     };
 
   // ********** begin public methods **********
@@ -509,8 +532,6 @@ NW.Dom = function() {
       function() {
         Snapshot.isValid = false;
       },
-
-    getIndex: getIndex,
 
     // element match selector return boolean true/false
     match:
