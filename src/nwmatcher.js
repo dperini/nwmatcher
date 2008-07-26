@@ -21,12 +21,12 @@ NW.Dom = function() {
 
   var version = '0.99.8',
 
-  // the selecting functions
-  // used to test a collection
+  // the DOM selection functions
+  // returning collections
   compiledSelectors = { },
 
-  // the matching functions
-  // used to test an element
+  // the DOM matching functions
+  // returning booleans
   compiledMatchers = { },
 
   // selection matched elements
@@ -43,8 +43,6 @@ NW.Dom = function() {
   // DOM will not be modified from now on (aggressive caching)
   STATIC = 2,
 
-  // nth pseudo selector (CSS3)
-  nth_pseudo = /\:(nth)\-/,
   // child pseudo selector (CSS3)
   child_pseudo = /\:(nth|first|last|only)\-/,
   // of-type pseudo selectors (CSS3)
@@ -97,7 +95,9 @@ NW.Dom = function() {
   toArray =
     function(iterable) {
       var length = iterable.length, array = new Array(length);
-      while (length--) array[length] = iterable[length];
+      while (length--) {
+        array[length] = iterable[length];
+      }
       return array;
     },
 
@@ -108,24 +108,23 @@ NW.Dom = function() {
     // and select (true) or match (false)
     function(selector, source, select) {
 
-      var a, b, // parsing of (an+b)
-          compare, // of-type matcher
-          match, // the matched parts
-          param, // parsing of (an+b)
-          test, // operator comparing
-          type, // type of collection
-          attributeValue; // attrValue
+      var a, b,
+          // temporary building placeholders
+          compare, match, param, test, type,
+          attributeValue, attributePresence;
 
       while (selector) {
 
         // * match all
         if ((match = selector.match(Patterns.all))) {
-          // always matching
-          source = 'if(e){' + source + '}';
+          // always matching (removed for speed)
+          //source = 'if(e){' + source + '}';
+          // on IE remove comment nodes to avoid this
+          source = 'if(e.nodeType==1){' + source + '}';
         }
         // #Foo Id case sensitive
         else if ((match = selector.match(Patterns.id))) {
-          source = 'if(e.hasAttribute("id")&&e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
+          source = 'if((a=e.getAttributeNode("id"))&&a.value=="' + match[1] + '"){' + source + '}';
         }
         // Foo Tag case insensitive (?)
         else if ((match = selector.match(Patterns.tagName))) {
@@ -139,12 +138,25 @@ NW.Dom = function() {
         // [attr] [attr=value] [attr="value"] and !=, *=, ~=, |=, ^=, $=
         else if ((match = selector.match(Patterns.attribute))) {
 
-          attributeValue = '(e.hasAttribute("' + match[1] + '")&&e.getAttribute("' + match[1] + '")||"").toLowerCase()',
+          if (match[1] == 'href' || match[1] == 'src') {
+            attributeValue = '(((a=e.getAttribute("' + match[1] + '",2))&&a)||"")';
+          } else {
+            attributeValue = '(((a=e.getAttributeNode("' + match[1] + '"))&&a.value)||"")';
+          }
+
+          if (typeof document.fileSize != 'undefined') {
+            // on IE check the "specified" property on the attribute node
+            attributePresence = '((a=e.getAttributeNode("' + match[1] + '"))&&a.specified)';
+          } else {
+            attributePresence = 'e.hasAttribute("' + match[1] + '")';
+          }
+
           // match[1] - attribute name
           // match[2] - operator type
           // match[3] - equal sign
           // match[4] - quotes
           // match[5] - value
+
           source = 'if(' +
             // change behavior for [class!=madeup]
             //(match[2] == '!' ? 'e.' + match[1] + '&&' : '') +
@@ -158,20 +170,20 @@ NW.Dom = function() {
               (match[2] == '$' ? '$' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
                 (match[2] == '|' || match[2] == '~' ? '")>-1' : '/)') :
               (match[3] && match[5] ? attributeValue + (match[2] == '!' ? '!' : '=') + '="' +
-                match[5].toLowerCase() + '"' : 'e.hasAttribute("'+ match[1] +'")')) +
+                match[5].toLowerCase() + '"' : attributePresence)) +
           '){' + source + '}';
         }
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
-          source = 'while((e=e.previousSibling)&&e.nodeType!=1);if(e){' + source + '}';
+          source = 'while(e.previousSibling){e=e.previousSibling;if(e.nodeType==1){' + source + 'break;}}';
         }
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
-          source = 'while(e.previousSibling){(e=e.previousSibling);if(e.nodeType==1){' + source.replace(/\}$/, 'break;}') + '}}';
+          source = 'while(e.previousSibling){e=e.previousSibling;if(e.nodeType==1){' + source.replace(/\}$/, 'break;}') + '}}';
         }
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'if(e.parentNode.nodeType==1){e=e.parentNode;' + source + '}';
+          source = 'while(e.parentNode.nodeType==1){e=e.parentNode;' + source + 'break;}';
         }
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
@@ -190,20 +202,22 @@ NW.Dom = function() {
               source = 'if(e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
               break;
             case 'empty':
-              source = 'if(/^\s*$/.test(e.innerHTML)){' + source + '}';
+              //source = 'if(/^\\s*$/.test(e.innerHTML)){' + source + '}';
+              // IE does not support empty text nodes, HTML white spaces and CRLF are not in the DOM
+              source = 'if(/^\\s*$/.test(e.innerHTML)&&!/\\r|\\n/.test(e.innerHTML)){' + source + '}';
               break;
             case 'contains':
               source = 'if((e.textContent||e.innerText||"").indexOf("' + match[2].replace(/\(|\)/g, '') + '")!=-1){' + source + '}';
               break;
             // CSS3 part of UI element states
             case 'enabled':
-              source = 'if(!e.disabled&&e.type&&e.type!="hidden"){' + source + '}';
+              source = 'if(e.type&&e.type!="hidden"&&!e.disabled){' + source + '}';
               break;
             case 'disabled':
-              source = 'if(e.disabled&&e.type&&e.type!="hidden"){' + source + '}';
+              source = 'if(e.type&&e.type!="hidden"&&e.disabled){' + source + '}';
               break;
             case 'checked':
-              source = 'if(e.checked&&e.type&&e.type!="hidden"){' + source + '}';
+              source = 'if(e.type&&e.type!="hidden"&&e.checked){' + source + '}';
               break;
             // CSS3 target element
             case 'target':
@@ -214,22 +228,28 @@ NW.Dom = function() {
               source = 'if(e.nodeName.toUpperCase()=="A"&&e.href){' + source + '}';
               break;
             case 'visited':
-              source = 'if(e.visited){' + source + '}';
+              source = 'if(e.nodeName.toUpperCase()=="A"&&e.visited){' + source + '}';
               break;
             // CSS1 & CSS2 user action
             case 'active':
               // IE, FF3 have native method, others may have it emulated,
               // this may be done in the event manager setting activeElement
-              source = 'if(d.activeElement&&e===d.activeElement){' + source + '}';
+              source = 'var d=(e.ownerDocument||e.document);' +
+                       'if(d.activeElement&&e===d.activeElement){' + source + '}';
+              break;
+            case 'hover':
+              // IE, FF3 have native method, other browser may achieve a similar effect
+              // by delegating mouseover/mouseout handling to the document/documentElement
+              source = 'var d=(e.ownerDocument||e.document);' +
+                       'if(d.hoverElement&&e===d.hoverElement){' + source + '}';
               break;
             case 'focus':
               // IE, FF3 have native method, others may have it emulated,
               // this may be done in the event manager setting focusElement
-              source = 'if(((e.hasFocus&&e.hasFocus())||(d.focusElement&&d.focusElement===e))){' + source + '}';
-              break;
-            case 'hover':
-              // not implemented (TODO)
-              // track mouseover/mouseout and set hoverElement to current
+              source = 'var d=(e.ownerDocument||e.document);' +
+                       'if(e.type&&e.type!="hidden"&&' +
+                         '((e.hasFocus&&e.hasFocus())||' +
+                         '(d.focusElement&&e===d.focusElement))){' + source + '}';
               break;
             default:
               break;
@@ -303,7 +323,7 @@ NW.Dom = function() {
             // handle 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
             compare =
               's.' + type + 'Lengths[s.' + type + 'Parents[k+1]]' +
-              (match[4] == 'of-type' ? '[e.nodeName]' : ''); 
+              (match[4] == 'of-type' ? '[e.nodeName]' : '');
 
             if (select) {
               // add function for select method (select=true)
@@ -331,10 +351,7 @@ NW.Dom = function() {
               '}';
             }
           }
-        }
-        else {
-          throw new Error('NW.Dom.compileSelector: syntax error, unknown selector rule "' + selector + '"');
-        }
+        } else throw new Error('NW.Dom.compileSelector: syntax error, unknown selector rule "' + selector + '"');
 
         selector = match[match.length - 1];
       }
@@ -379,8 +396,6 @@ NW.Dom = function() {
 
     },
 
-  IE = typeof document.fileSize != 'undefined',
-
   // snapshot of elements contained in rootElement
   // also contains maps to make nth lookups faster
   // updated by each select/match if DOM changes
@@ -397,13 +412,13 @@ NW.Dom = function() {
   },
 
   // DYNAMIC | RELAXED | STATIC
-  cachingLevel = RELAXED,
+  cachingLevel = DYNAMIC,
 
   // get element index in a node array
   getIndex =
     function(array, element) {
-      // ie only (too slow in opera)
-      if (IE) {
+      // IE only (too slow in opera)
+      if (typeof document.fileSize != 'undefined') {
         getIndex = function(array, element) {
           return element.sourceIndex || -1;
         };
@@ -536,31 +551,37 @@ NW.Dom = function() {
     // element match selector return boolean true/false
     match:
       function(element, selector) {
+
         // make sure an element node was passed
         if (!(element && element.nodeType == 1)) {
           return false;
         }
+
         if (typeof selector == 'string' && selector.length) {
+
           // cache compiled matchers
           if (!compiledMatchers[selector]) {
             compiledMatchers[selector]=compileGroup(selector, false);
           }
+
           // result of compiled matcher
           return compiledMatchers[selector](element);
-        } else {
-          throw new Error('NW.Dom.match: "' + selector + '" is not a valid CSS selector.');
-        }
+
+        } else throw new Error('NW.Dom.match: "' + selector + '" is not a valid CSS selector.');
+
         return false;
       },
 
     // elements matching selector optionally starting from node
     select:
       function(selector, from) {
+
         var elements = [], match;
 
         if (!(from && (from.nodeType == 1 || from.nodeType == 9))) {
           from = document;
         }
+
         if (typeof selector == 'string' && selector.length) {
 
           // BEGIN REDUCE/OPTIMIZE
@@ -629,13 +650,12 @@ NW.Dom = function() {
             return cachedResults.items[selector];
           }
 
-        } else {
-          throw new Error('NW.Dom.select: "' + selector + '" is not a valid CSS selector.');
-        }
+        } else throw new Error('NW.Dom.select: "' + selector + '" is not a valid CSS selector.');
 
         return [];
       }
 
   };
   // *********** end public methods ***********
+
 }();
