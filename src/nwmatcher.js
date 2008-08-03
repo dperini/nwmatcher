@@ -35,14 +35,6 @@ NW.Dom = function() {
     items: [ ]
   },
 
-  // caching levels
-  // DOM frequently modified (caching completely disabled)
-  DYNAMIC = 0,
-  // DOM may be modified but we catch it (moderate caching)
-  RELAXED = 1,
-  // DOM will not be modified from now on (aggressive caching)
-  STATIC = 2,
-
   // child pseudo selector (CSS3)
   child_pseudo = /\:(nth|first|last|only)\-/,
   // of-type pseudo selectors (CSS3)
@@ -401,18 +393,16 @@ NW.Dom = function() {
   // updated by each select/match if DOM changes
   Snapshot = {
     Elements: [],
-    ChildIndexes: [],
-    ChildLengths: [],
-    ChildParents: [],
     TwinIndexes: [],
     TwinLengths: [],
     TwinParents: [],
-    isValid: false,
-    HtmlSrc: ''
+    ChildIndexes: [],
+    ChildLengths: [],
+    ChildParents: [],
+    hasElements: false,
+    hasTwinIndexes: false,
+    hasChildIndexes: false
   },
-
-  // DYNAMIC | RELAXED | STATIC
-  cachingLevel = DYNAMIC,
 
   // get element index in a node array
   getIndex =
@@ -491,40 +481,57 @@ NW.Dom = function() {
       Snapshot.ChildLengths = l;
     },
 
-  // check if cached snapshot has changed
-  getCache =
-    function(f) {
-      var document, elements = Snapshot.Elements;
-      if (elements.length) {
-        document = elements[0].ownerDocument || elements[0].document;
-        // DOM is say not to change but
-        // will do a simple check anyway
-        if (cachingLevel == STATIC &&
-          (elements.length == Snapshot.ChildIndexes.length ||
-           elements.length == Snapshot.TwinIndexes.length)) {
-          Snapshot.isValid = true;
-        // DOM is say not to change, but may be
-        } else if (cachingLevel==RELAXED &&
-          Snapshot.HtmlSrc == document.body.innerHTML) {
-          Snapshot.isValid = true;
+  caching = false,
+
+  // enable caching system
+  // @d optional document context
+  setCache =
+    function(enable, d) {
+      expireCache();
+      d || (d = document);
+      if (!caching && enable) {
+        if (d.documentElement.setExpression) {
+          //d.documentElement.setExpression('innerHTML', 'NW.Dom.expireCache()');
         } else {
-          if (cachingLevel == RELAXED) {
-            Snapshot.HtmlSrc = document.body.innerHTML;
-          }
-          cachedResults = {
-            from: [],
-            items: []
-          };
-          Snapshot.isValid = false;
+          // Mozilla/Firefox/Opera/Safari/KHTML (fire for insertion and removal)
+          d.addEventListener('DOMNodeInserted', expireCache, false);
+          d.addEventListener('DOMNodeRemoved', expireCache, false);
         }
-      } else {
-        cachedResults = {
-          from: [],
-          items: []
-        };
-        Snapshot.isValid = false;
+        caching = true;
+      } else if (caching) {
+        if (d.documentElement.setExpression) {
+          //d.documentElement.removeExpression('innerHTML');
+        } else {
+          d.removeEventListener('DOMNodeInserted', expireCache, false);
+          d.removeEventListener('DOMNodeRemoved', expireCache, false);
+        }
+        caching = false;
       }
+    },
+
+  // expose the private method
+  expireCache =
+    function() {
+      Snapshot.hasElements = false;
+      Snapshot.hasTwinIndexes = false;
+      Snapshot.hasChildIndexes = false;
+      cachedResults = {
+        from: [],
+        items: []
+      };
     };
+
+  if (
+    document.implementation.hasFeature("MutationEvents", "2.0")||
+    document.implementation.hasFeature("Events", "2.0") &&
+    document.implementation.hasFeature("Core", "2.0")) {
+    window.addEventListener('unload', function() {
+        window.removeEventListener('unload', arguments.callee, false);
+        setCache(false);
+      }, false
+    );
+    setCache(true);
+  }
 
   // ********** begin public methods **********
   return {
@@ -534,19 +541,10 @@ NW.Dom = function() {
       return compileGroup(selector, true).toString();
     },
 
-    // set required caching level
-    // also invalidate current map
-    setCache:
-      function(level) {
-        cachingLevel = (level % 3);
-        this.expireCache();
-      },
+    setCache: setCache,
 
     // expose the private method
-    expireCache:
-      function() {
-        Snapshot.isValid = false;
-      },
+    expireCache: expireCache,
 
     // element match selector return boolean true/false
     match:
@@ -608,46 +606,55 @@ NW.Dom = function() {
           }
           // END REDUCE/OPTIMIZE
 
-          // collection of all nodes
-          elements = toArray(from.getElementsByTagName('*'));
-
-          // save current collection
-          Snapshot.Elements = elements;
+          if (caching && Snapshot.hasElements) {
+            elements = Snapshot.Elements;
+          } else {
+            elements = toArray(from.getElementsByTagName('*'));
+            Snapshot.Elements = elements;
+            Snapshot.hasTwinIndexes = false;
+            Snapshot.hasChildIndexes = false;
+          }
 
           if (selector.match(child_pseudo)) {
-            // check requested caching level
-            if (cachingLevel == DYNAMIC) {
-              Snapshot.isValid = false;
-            } else {
-              getCache(elements);
-            }
-            // check if storage synchronized
-            if (Snapshot.isValid === false) {
-              if (selector.match(oftype_pseudo)) {
-                // special of-type pseudo selectors
+            if (selector.match(oftype_pseudo)) {
+              // special of-type pseudo selectors
+              if (!caching || !Snapshot.hasTwinIndexes) {
                 getTwins(from, elements);
-              } else {
-                // normal nth/child pseudo selectors
+                Snapshot.hasTwinIndexes = true;
+              }
+            } else {
+              // normal nth/child pseudo selectors
+              if (!caching || !Snapshot.hasChildIndexes) {
                 getChilds(from, elements);
+                Snapshot.hasChildIndexes = true;
               }
             }
           }
+
+          Snapshot.hasElements = true;
 
           // cache compiled selectors
           if (!compiledSelectors[selector]) {
             compiledSelectors[selector] = compileGroup(selector, true);
           }
 
-          if (cachingLevel == DYNAMIC) {
-            // caching of results disabled
-            return compiledSelectors[selector](elements, Snapshot);
-          } else {
+          if (caching) {
+
             // caching of results enabled
             if (!(cachedResults.items[selector] && cachedResults.from[selector] == from)) {
               cachedResults.items[selector] = compiledSelectors[selector](elements, Snapshot);
               cachedResults.from[selector] = from;
             }
+            // result is a previously cached
+            // selection of the same selector
             return cachedResults.items[selector];
+
+          } else {
+
+            // result is a live selection
+            // of the requested selector
+            return compiledSelectors[selector](elements, Snapshot);
+
           }
 
         } else throw new Error('NW.Dom.select: "' + selector + '" is not a valid CSS selector.');
