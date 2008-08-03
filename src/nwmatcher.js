@@ -5,9 +5,9 @@
  * nwmatcher.js - A fast selector engine not using XPath
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 0.99.8
+ * Version: 0.99.9
  * Created: 20070722
- * Release: 20080725
+ * Release: 20080803
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -19,7 +19,7 @@ window.NW || (window.NW = {});
 
 NW.Dom = function() {
 
-  var version = '0.99.8',
+  var version = '0.99.9',
 
   // the DOM selection functions
   // returning collections
