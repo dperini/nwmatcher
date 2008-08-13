@@ -5,9 +5,9 @@
  * nwmatcher.js - A fast selector engine not using XPath
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 0.99.9
+ * Version: 1.0beta
  * Created: 20070722
- * Release: 20080803
+ * Release: 20080813
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -19,7 +19,7 @@ window.NW || (window.NW = {});
 
 NW.Dom = function() {
 
-  var version = '0.99.9',
+  var version = '1.0beta',
 
   // the DOM selection functions
   // returning collections
@@ -160,9 +160,9 @@ NW.Dom = function() {
                 (match[2] == '!' || match[2] == '|' || match[2] == '~' ? '.indexOf("' : '.match(/') +
               (match[2] == '^' ? '^' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') + match[5].toLowerCase() +
               (match[2] == '$' ? '$' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
-                (match[2] == '|' || match[2] == '~' ? '")>-1' : '/)') :
+                (match[2] == '|' || match[2] == '~' ? '")>-1' : '/i)') :
               (match[3] && match[5] ? attributeValue + (match[2] == '!' ? '!' : '=') + '="' +
-                match[5].toLowerCase() + '"' : attributePresence)) +
+                match[5] + '"' : attributePresence)) +
           '){' + source + '}';
         }
         // E + F (F adiacent sibling of E)
@@ -355,7 +355,7 @@ NW.Dom = function() {
   compileGroup=
     // selector string for the compiled function,
     // boolean for select (true) or match (false)
-    function(selector, select){
+    function(selector, select) {
 
       var i = 0, source = '', token, cachedTokens = {},
           parts = selector.split(','), extraVars = '';
@@ -446,7 +446,7 @@ NW.Dom = function() {
         l[k] = 0;
         p = e.parentNode;
         r = e.nodeName;
-        if (s != p){
+        if (s != p) {
           x = getIndex(h, s = p);
         }
         b[k] = x;
