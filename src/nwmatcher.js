@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.0beta
  * Created: 20070722
- * Release: 20080813
+ * Release: 20080816
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -46,9 +46,9 @@ NW.Dom = function() {
   // precompiled Regular Expressions
   Patterns = {
     // nth child pseudos
-    npseudos: /\:(nth-)?(child|first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(\s|$|[:+~>].*)/,
+    npseudos: /^\:(nth-)?(child|first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
     // simple pseudos
-    pseudos: /\:([\w]+)(\(.*?\))?(\s|$|[:+~>].*)/,
+    spseudos: /^\:([\w]+)(\(([\x22\x27])?(.*?(\(.*?\))?[^(]*?)\3\))?(.*)/,
     // E > F
     children: /^\s*\>\s*(.*)/,
     // E + F
@@ -58,7 +58,7 @@ NW.Dom = function() {
     // E F
     ancestor: /^(\s+)(.*)/,
     // attribute
-    attribute: /^\[([-\w]*:?[-\w]+)\s*(?:([!^$*~|])?(\=)?\s*(["'])?([^\4]*?)\4|([^'"][^\]]*?))\](.*)/,
+    attribute: /^\[([-\w]*:?[-\w]+)\s*(?:([!^$*~|])?(\=)?\s*([\x22\x27])?([^\4]*?)\4|([^\4][^\]]*?))\](.*)/,
     // all
     all: /^\*(.*)/,
     // id
@@ -158,9 +158,10 @@ NW.Dom = function() {
                 (match[2] == '|' || match[2] == '~' ? '.replace(/\\s+/g," ")' : '') +
               (match[2] == '~' ? '+" ")' : (match[2] == '|' ? '+"-")' : '')) +
                 (match[2] == '!' || match[2] == '|' || match[2] == '~' ? '.indexOf("' : '.match(/') +
-              (match[2] == '^' ? '^' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') + match[5].toLowerCase() +
+              (match[2] == '^' ? '^' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
+			  	(match[2] == '|' ? match[5].toLowerCase() : match[5]) +
               (match[2] == '$' ? '$' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
-                (match[2] == '|' || match[2] == '~' ? '")>-1' : '/i)') :
+                (match[2] == '|' || match[2] == '~' ? '")>-1' : '/' + (match[2] == '|' ? 'i' : '') + ')') :
               (match[3] && match[5] ? attributeValue + (match[2] == '!' ? '!' : '=') + '="' +
                 match[5] + '"' : attributePresence)) +
           '){' + source + '}';
@@ -181,10 +182,112 @@ NW.Dom = function() {
         else if ((match = selector.match(Patterns.ancestor))) {
           source = 'while(e.parentNode.nodeType==1){e=e.parentNode;' + source.replace(/\}$/, 'break;}') + '}';
         }
-        // CSS3 :root, :empty, :enabled, :disabled, :checked, :target
+        // :first-child, :last-child, :only-child,
+        // :first-child-of-type, :last-child-of-type, :only-child-of-type,
+        // :nth-child(), :nth-last-child(), :nth-of-type(), :nth-last-of-type()
+        else if ((match = selector.match(Patterns.npseudos)) && (match[2] || match[5])) {
+          // snapshot collection type Twin or Child
+          type = match[4] == 'of-type' ? 'Twin' : 'Child';
+
+          if (match[5]) {
+            // remove the ( ) grabbed above
+            match[5] = match[5].replace(/\(|\)/g, '');
+
+            if (match[5] == 'even') {
+              a = 2;
+              b = 0;
+            } else if (match[5] == 'odd') {
+              a = 2;
+              b = 1;
+            } else {
+              b = 0;
+              // assumes correct "an+b" format
+              a = match[5].match(/^-/) ? -1 : match[5].match(/^n/) ? 1 : 0;
+              a = a || ((param = match[5].match(/(-?\d{1,})n/)) ? parseInt(param[1], 10) : 0);
+              b = b || ((param = match[5].match(/(-?\d{1,})$/)) ? parseInt(param[1], 10) : 0);
+            }
+
+            compare =
+              (match[2] == 'last' ?
+                '(s.' + type + 'Lengths[s.' + type + 'Parents[s.getIndex(e)+1]' + ']' +
+                (match[4] == 'of-type' ?
+                  '[e.nodeName.toUpperCase()]' :
+                  '') + '-' + (b - 1) + ')' : b);
+
+            // handle 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
+            test = match[5] == 'even' ||
+              match[5] == 'odd' ||
+              a > Math.abs(b) ?
+                ('%' + a + '===' + b) :
+              a < 0 ?
+                '<=' + compare :
+              a > 0 ?
+                '>=' + compare :
+              a == 0 ?
+                '==' + compare :
+                '';
+
+            // boolean indicating select (true) or match (false) method
+            if (select) {
+              // add function for select method (select=true)
+              // requires prebuilt arrays get[Childs|Twins]
+              source = 'if(s.' + type + 'Indexes[s.getIndex(e)+1]' + test + '){' + source + '}';
+            } else {
+              // add function for "match" method (select=false)
+              // this will not be in a loop, this is faster
+              // for "match" but slower for "select" and it
+              // also doesn't require prebuilt node arrays
+              source = 'if((n=e)){' +
+                'u=1' + (match[4] == 'of-type' ? ',t=e.nodeName;' : ';') +
+                'while((n=n.' + (match[2] == 'last' ? 'next' : 'previous') + 'Sibling)){' +
+                  'if(n.node' + (match[4] == 'of-type' ? 'Name==t' : 'Type==1') + '){++u;}' +
+                '}' +
+                'if(u' + test + '){' + source + '}' +
+              '}';
+            }
+          } else {
+
+            // if missing value in nth queries
+            if (match[1]) {
+              throw new Error('NW.Dom.compileSelector: syntax error, unknown index value in "' + selector + '"');
+              break;
+            }
+            // handle 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
+            compare =
+              's.' + type + 'Lengths[s.' + type + 'Parents[s.getIndex(e)+1]]' +
+              (match[4] == 'of-type' ? '[e.nodeName]' : '');
+
+            if (select) {
+              // add function for select method (select=true)
+              source = 'if(' +
+                (match[2] == 'first' ?
+                  's.' + type + 'Indexes[s.getIndex(e)+1]==1' :
+                  match[2] == 'only' ?
+                    compare + '==1' :
+                      match[2] == 'last' ?
+                        's.' + type + 'Indexes[s.getIndex(e)+1]===' + compare : '') +
+                '){' + source + '}';
+            } else {
+              // add function for match method (select=false)
+              source = 'if((n=e)){' +
+                (match[4] ? 't=e.nodeName;' : '') +
+                'while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'Sibling)&&' +
+                  'n.node' + (match[4] ? 'Name!=t' : 'Type!=1') + ');' +
+                'if(!n&&(n=e)){' +
+                  (match[2] == 'first' || match[2] == 'last' ?
+                    '{' + source + '}' :
+                    'while((n=n.' + (match[2] == 'first' ? 'next' : 'previous') + 'Sibling)&&' +
+                        'n.node' + (match[4] ? 'Name!=t' : 'Type!=1') + ');' +
+                    'if(!n){' + source + '}') +
+                '}' +
+              '}';
+            }
+          }
+        }
+        // CSS3 :not, :root, :empty, :contains, :enabled, :disabled, :checked, :target
         // CSS2 :active, :focus, :hover (no way yet)
         // CSS1 :link, :visited
-        else if ((match = selector.match(Patterns.pseudos))) {
+        else if ((match = selector.match(Patterns.spseudos))) {
           switch (match[1]) {
             // CSS3 part of structural pseudo-classes
             case 'not':
@@ -194,7 +297,6 @@ NW.Dom = function() {
               source = 'if(e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
               break;
             case 'empty':
-              //source = 'if(/^\\s*$/.test(e.innerHTML)){' + source + '}';
               // IE does not support empty text nodes, HTML white spaces and CRLF are not in the DOM
               source = 'if(/^\\s*$/.test(e.innerHTML)&&!/\\r|\\n/.test(e.innerHTML)){' + source + '}';
               break;
@@ -247,103 +349,7 @@ NW.Dom = function() {
               break;
           }
         }
-        // :first-child, :last-child, :only-child,
-        // :first-child-of-type, :last-child-of-type, :only-child-of-type,
-        // :nth-child(), :nth-last-child(), :nth-of-type(), :nth-last-of-type()
-        else if ((match = selector.match(Patterns.npseudos))) {
-
-          // snapshot collection type Twin or Child
-          type = match[4] == 'of-type' ? 'Twin' : 'Child';
-
-          if (match[5]) {
-            // remove the ( ) grabbed above
-            match[5] = match[5].replace(/\(|\)/g, '');
-
-            if (match[5] == 'even') {
-              a = 2;
-              b = 0;
-            } else if (match[5] == 'odd') {
-              a = 2;
-              b = 1;
-            } else {
-              // assumes correct "an+b" format
-              a = match[5].match(/^-/) ? -1 : match[5].match(/^n/) ? 1 : 0;
-              a = a || ((param = match[5].match(/(-?\d{1,})n/)) ? parseInt(param[1], 10) : 0);
-              b = b || ((param = match[5].match(/(-?\d{1,})$/)) ? parseInt(param[1], 10) : 0);
-            }
-
-            compare =
-              (match[2] == 'last' ?
-                '(s.' + type + 'Lengths[s.' + type + 'Parents[k+1]' + ']' +
-                (match[4] == 'of-type' ?
-                  '[e.nodeName.toUpperCase()]' :
-                  '') + '-' + (b - 1) + ')' : b);
-
-            // handle 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
-            test = match[5] == 'even' ||
-              match[5] == 'odd' ||
-              a > Math.abs(b) ?
-                ('%' + a + '===' + b) :
-              a < 0 ?
-                '<=' + compare :
-              a > 0 ?
-                '>=' + compare :
-              a == 0 ?
-                '==' + compare :
-                '';
-
-            // boolean indicating select (true) or match (false) method
-            if (select) {
-              // add function for select method (select=true)
-              // requires prebuilt arrays get[Childs|Twins]
-              source = 'if(s.' + type + 'Indexes[k+1]' + test + '){' + source + '}';
-            } else {
-              // add function for "match" method (select=false)
-              // this will not be in a loop, this is faster
-              // for "match" but slower for "select" and it
-              // also doesn't require prebuilt node arrays
-              source = 'if((n=e)){' +
-                'u=1' + (match[4] == 'of-type' ? ',t=e.nodeName;' : ';') +
-                'while((n=n.' + (match[2] == 'last' ? 'next' : 'previous') + 'Sibling)){' +
-                  'if(n.node' + (match[4] == 'of-type' ? 'Name==t' : 'Type==1') + '){++u;}' +
-                '}' +
-                'if(u' + test + '){' + source + '}' +
-              '}';
-            }
-
-          } else {
-            // handle 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
-            compare =
-              's.' + type + 'Lengths[s.' + type + 'Parents[k+1]]' +
-              (match[4] == 'of-type' ? '[e.nodeName]' : '');
-
-            if (select) {
-              // add function for select method (select=true)
-              source = 'if(' +
-                (match[2] == 'first' ?
-                  's.' + type + 'Indexes[k+1]==1' :
-                  match[2] == 'only' ?
-                    compare + '==1' :
-                      match[2] == 'last' ?
-                        's.' + type + 'Indexes[k+1]===' + compare : '') +
-                '){' + source + '}';
-            } else {
-              // add function for match method (select=false)
-              source = 'if((n=e)){' +
-                (match[4] ? 't=e.nodeName;' : '') +
-                'while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'Sibling)&&' +
-                  'n.node' + (match[4] ? 'Name!=t' : 'Type!=1') + ');' +
-                'if(!n&&(n=e)){' +
-                  (match[2] == 'first' || match[2] == 'last' ?
-                    '{' + source + '}' :
-                    'while((n=n.' + (match[2] == 'first' ? 'next' : 'previous') + 'Sibling)&&' +
-                        'n.node' + (match[4] ? 'Name!=t' : 'Type!=1') + ');' +
-                    'if(!n){' + source + '}') +
-                '}' +
-              '}';
-            }
-          }
-        } else throw new Error('NW.Dom.compileSelector: syntax error, unknown selector rule "' + selector + '"');
+        else throw new Error('NW.Dom.compileSelector: syntax error, unknown selector rule "' + selector + '"');
 
         selector = match[match.length - 1];
       }
@@ -401,7 +407,11 @@ NW.Dom = function() {
     ChildParents: [],
     hasElements: false,
     hasTwinIndexes: false,
-    hasChildIndexes: false
+    hasChildIndexes: false,
+    getIndex:
+      function(e) {
+        return getIndex(this.Elements, e);
+      }
   },
 
   // get element index in a node array
@@ -537,13 +547,14 @@ NW.Dom = function() {
   return {
 
     // for testing purposes only!
-    compile: function(selector) {
-      return compileGroup(selector, true).toString();
-    },
+    compile:
+      function(selector) {
+        return compileGroup(selector, true).toString();
+      },
 
+    // expose cahing methods
     setCache: setCache,
 
-    // expose the private method
     expireCache: expireCache,
 
     // element match selector return boolean true/false
