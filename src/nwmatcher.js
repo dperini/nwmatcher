@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.0beta
  * Created: 20070722
- * Release: 20080816
+ * Release: 20080817
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -40,13 +40,13 @@ NW.Dom = function() {
   // of-type pseudo selectors (CSS3)
   oftype_pseudo = /\-(of-type)/,
 
-  // trim leading whitespaces
+  // trim whitespaces
   TR = /^\s+|\s+$/g,
 
   // precompiled Regular Expressions
   Patterns = {
     // nth child pseudos
-    npseudos: /^\:(nth-)?(child|first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
+    npseudos: /^\:(nth-)?(first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
     // simple pseudos
     spseudos: /^\:([\w]+)(\(([\x22\x27])?(.*?(\(.*?\))?[^(]*?)\3\))?(.*)/,
     // E > F
@@ -70,12 +70,8 @@ NW.Dom = function() {
   },
 
   // initial optimizations
-  // by single/multi tokens
-  // only for select method
   Optimizations = {
-    // all with whitespaces
-    // maybe the worst case
-    // being "\r\n\t * \r\n"
+    // all elements
     all: /(^\*)$/,
     // single class, id, tag
     id: /^\#([-\w]+)$/,
@@ -83,7 +79,7 @@ NW.Dom = function() {
     className: /^\.([-\w]+)$/
   },
 
-  // convert nodeList to array (implementation from Prototype)
+  // convert nodeList to array
   toArray =
     function(iterable) {
       var length = iterable.length, array = new Array(length);
@@ -96,9 +92,8 @@ NW.Dom = function() {
   // compile a CSS3 string selector into
   // ad-hoc javascript matching function
   compileSelector =
-    // selector string, function source,
-    // and select (true) or match (false)
-    function(selector, source, select) {
+    // @mode boolean true for select, false for match
+    function(selector, source, mode) {
 
       var a, b,
           // temporary building placeholders
@@ -186,7 +181,7 @@ NW.Dom = function() {
         // :first-child-of-type, :last-child-of-type, :only-child-of-type,
         // :nth-child(), :nth-last-child(), :nth-of-type(), :nth-last-of-type()
         else if ((match = selector.match(Patterns.npseudos)) && (match[2] || match[5])) {
-          // snapshot collection type Twin or Child
+          // snapshot collection type to use Twin or Child
           type = match[4] == 'of-type' ? 'Twin' : 'Child';
 
           if (match[5]) {
@@ -210,9 +205,8 @@ NW.Dom = function() {
             compare =
               (match[2] == 'last' ?
                 '(s.' + type + 'Lengths[s.' + type + 'Parents[s.getIndex(e)+1]' + ']' +
-                (match[4] == 'of-type' ?
-                  '[e.nodeName.toUpperCase()]' :
-                  '') + '-' + (b - 1) + ')' : b);
+                (match[4] == 'of-type' ? '[e.nodeName.toUpperCase()]' : '') +
+				'-' + (b - 1) + ')' : b);
 
             // handle 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
             test = match[5] == 'even' ||
@@ -227,13 +221,12 @@ NW.Dom = function() {
                 '==' + compare :
                 '';
 
-            // boolean indicating select (true) or match (false) method
-            if (select) {
-              // add function for select method (select=true)
+            if (mode) {
+              // add function for select method (mode=true)
               // requires prebuilt arrays get[Childs|Twins]
               source = 'if(s.' + type + 'Indexes[s.getIndex(e)+1]' + test + '){' + source + '}';
             } else {
-              // add function for "match" method (select=false)
+              // add function for "match" method (mode=false)
               // this will not be in a loop, this is faster
               // for "match" but slower for "select" and it
               // also doesn't require prebuilt node arrays
@@ -247,18 +240,13 @@ NW.Dom = function() {
             }
           } else {
 
-            // if missing value in nth queries
-            if (match[1]) {
-              throw new Error('NW.Dom.compileSelector: syntax error, unknown index value in "' + selector + '"');
-              break;
-            }
             // handle 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
             compare =
               's.' + type + 'Lengths[s.' + type + 'Parents[s.getIndex(e)+1]]' +
-              (match[4] == 'of-type' ? '[e.nodeName]' : '');
+              (match[4] == 'of-type' ? '[e.nodeName.toUpperCase()]' : '');
 
-            if (select) {
-              // add function for select method (select=true)
+            if (mode) {
+              // add function for select method (mode=true)
               source = 'if(' +
                 (match[2] == 'first' ?
                   's.' + type + 'Indexes[s.getIndex(e)+1]==1' :
@@ -268,7 +256,7 @@ NW.Dom = function() {
                         's.' + type + 'Indexes[s.getIndex(e)+1]===' + compare : '') +
                 '){' + source + '}';
             } else {
-              // add function for match method (select=false)
+              // add function for match method (mode=false)
               source = 'if((n=e)){' +
                 (match[4] ? 't=e.nodeName;' : '') +
                 'while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'Sibling)&&' +
@@ -291,7 +279,7 @@ NW.Dom = function() {
           switch (match[1]) {
             // CSS3 part of structural pseudo-classes
             case 'not':
-              source = compileSelector(match[2].replace(/\((.*)\)/, '$1'), source, select).replace(/if([^\{]+)/, 'if(!$1)');
+              source = compileSelector(match[2].replace(/\((.*)\)/, '$1'), source, mode).replace(/if([^\{]+)/, 'if(!$1)');
               break;
             case 'root':
               source = 'if(e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
@@ -358,13 +346,11 @@ NW.Dom = function() {
     },
 
   // compile a comma separated group of selector
-  compileGroup=
-    // selector string for the compiled function,
-    // boolean for select (true) or match (false)
-    function(selector, select) {
+  // @mode boolean true for select, false for match
+  compileGroup =
+    function(selector, mode) {
 
-      var i = 0, source = '', token, cachedTokens = {},
-          parts = selector.split(','), extraVars = '';
+      var i = 0, source = '', token, cachedTokens = {}, parts = selector.split(',');
 
       // for each selector in the group
       for ( ; i < parts.length; ++i) {
@@ -375,16 +361,16 @@ NW.Dom = function() {
           if (!cachedTokens[token]) {
             cachedTokens[token] = token;
             // insert corresponding mode function
-            if (select) {
-              source += compileSelector(token, 'r[r.length]=c[k];', select);
+            if (mode) {
+              source += compileSelector(token, 'r[r.length]=c[k];', mode);
             } else {
-              source += compileSelector(token, 'return true;', select);
+              source += compileSelector(token, 'return true;', mode);
             }
           }
         }
       }
 
-      if (select) {
+      if (mode) {
         // for select method
         return new Function('c,s', 'var k=-1,e,r=[],n,j,u,t,a;while((e=c[++k])){' + source + '}return r;');
       } else {
@@ -396,7 +382,7 @@ NW.Dom = function() {
 
   // snapshot of elements contained in rootElement
   // also contains maps to make nth lookups faster
-  // updated by each select/match if DOM changes
+  // updated when the elements in the DOM change
   Snapshot = {
     Elements: [],
     TwinIndexes: [],
@@ -439,14 +425,10 @@ NW.Dom = function() {
           return i;
         };
       }
-      // we overwrite the function first time
-      // to avoid browser sniffing in loops
       return getIndex(array, element);
     },
 
-  // build a twin index map
-  // indexes by child position
-  // (f)rom (t)ag
+  // build a twin index map by tag position
   getTwins =
     function(f, c) {
       var k = 0, e, r, p, s, x,
@@ -469,9 +451,7 @@ NW.Dom = function() {
       Snapshot.TwinLengths = l;
     },
 
-  // build a child index map
-  // indexes by tag position
-  // (f)rom (t)ag
+  // build a child index map by child position
   getChilds =
     function(f, c) {
       var  k = 0, e, p, s, x,
@@ -626,19 +606,19 @@ NW.Dom = function() {
             Snapshot.hasChildIndexes = false;
           }
 
+          // normal nth/child pseudo selectors
           if (selector.match(child_pseudo)) {
-            if (selector.match(oftype_pseudo)) {
-              // special of-type pseudo selectors
-              if (!caching || !Snapshot.hasTwinIndexes) {
-                getTwins(from, elements);
-                Snapshot.hasTwinIndexes = true;
-              }
-            } else {
-              // normal nth/child pseudo selectors
-              if (!caching || !Snapshot.hasChildIndexes) {
-                getChilds(from, elements);
-                Snapshot.hasChildIndexes = true;
-              }
+            if (!caching || !Snapshot.hasChildIndexes) {
+              getChilds(from, elements);
+              Snapshot.hasChildIndexes = true;
+            }
+          }
+
+          // special of-type pseudo selectors
+          if (selector.match(oftype_pseudo)) {
+            if (!caching || !Snapshot.hasTwinIndexes) {
+              getTwins(from, elements);
+              Snapshot.hasTwinIndexes = true;
             }
           }
 
@@ -656,14 +636,12 @@ NW.Dom = function() {
               cachedResults.items[selector] = compiledSelectors[selector](elements, Snapshot);
               cachedResults.from[selector] = from;
             }
-            // result is a previously cached
-            // selection of the same selector
+            // a previously cached selection of the same selector
             return cachedResults.items[selector];
 
           } else {
 
-            // result is a live selection
-            // of the requested selector
+            // a live selection of the requested selector
             return compiledSelectors[selector](elements, Snapshot);
 
           }
