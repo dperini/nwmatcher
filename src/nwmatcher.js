@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.0beta
  * Created: 20070722
- * Release: 20080817
+ * Release: 20080819
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -34,6 +34,15 @@ NW.Dom = function() {
     from: [ ],
     items: [ ]
   },
+
+  // attribute names may be passed case insensitive
+  // accepts chopped attributes like "class" and "for"
+  // but I don't know if this is good for every token
+  camelProps = [
+    'htmlFor','className','tabIndex','accessKey','maxLength',
+    'readOnly','longDesc','frameBorder','isMap','useMap','noHref','noWrap',
+    'colSpan','rowSpan','cellPadding','cellSpacing','marginWidth','marginHeight'
+  ],
 
   // child pseudo selector (CSS3)
   child_pseudo = /\:(nth|first|last|only)\-/,
@@ -95,7 +104,7 @@ NW.Dom = function() {
     // @mode boolean true for select, false for match
     function(selector, source, mode) {
 
-      var a, b,
+      var a, b, i,
           // temporary building placeholders
           compare, match, param, test, type,
           attributeValue, attributePresence;
@@ -104,31 +113,43 @@ NW.Dom = function() {
 
         // * match all
         if ((match = selector.match(Patterns.all))) {
-          // always matching (removed for speed)
-          //source = 'if(e){' + source + '}';
           // on IE remove comment nodes to avoid this
           source = 'if(e.nodeType==1){' + source + '}';
         }
         // #Foo Id case sensitive
         else if ((match = selector.match(Patterns.id))) {
-          source = 'if((a=e.getAttributeNode("id"))&&a.value=="' + match[1] + '"){' + source + '}';
+          // this is necessary because form elements using reserved words as id/name can overwrite form properties (ex. name="id")
+          source = 'if(e.id&&e.id=="' + match[1] + '"||((a=e.getAttributeNode("id"))&&a.value=="' + match[1] + '")){' + source + '}';
         }
-        // Foo Tag case insensitive (?)
+        // Foo Tag case insensitive
         else if ((match = selector.match(Patterns.tagName))) {
           source = 'if(e.nodeName.toLowerCase()=="' + match[1].toLowerCase() + '"){' + source + '}';
         }
         // .Foo Class case sensitive
         else if ((match = selector.match(Patterns.className))) {
-          source = 'if((" "+e.className+" ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
-          //source = 'if(((" "+e.className).replace(/\\s+/g," ") + " ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
+          source = 'if(e.className&&((" "+e.className).replace(/\\s+/g," ") + " ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
         }
         // [attr] [attr=value] [attr="value"] and !=, *=, ~=, |=, ^=, $=
         else if ((match = selector.match(Patterns.attribute))) {
 
-          if (match[1] == 'href' || match[1] == 'src') {
+          // fix common misCased attribute names
+          compare = match[1];
+          for (i = 0; i < camelProps.length; ++i) {
+            if (camelProps[i].toLowerCase().indexOf(match[1]) == 0) {
+              compare = camelProps[i];
+              break;
+            }
+          }
+
+          if (/\w+:\w+/.test(match[1])) {
+            // XML namespaced attributes
+            attributeValue = '(((a=e.getAttribute("' + match[1] + '",1))&&a)||"")';
+          } else if ("|action|data|href|longdesc|lowsrc|src|".indexOf(match[1]) > -1) {
+            // specific URI attributes
             attributeValue = '(((a=e.getAttribute("' + match[1] + '",2))&&a)||"")';
           } else {
-            attributeValue = '(((a=e.getAttributeNode("' + match[1] + '"))&&a.value)||"")';
+            // others by property value
+            attributeValue = '(e.' + compare + '||"")';
           }
 
           if (typeof document.fileSize != 'undefined') {
@@ -144,21 +165,31 @@ NW.Dom = function() {
           // match[4] - quotes
           // match[5] - value
 
+          // no "*" operator in these conditionals
+          // .match() will handle it by exclusion
+          // for case insensitive matches use "|"
           source = 'if(' +
-            // change behavior for [class!=madeup]
-            //(match[2] == '!' ? 'e.' + match[1] + '&&' : '') +
-            // match attributes or property
+            // match attribute or property
             (match[2] && match[3] && match[5] && match[2] != '!' ?
+              // replace possible whitespaces with space in properties values
+              // and build a "-propval-" or " propval " string to exactly match
               (match[2] == '~' ? '(" "+' : (match[2] == '|' ? '("-"+' : '')) + attributeValue +
-                (match[2] == '|' || match[2] == '~' ? '.replace(/\\s+/g," ")' : '') +
+                (match[2] == '!' || match[2] == '~' ? '.replace(/\\s+/g," ")' : '') +
               (match[2] == '~' ? '+" ")' : (match[2] == '|' ? '+"-")' : '')) +
-                (match[2] == '!' || match[2] == '|' || match[2] == '~' ? '.indexOf("' : '.match(/') +
-              (match[2] == '^' ? '^' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
-			  	(match[2] == '|' ? match[5].toLowerCase() : match[5]) +
-              (match[2] == '$' ? '$' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
-                (match[2] == '|' || match[2] == '~' ? '")>-1' : '/' + (match[2] == '|' ? 'i' : '') + ')') :
-              (match[3] && match[5] ? attributeValue + (match[2] == '!' ? '!' : '=') + '="' +
-                match[5] + '"' : attributePresence)) +
+                // BEGIN: add an indexOf() or match() where it applies ( ! and ~ use indexOf)
+                (match[2] == '!' || match[2] == '~' ? '.indexOf("' : '.match(/') +
+                  // build the content of the indexOf search or the match
+                  (match[2] == '^' ? '^' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
+                    match[5] +
+                  (match[2] == '$' ? '$' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
+                // END: close the indexOf or match()
+                (match[2] == '!' || match[2] == '~' ? '")>-1' : (match[2] == '|' ? '/i' : '/') + ')') :
+              // add rigth side of comparison when no indexOf / match
+              // when we have to exactly match or not a value ( ! or = )
+              (match[3] && match[5] ?
+                attributeValue + (match[2] == '!' ? '!' : '=') + '="' + match[5] + '"' :
+                  // or just check for attribute presence
+                  attributePresence)) +
           '){' + source + '}';
         }
         // E + F (F adiacent sibling of E)
@@ -195,24 +226,22 @@ NW.Dom = function() {
               a = 2;
               b = 1;
             } else {
-              b = 0;
               // assumes correct "an+b" format
               a = match[5].match(/^-/) ? -1 : match[5].match(/^n/) ? 1 : 0;
               a = a || ((param = match[5].match(/(-?\d{1,})n/)) ? parseInt(param[1], 10) : 0);
-              b = b || ((param = match[5].match(/(-?\d{1,})$/)) ? parseInt(param[1], 10) : 0);
+              b = 0 || ((param = match[5].match(/(-?\d{1,})$/)) ? parseInt(param[1], 10) : 0);
             }
 
             compare =
               (match[2] == 'last' ?
-                '(s.' + type + 'Lengths[s.' + type + 'Parents[s.getIndex(e)+1]' + ']' +
-                (match[4] == 'of-type' ? '[e.nodeName.toUpperCase()]' : '') +
-				'-' + (b - 1) + ')' : b);
+                '(s.' + type + 'Lengths[s.' + type + 'Parents[u]]' +
+                (match[4] == 'of-type' ? '[e.nodeName.toUpperCase()]' : '') + '-' + (b - 1) + ')' : b);
 
             // handle 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
             test = match[5] == 'even' ||
               match[5] == 'odd' ||
               a > Math.abs(b) ?
-                ('%' + a + '===' + b) :
+                ('%' + a + '==' + b) :
               a < 0 ?
                 '<=' + compare :
               a > 0 ?
@@ -223,13 +252,14 @@ NW.Dom = function() {
 
             if (mode) {
               // add function for select method (mode=true)
-              // requires prebuilt arrays get[Childs|Twins]
-              source = 'if(s.' + type + 'Indexes[s.getIndex(e)+1]' + test + '){' + source + '}';
+              // requires prebuilt array get[Childs|Twins]
+              source = 'u=s.getIndex(e)+1;' +
+			    'if(s.' + type + 'Indexes[u]' + test + '){' + source + '}';
             } else {
               // add function for "match" method (mode=false)
               // this will not be in a loop, this is faster
               // for "match" but slower for "select" and it
-              // also doesn't require prebuilt node arrays
+              // also does not require prebuilt node array
               source = 'if((n=e)){' +
                 'u=1' + (match[4] == 'of-type' ? ',t=e.nodeName;' : ';') +
                 'while((n=n.' + (match[2] == 'last' ? 'next' : 'previous') + 'Sibling)){' +
@@ -239,21 +269,21 @@ NW.Dom = function() {
               '}';
             }
           } else {
-
             // handle 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
             compare =
-              's.' + type + 'Lengths[s.' + type + 'Parents[s.getIndex(e)+1]]' +
+              's.' + type + 'Lengths[s.' + type + 'Parents[u]]' +
               (match[4] == 'of-type' ? '[e.nodeName.toUpperCase()]' : '');
 
             if (mode) {
               // add function for select method (mode=true)
-              source = 'if(' +
-                (match[2] == 'first' ?
-                  's.' + type + 'Indexes[s.getIndex(e)+1]==1' :
-                  match[2] == 'only' ?
-                    compare + '==1' :
+              source = 'u=s.getIndex(e)+1;' +
+			    'if(' +
+                  (match[2] == 'first' ?
+                    's.' + type + 'Indexes[u]==1' :
+                    match[2] == 'only' ?
+                      compare + '==1' :
                       match[2] == 'last' ?
-                        's.' + type + 'Indexes[s.getIndex(e)+1]===' + compare : '') +
+                        's.' + type + 'Indexes[u]==' + compare : '') +
                 '){' + source + '}';
             } else {
               // add function for match method (mode=false)
@@ -349,9 +379,7 @@ NW.Dom = function() {
   // @mode boolean true for select, false for match
   compileGroup =
     function(selector, mode) {
-
       var i = 0, source = '', token, cachedTokens = {}, parts = selector.split(',');
-
       // for each selector in the group
       for ( ; i < parts.length; ++i) {
         token = parts[i].replace(TR, '');
@@ -369,15 +397,13 @@ NW.Dom = function() {
           }
         }
       }
-
       if (mode) {
         // for select method
         return new Function('c,s', 'var k=-1,e,r=[],n,j,u,t,a;while((e=c[++k])){' + source + '}return r;');
       } else {
         // for match method
-        return new Function('e', 'var n,u;' + source  + 'return false;');
+        return new Function('e', 'var n,u,a;' + source  + 'return false;');
       }
-
     },
 
   // snapshot of elements contained in rootElement
@@ -471,7 +497,9 @@ NW.Dom = function() {
       Snapshot.ChildLengths = l;
     },
 
-  caching = false,
+  // set this to true to always enable or
+  // switch manually using setCache(true)
+  cachingEnabled = false,
 
   // enable caching system
   // @d optional document context
@@ -479,23 +507,15 @@ NW.Dom = function() {
     function(enable, d) {
       expireCache();
       d || (d = document);
-      if (!caching && enable) {
-        if (d.documentElement.setExpression) {
-          //d.documentElement.setExpression('innerHTML', 'NW.Dom.expireCache()');
-        } else {
-          // Mozilla/Firefox/Opera/Safari/KHTML (fire for insertion and removal)
-          d.addEventListener('DOMNodeInserted', expireCache, false);
-          d.addEventListener('DOMNodeRemoved', expireCache, false);
-        }
-        caching = true;
-      } else if (caching) {
-        if (d.documentElement.setExpression) {
-          //d.documentElement.removeExpression('innerHTML');
-        } else {
-          d.removeEventListener('DOMNodeInserted', expireCache, false);
-          d.removeEventListener('DOMNodeRemoved', expireCache, false);
-        }
-        caching = false;
+      if (!cachingEnabled && enable) {
+        // FireFox/Opera/Safari/KHTML support both Mutation Events
+        d.addEventListener('DOMNodeInserted', expireCache, false);
+        d.addEventListener('DOMNodeRemoved', expireCache, false);
+        cachingEnabled = true;
+      } else if (cachingEnabled) {
+        d.removeEventListener('DOMNodeInserted', expireCache, false);
+        d.removeEventListener('DOMNodeRemoved', expireCache, false);
+        cachingEnabled = false;
       }
     },
 
@@ -512,15 +532,18 @@ NW.Dom = function() {
     };
 
   if (
-    document.implementation.hasFeature("MutationEvents", "2.0")||
+    document.implementation.hasFeature("MutationEvents", "2.0") ||
     document.implementation.hasFeature("Events", "2.0") &&
     document.implementation.hasFeature("Core", "2.0")) {
-    window.addEventListener('unload', function() {
-        window.removeEventListener('unload', arguments.callee, false);
+    // enable caching on browser supporting either Mutation Events (FF3/Safari/Opera/Konqueror)
+    // or Core Events 2.0 (FF2 supports Mutation Events but are not shown in the implementation)
+    setCache(true);
+    // on page unload remove event listeners and cleanup
+    window.addEventListener('beforeunload', function() {
+        window.removeEventListener('beforeunload', arguments.callee, false);
         setCache(false);
       }, false
     );
-    setCache(true);
   }
 
   // ********** begin public methods **********
@@ -532,7 +555,7 @@ NW.Dom = function() {
         return compileGroup(selector, true).toString();
       },
 
-    // expose cahing methods
+    // expose caching methods
     setCache: setCache,
 
     expireCache: expireCache,
@@ -597,7 +620,7 @@ NW.Dom = function() {
           }
           // END REDUCE/OPTIMIZE
 
-          if (caching && Snapshot.hasElements) {
+          if (cachingEnabled && Snapshot.hasElements) {
             elements = Snapshot.Elements;
           } else {
             elements = toArray(from.getElementsByTagName('*'));
@@ -608,7 +631,7 @@ NW.Dom = function() {
 
           // normal nth/child pseudo selectors
           if (selector.match(child_pseudo)) {
-            if (!caching || !Snapshot.hasChildIndexes) {
+            if (!cachingEnabled || !Snapshot.hasChildIndexes) {
               getChilds(from, elements);
               Snapshot.hasChildIndexes = true;
             }
@@ -616,7 +639,7 @@ NW.Dom = function() {
 
           // special of-type pseudo selectors
           if (selector.match(oftype_pseudo)) {
-            if (!caching || !Snapshot.hasTwinIndexes) {
+            if (!cachingEnabled || !Snapshot.hasTwinIndexes) {
               getTwins(from, elements);
               Snapshot.hasTwinIndexes = true;
             }
@@ -629,9 +652,8 @@ NW.Dom = function() {
             compiledSelectors[selector] = compileGroup(selector, true);
           }
 
-          if (caching) {
+          if (cachingEnabled) {
 
-            // caching of results enabled
             if (!(cachedResults.items[selector] && cachedResults.from[selector] == from)) {
               cachedResults.items[selector] = compiledSelectors[selector](elements, Snapshot);
               cachedResults.from[selector] = from;
