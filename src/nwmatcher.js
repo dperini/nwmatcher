@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.0beta
  * Created: 20070722
- * Release: 20080819
+ * Release: 20080822
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -21,15 +21,13 @@ NW.Dom = function() {
 
   var version = '1.0beta',
 
-  // the DOM selection functions
-  // returning collections
+  // selection functions returning collections
   compiledSelectors = { },
 
-  // the DOM matching functions
-  // returning booleans
+  // matching functions returning booleans
   compiledMatchers = { },
 
-  // selection matched elements
+  // cached selection results
   cachedResults = {
     from: [ ],
     items: [ ]
@@ -37,7 +35,6 @@ NW.Dom = function() {
 
   // attribute names may be passed case insensitive
   // accepts chopped attributes like "class" and "for"
-  // but I don't know if this is good for every token
   camelProps = [
     'htmlFor','className','tabIndex','accessKey','maxLength',
     'readOnly','longDesc','frameBorder','isMap','useMap','noHref','noWrap',
@@ -105,7 +102,7 @@ NW.Dom = function() {
     function(selector, source, mode) {
 
       var a, b, i,
-          // temporary building placeholders
+          // building placeholders
           compare, match, param, test, type,
           attributeValue, attributePresence;
 
@@ -254,7 +251,7 @@ NW.Dom = function() {
               // add function for select method (mode=true)
               // requires prebuilt array get[Childs|Twins]
               source = 'u=s.getIndex(e)+1;' +
-			    'if(s.' + type + 'Indexes[u]' + test + '){' + source + '}';
+                'if(s.' + type + 'Indexes[u]' + test + '){' + source + '}';
             } else {
               // add function for "match" method (mode=false)
               // this will not be in a loop, this is faster
@@ -277,7 +274,7 @@ NW.Dom = function() {
             if (mode) {
               // add function for select method (mode=true)
               source = 'u=s.getIndex(e)+1;' +
-			    'if(' +
+                'if(' +
                   (match[2] == 'first' ?
                     's.' + type + 'Indexes[u]==1' :
                     match[2] == 'only' ?
@@ -344,14 +341,14 @@ NW.Dom = function() {
               break;
             // CSS1 & CSS2 user action
             case 'active':
-              // IE, FF3 have native method, others may have it emulated,
+              // IE & FF3 have native method, others may have it emulated,
               // this may be done in the event manager setting activeElement
               source = 'var d=(e.ownerDocument||e.document);' +
                        'if(d.activeElement&&e===d.activeElement){' + source + '}';
               break;
             case 'hover':
-              // IE, FF3 have native method, other browser may achieve a similar effect
-              // by delegating mouseover/mouseout handling to the document/documentElement
+              // IE & FF3 have native method, other browser may achieve a similar effect
+              // by delegating mouseover/mouseout handling to document/documentElement
               source = 'var d=(e.ownerDocument||e.document);' +
                        'if(d.hoverElement&&e===d.hoverElement){' + source + '}';
               break;
@@ -546,7 +543,6 @@ NW.Dom = function() {
     );
   }
 
-  // ********** begin public methods **********
   return {
 
     // for testing purposes only!
@@ -674,6 +670,5 @@ NW.Dom = function() {
       }
 
   };
-  // *********** end public methods ***********
 
 }();
