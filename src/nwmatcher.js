@@ -5,9 +5,9 @@
  * nwmatcher.js - A fast selector engine not using XPath
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.0
+ * Version: 1.01beta
  * Created: 20070722
- * Release: 20080824
+ * Release: 20080905
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -19,7 +19,7 @@ window.NW || (window.NW = {});
 
 NW.Dom = function() {
 
-  var version = '1.0',
+  var version = '1.01beta',
 
   // selection functions returning collections
   compiledSelectors = { },
@@ -506,10 +506,12 @@ NW.Dom = function() {
       d || (d = document);
       if (!cachingEnabled && enable) {
         // FireFox/Opera/Safari/KHTML support both Mutation Events
+        d.addEventListener('DOMAttrModified', expireCache, false);
         d.addEventListener('DOMNodeInserted', expireCache, false);
         d.addEventListener('DOMNodeRemoved', expireCache, false);
         cachingEnabled = true;
       } else if (cachingEnabled) {
+        d.removeEventListener('DOMAttrModified', expireCache, false);
         d.removeEventListener('DOMNodeInserted', expireCache, false);
         d.removeEventListener('DOMNodeRemoved', expireCache, false);
         cachingEnabled = false;
