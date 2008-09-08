@@ -5,9 +5,9 @@
  * nwmatcher.js - A fast selector engine not using XPath
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.01beta
+ * Version: 1.0.1beta
  * Created: 20070722
- * Release: 20080905
+ * Release: 20080907
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -19,7 +19,7 @@ window.NW || (window.NW = {});
 
 NW.Dom = function() {
 
-  var version = '1.01beta',
+  var version = '1.0.1beta',
 
   // selection functions returning collections
   compiledSelectors = { },
@@ -43,6 +43,7 @@ NW.Dom = function() {
 
   // child pseudo selector (CSS3)
   child_pseudo = /\:(nth|first|last|only)\-/,
+
   // of-type pseudo selectors (CSS3)
   oftype_pseudo = /\-(of-type)/,
 
@@ -571,7 +572,7 @@ NW.Dom = function() {
 
           // cache compiled matchers
           if (!compiledMatchers[selector]) {
-            compiledMatchers[selector]=compileGroup(selector, false);
+            compiledMatchers[selector] = compileGroup(selector, false);
           }
 
           // result of compiled matcher
@@ -593,6 +594,15 @@ NW.Dom = function() {
         }
 
         if (typeof selector == 'string' && selector.length) {
+
+          if (typeof from.querySelectorAll != 'undefined') {
+            try {
+              elements = toArray(from.querySelectorAll(selector));
+            } catch(e) {
+              elements = [];
+            }
+            return elements;
+          }
 
           // BEGIN REDUCE/OPTIMIZE
           // * (all elements selector)
