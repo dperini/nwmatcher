@@ -35,11 +35,12 @@ NW.Dom = function() {
 
   // attribute names may be passed case insensitive
   // accepts chopped attributes like "class" and "for"
-  camelProps = [
-    'htmlFor','className','tabIndex','accessKey','maxLength',
-    'readOnly','longDesc','frameBorder','isMap','useMap','noHref','noWrap',
-    'colSpan','rowSpan','cellPadding','cellSpacing','marginWidth','marginHeight'
-  ],
+  camelProps = {
+    'class': 'className', 'for': 'htmlFor',
+    'className': 'className', 'htmlfor': 'htmlFor', 'tabindex': 'tabIndex','accesskey': 'accessKey', 'maxlength': 'maxLength',
+    'readonly': 'readOnly', 'longdesc': 'longDesc', 'frameborder': 'frameBorder', 'ismap': 'isMap', 'usemap': 'useMap', 'nohref': 'noHref', 'nowrap': 'noWrap',
+    'colspan': 'colSpan', 'rowspan': 'rowSpan', 'cellpadding': 'cellPadding', 'cellspacing': 'cellSpacing', 'marginwidth': 'marginWidth', 'marginheight': 'marginHeight'
+  },
 
   // child pseudo selector (CSS3)
   child_pseudo = /\:(nth|first|last|only)\-/,
@@ -131,13 +132,7 @@ NW.Dom = function() {
         else if ((match = selector.match(Patterns.attribute))) {
 
           // fix common misCased attribute names
-          compare = match[1];
-          for (i = 0; i < camelProps.length; ++i) {
-            if (camelProps[i].toLowerCase().indexOf(match[1]) == 0) {
-              compare = camelProps[i];
-              break;
-            }
-          }
+          compare = camelProps[match[1].toLowerCase()] || match[1];
 
           if (/\w+:\w+/.test(match[1])) {
             // XML namespaced attributes
