@@ -2,12 +2,12 @@
  * Copyright (C) 2007-2008 Diego Perini
  * All rights reserved.
  *
- * nwmatcher.js - A fast selector engine not using XPath
+ * nwmatcher.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.0.1beta
  * Created: 20070722
- * Release: 20080907
+ * Release: 20080915
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -35,12 +35,20 @@ NW.Dom = function() {
 
   // attribute names may be passed case insensitive
   // accepts chopped attributes like "class" and "for"
-  camelProps = {
+  // also fixes difference between namespaces (HTML/DOM)
+  attributesMap = {
     'class': 'className', 'for': 'htmlFor',
-    'className': 'className', 'htmlfor': 'htmlFor', 'tabindex': 'tabIndex','accesskey': 'accessKey', 'maxlength': 'maxLength',
-    'readonly': 'readOnly', 'longdesc': 'longDesc', 'frameborder': 'frameBorder', 'ismap': 'isMap', 'usemap': 'useMap', 'nohref': 'noHref', 'nowrap': 'noWrap',
-    'colspan': 'colSpan', 'rowspan': 'rowSpan', 'cellpadding': 'cellPadding', 'cellspacing': 'cellSpacing', 'marginwidth': 'marginWidth', 'marginheight': 'marginHeight'
+    'classname': 'className', 'htmlfor': 'htmlFor',
+    'tabindex': 'tabIndex', 'accesskey': 'accessKey', 'maxlength': 'maxLength',
+    'readonly': 'readOnly', 'longdesc': 'longDesc', 'frameborder': 'frameBorder',
+    'ismap': 'isMap', 'usemap': 'useMap', 'nohref': 'noHref', 'nowrap': 'noWrap',
+    'colspan': 'colSpan', 'rowspan': 'rowSpan',
+    'cellpadding': 'cellPadding', 'cellspacing': 'cellSpacing',
+    'marginwidth': 'marginWidth', 'marginheight': 'marginHeight'
   },
+
+  // detect IE any version
+  IE = typeof document.fileSize != 'undefined',
 
   // child pseudo selector (CSS3)
   child_pseudo = /\:(nth|first|last|only)\-/,
@@ -48,11 +56,13 @@ NW.Dom = function() {
   // of-type pseudo selectors (CSS3)
   oftype_pseudo = /\-(of-type)/,
 
-  // trim whitespaces
+  // trim leading/trailing whitespaces
   TR = /^\s+|\s+$/g,
 
   // precompiled Regular Expressions
   Patterns = {
+    // attribute
+    attribute: /^\[([-\w]*:?[-\w]+)\s*(?:([!^$*~|])?(\=)?\s*([\x22\x27])?([^\4]*?)\4|([^\4][^\]]*?))\](.*)/,
     // nth child pseudos
     npseudos: /^\:(nth-)?(first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
     // simple pseudos
@@ -65,8 +75,6 @@ NW.Dom = function() {
     relative: /^\s*\~\s*(.*)/,
     // E F
     ancestor: /^(\s+)(.*)/,
-    // attribute
-    attribute: /^\[([-\w]*:?[-\w]+)\s*(?:([!^$*~|])?(\=)?\s*([\x22\x27])?([^\4]*?)\4|([^\4][^\]]*?))\](.*)/,
     // all
     all: /^\*(.*)/,
     // id
@@ -77,24 +85,24 @@ NW.Dom = function() {
     className: /^\.([-\w]+)(.*)/
   },
 
-  // initial optimizations
-  Optimizations = {
-    // all elements
-    all: /(^\*)$/,
-    // single class, id, tag
-    id: /^\#([-\w]+)$/,
-    tagName: /^([\w]+)$/,
-    className: /^\.([-\w]+)$/
-  },
-
   // convert nodeList to array
   toArray =
     function(iterable) {
-      var length = iterable.length, array = new Array(length);
-      while (length--) {
-        array[length] = iterable[length];
+      if (!IE) {
+        toArray = function(iterable) {
+          return Array.prototype.slice.call(iterable);
+        };
+      } else {
+        toArray = function(iterable) {
+          var length = iterable.length, array = new Array(length);
+          while (length--) {
+            array[length] = iterable[length];
+          }
+          return array;
+        };
       }
-      return array;
+      // call lazy function definition
+      return toArray(iterable);
     },
 
   // compile a CSS3 string selector into
@@ -117,22 +125,25 @@ NW.Dom = function() {
         }
         // #Foo Id case sensitive
         else if ((match = selector.match(Patterns.id))) {
-          // this is necessary because form elements using reserved words as id/name can overwrite form properties (ex. name="id")
-          source = 'if(e.id&&e.id=="' + match[1] + '"||((a=e.getAttributeNode("id"))&&a.value=="' + match[1] + '")){' + source + '}';
+          // necessary since form elements using reserved words as id/name can overwrite form properties (ex. name="id")
+          source = 'if(e.id=="' + match[1] + '"||((a=e.getAttributeNode("id"))&&a.value=="' + match[1] + '")){' + source + '}';
         }
         // Foo Tag case insensitive
         else if ((match = selector.match(Patterns.tagName))) {
-          source = 'if(e.nodeName.toLowerCase()=="' + match[1].toLowerCase() + '"){' + source + '}';
+          // both tagName & nodeName are Upper/Lower cased strings depending on their creation NAMESPACE (createElementNS et all)
+          source = 'if(e.nodeName=="' + match[1].toUpperCase() + '"||e.nodeName=="' + match[1].toLowerCase() + '"){' + source + '}';
         }
         // .Foo Class case sensitive
         else if ((match = selector.match(Patterns.className))) {
-          source = 'if(e.className&&((" "+e.className).replace(/\\s+/g," ") + " ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
+          // W3C CSS3 specs: element whose "class" attribute has been assigned a list of whitespace-separated values
+          // see section 6.4 Class selectors and notes at the bottom; explicitly non-normative in this specification.
+          source = 'if((" "+e.className+" ").replace(/\\s+/g," ").indexOf("' + match[1] + '")>0){' + source + '}';
         }
         // [attr] [attr=value] [attr="value"] and !=, *=, ~=, |=, ^=, $=
         else if ((match = selector.match(Patterns.attribute))) {
 
-          // fix common misCased attribute names
-          compare = camelProps[match[1].toLowerCase()] || match[1];
+          // map attribute names between HTML and DOM namespaces
+          compare = attributesMap[match[1].toLowerCase()] || match[1];
 
           if (/\w+:\w+/.test(match[1])) {
             // XML namespaced attributes
@@ -145,7 +156,7 @@ NW.Dom = function() {
             attributeValue = '(e.' + compare + '||"")';
           }
 
-          if (typeof document.fileSize != 'undefined') {
+          if (IE) {
             // on IE check the "specified" property on the attribute node
             attributePresence = '((a=e.getAttributeNode("' + match[1] + '"))&&a.specified)';
           } else {
@@ -312,7 +323,7 @@ NW.Dom = function() {
               source = 'if(/^\\s*$/.test(e.innerHTML)&&!/\\r|\\n/.test(e.innerHTML)){' + source + '}';
               break;
             case 'contains':
-              source = 'if((e.textContent||e.innerText||"").indexOf("' + match[2].replace(/\(|\)/g, '') + '")!=-1){' + source + '}';
+              source = 'if((e.textContent||e.innerText||"").indexOf("' + match[2].replace(/\(|\)/g, '') + '")>-1){' + source + '}';
               break;
             // CSS3 part of UI element states
             case 'enabled':
@@ -336,21 +347,19 @@ NW.Dom = function() {
               source = 'if(e.nodeName.toUpperCase()=="A"&&e.visited){' + source + '}';
               break;
             // CSS1 & CSS2 user action
+            // these capabilities may be emulated by event managers
             case 'active':
-              // IE & FF3 have native method, others may have it emulated,
-              // this may be done in the event manager setting activeElement
+              // IE & FF3 have native support
               source = 'var d=(e.ownerDocument||e.document);' +
                        'if(d.activeElement&&e===d.activeElement){' + source + '}';
               break;
             case 'hover':
-              // IE & FF3 have native method, other browser may achieve a similar effect
-              // by delegating mouseover/mouseout handling to document/documentElement
+              // IE & FF3 have native support
               source = 'var d=(e.ownerDocument||e.document);' +
                        'if(d.hoverElement&&e===d.hoverElement){' + source + '}';
               break;
             case 'focus':
-              // IE, FF3 have native method, others may have it emulated,
-              // this may be done in the event manager setting focusElement
+              // IE & FF3 have native support
               source = 'var d=(e.ownerDocument||e.document);' +
                        'if(e.type&&e.type!="hidden"&&' +
                          '((e.hasFocus&&e.hasFocus())||' +
@@ -378,7 +387,8 @@ NW.Dom = function() {
         token = parts[i].replace(TR, '');
         // if we have a selector string
         if (token && token.length > 0) {
-          // avoid repeating the same functions
+          // avoid repeating the same token
+          // in comma separated group (p, p)
           if (!cachedTokens[token]) {
             cachedTokens[token] = token;
             // insert corresponding mode function
@@ -399,6 +409,71 @@ NW.Dom = function() {
       }
     },
 
+  // element selection
+  select =
+    function(selector, from) {
+
+      var elements = [], match;
+
+      if (!(from && (from.nodeType == 1 || from.nodeType == 9))) {
+        from = document;
+      }
+
+      if (typeof selector == 'string' && selector.length) {
+
+        if (cachingEnabled && Snapshot.hasElements) {
+          elements = Snapshot.Elements;
+        } else {
+          elements = toArray(from.getElementsByTagName('*'));
+          Snapshot.Elements = elements;
+          Snapshot.hasTwinIndexes = false;
+          Snapshot.hasChildIndexes = false;
+        }
+
+        // normal nth/child pseudo selectors
+        if (selector.match(child_pseudo)) {
+          if (!cachingEnabled || !Snapshot.hasChildIndexes) {
+            getChilds(from, elements);
+            Snapshot.hasChildIndexes = true;
+          }
+        }
+
+        // special of-type pseudo selectors
+        if (selector.match(oftype_pseudo)) {
+          if (!cachingEnabled || !Snapshot.hasTwinIndexes) {
+            getTwins(from, elements);
+            Snapshot.hasTwinIndexes = true;
+          }
+        }
+
+        Snapshot.hasElements = true;
+
+        // cache compiled selectors
+        if (!compiledSelectors[selector]) {
+          compiledSelectors[selector] = compileGroup(selector, true);
+        }
+
+        if (cachingEnabled) {
+
+          if (!(cachedResults.items[selector] && cachedResults.from[selector] == from)) {
+            cachedResults.items[selector] = compiledSelectors[selector](elements, Snapshot);
+            cachedResults.from[selector] = from;
+          }
+          // a previously cached selection of the same selector
+          return cachedResults.items[selector];
+
+        } else {
+
+          // a live selection of the requested selector
+          return compiledSelectors[selector](elements, Snapshot);
+
+        }
+
+      } else throw new Error('NW.Dom.select: "' + selector + '" is not a valid CSS selector.');
+
+      return [];
+    },
+
   // snapshot of elements contained in rootElement
   // also contains maps to make nth lookups faster
   // updated when the elements in the DOM change
@@ -413,6 +488,7 @@ NW.Dom = function() {
     hasElements: false,
     hasTwinIndexes: false,
     hasChildIndexes: false,
+    // passed to compiled functions
     getIndex:
       function(e) {
         return getIndex(this.Elements, e);
@@ -423,7 +499,7 @@ NW.Dom = function() {
   getIndex =
     function(array, element) {
       // IE only (too slow in opera)
-      if (typeof document.fileSize != 'undefined') {
+      if (IE) {
         getIndex = function(array, element) {
           return element.sourceIndex || -1;
         };
@@ -444,6 +520,7 @@ NW.Dom = function() {
           return i;
         };
       }
+      // call lazy function definition
       return getIndex(array, element);
     },
 
@@ -582,98 +659,32 @@ NW.Dom = function() {
     select:
       function(selector, from) {
 
-        var elements = [], match;
+        // use native Selector API if available
+        if (typeof document.querySelectorAll != 'undefined') {
 
-        if (!(from && (from.nodeType == 1 || from.nodeType == 9))) {
-          from = document;
-        }
-
-        if (typeof selector == 'string' && selector.length) {
-
-          if (typeof from.querySelectorAll != 'undefined') {
-            try {
-              elements = toArray(from.querySelectorAll(selector));
-            } catch(e) {
-              elements = [];
-            }
-            return elements;
-          }
-
-          // BEGIN REDUCE/OPTIMIZE
-          // * (all elements selector)
-          if ((match = selector.match(Optimizations.all))) {
-            var nodes, node, i = -1;
-            // fix IE comments as element
-            nodes = from.getElementsByTagName('*');
-            while ((node = nodes[++i])) {
-              if (node.nodeType == 1) {
-                elements[elements.length] = node;
+          this.select = function(selector, from) {
+            if (typeof selector == 'string' && selector.length) {
+              from || (from = document);
+              try {
+                return toArray(from.querySelectorAll(selector));
+              } catch(e) {
+                // fall back to self contained select
+                return select(selector, from);
               }
             }
-            return elements;
-          }
-          // #Foo Id (single id selector)
-          else if ((match = selector.match(Optimizations.id))) {
-            var element = from.getElementById(match[1]);
-            return element ? [element] : [];
-          }
-          // Foo Tag (single tag selector)
-          else if ((match = selector.match(Optimizations.tagName))) {
-            return toArray(from.getElementsByTagName(match[1]));
-          }
-          // END REDUCE/OPTIMIZE
+            return [];
+          };
 
-          if (cachingEnabled && Snapshot.hasElements) {
-            elements = Snapshot.Elements;
-          } else {
-            elements = toArray(from.getElementsByTagName('*'));
-            Snapshot.Elements = elements;
-            Snapshot.hasTwinIndexes = false;
-            Snapshot.hasChildIndexes = false;
+        } else {
+
+          this.select = function(selector, from) {
+            return select(selector, from);
           }
 
-          // normal nth/child pseudo selectors
-          if (selector.match(child_pseudo)) {
-            if (!cachingEnabled || !Snapshot.hasChildIndexes) {
-              getChilds(from, elements);
-              Snapshot.hasChildIndexes = true;
-            }
-          }
+        }
 
-          // special of-type pseudo selectors
-          if (selector.match(oftype_pseudo)) {
-            if (!cachingEnabled || !Snapshot.hasTwinIndexes) {
-              getTwins(from, elements);
-              Snapshot.hasTwinIndexes = true;
-            }
-          }
-
-          Snapshot.hasElements = true;
-
-          // cache compiled selectors
-          if (!compiledSelectors[selector]) {
-            compiledSelectors[selector] = compileGroup(selector, true);
-          }
-
-          if (cachingEnabled) {
-
-            if (!(cachedResults.items[selector] && cachedResults.from[selector] == from)) {
-              cachedResults.items[selector] = compiledSelectors[selector](elements, Snapshot);
-              cachedResults.from[selector] = from;
-            }
-            // a previously cached selection of the same selector
-            return cachedResults.items[selector];
-
-          } else {
-
-            // a live selection of the requested selector
-            return compiledSelectors[selector](elements, Snapshot);
-
-          }
-
-        } else throw new Error('NW.Dom.select: "' + selector + '" is not a valid CSS selector.');
-
-        return [];
+        // call lazy function definition
+        return this.select(selector, from);
       }
 
   };
