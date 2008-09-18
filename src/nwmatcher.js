@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.0.1beta
  * Created: 20070722
- * Release: 20080915
+ * Release: 20080916
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -152,7 +152,7 @@ NW.Dom = function() {
             // specific URI attributes
             attributeValue = '(((a=e.getAttribute("' + match[1] + '",2))&&a)||"")';
           } else {
-            // others by property value
+            // dynamic check by property value
             attributeValue = '(e.' + compare + '||"")';
           }
 
@@ -413,7 +413,7 @@ NW.Dom = function() {
   select =
     function(selector, from) {
 
-      var elements = [], match;
+      var elements = [];
 
       if (!(from && (from.nodeType == 1 || from.nodeType == 9))) {
         from = document;
