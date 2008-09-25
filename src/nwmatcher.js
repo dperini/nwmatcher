@@ -5,7 +5,7 @@
  * nwmatcher.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.0.1beta
+ * Version: 1.0.1
  * Created: 20070722
  * Release: 20080916
  *
@@ -19,7 +19,7 @@ window.NW || (window.NW = {});
 
 NW.Dom = function() {
 
-  var version = '1.0.1beta',
+  var version = '1.0.1',
 
   // selection functions returning collections
   compiledSelectors = { },
