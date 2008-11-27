@@ -5,9 +5,9 @@
  * nwmatcher.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.0.1
+ * Version: 1.0.2
  * Created: 20070722
- * Release: 20080916
+ * Release: 20081126
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -19,7 +19,7 @@ window.NW || (window.NW = {});
 
 NW.Dom = function() {
 
-  var version = '1.0.1',
+  var version = '1.0.2',
 
   // selection functions returning collections
   compiledSelectors = { },
@@ -137,7 +137,7 @@ NW.Dom = function() {
         else if ((match = selector.match(Patterns.className))) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a list of whitespace-separated values
           // see section 6.4 Class selectors and notes at the bottom; explicitly non-normative in this specification.
-          source = 'if((" "+e.className+" ").replace(/\\s+/g," ").indexOf("' + match[1] + '")>0){' + source + '}';
+          source = 'if((" "+e.className+" ").replace(/\\s+/g," ").indexOf(" ' + match[1] + ' ")>=0){' + source + '}';
         }
         // [attr] [attr=value] [attr="value"] and !=, *=, ~=, |=, ^=, $=
         else if ((match = selector.match(Patterns.attribute))) {
@@ -405,7 +405,7 @@ NW.Dom = function() {
         return new Function('c,s', 'var k=-1,e,r=[],n,j,u,t,a;while((e=c[++k])){' + source + '}return r;');
       } else {
         // for match method
-        return new Function('e', 'var n,u,a;' + source  + 'return false;');
+        return new Function('e', 'var n,u,a,t;' + source  + 'return false;');
       }
     },
 
