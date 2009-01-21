@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2007-2008 Diego Perini
+ * Copyright (C) 2007-2009 Diego Perini
  * All rights reserved.
  *
  * nwmatcher.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.0.2
+ * Version: 1.1beta
  * Created: 20070722
- * Release: 20081126
+ * Release: 20090117
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -17,26 +17,123 @@
 
 window.NW || (window.NW = {});
 
-NW.Dom = function() {
+NW.Dom = function(global) {
 
-  var version = '1.0.2',
+  var version = 'nwmatcher-1.1beta',
 
-  // selection functions returning collections
-  compiledSelectors = { },
+  // script loading context
+  context = global.document,
 
-  // matching functions returning booleans
-  compiledMatchers = { },
+  // context root element
+  root = context.documentElement,
 
-  // cached selection results
-  cachedResults = {
-    from: [ ],
-    items: [ ]
-  },
+  // processing context
+  base = context,
 
-  // attribute names may be passed case insensitive
-  // accepts chopped attributes like "class" and "for"
-  // also fixes difference between namespaces (HTML/DOM)
-  attributesMap = {
+  /* BEGIN FEATURE TESTING */
+
+  // detect native method in object
+  // not same scope of isHostObject
+  isNative = function(object, method) {
+    return object && method in object &&
+      typeof object[method] != 'string' &&
+      // IE & W3C browser return "[native code]"
+      // Safari <= 2.0.4 will return "[function]"
+      (/\{\s*\[native code\]\s*\}|^\[function\]$/).
+      test(object[method]);
+    },
+
+  STRICT_MODE = /^CSS/i.test(context.compatMode),
+
+  // detect native getAttribute/hasAttribute method,
+  // frameworks extend these to elements, but seems
+  // it does not work for XML namespaced attributes
+  NATIVE_GET_ATTRIBUTE = isNative(root, 'getAttribute'),
+  NATIVE_HAS_ATTRIBUTE = isNative(root, 'hasAttribute'),
+
+  NATIVE_CHILDREN_PROPERTY = 'children' in root,
+
+  // NOTE: NATIVE_XXXXX check for existance of method only
+  // so through the code read it as "supported", maybe BUGGY
+
+  // detect if used methods are native in browsers
+  NATIVE_QSAPI = isNative(context, 'querySelector'),
+  NATIVE_GEBID = isNative(context, 'getElementById'),
+  NATIVE_GEBTN = isNative(root, 'getElementsByTagName'),
+  NATIVE_GEBCN = isNative(root, 'getElementsByClassName'),
+
+  // nodeList can be converted by Array.slice() natively
+  // on Opera 9.27 an id="length" will fold Array.slice()
+  NATIVE_SLICE_PROTO =
+    (function() {
+      try {
+        return !!Array.prototype.slice.call(root.childNodes)[0];
+      } catch(e) { }
+      return false;
+    })(),
+
+  // check for Mutation Events, DOMAttrModified should be
+  // enough to ensure DOMNodeInserted/DOMNodeRemoved exist
+  NATIVE_MUTATION_EVENTS = root.addEventListener ?
+    (function() {
+      var e, l, f = false;
+      l = root.id;
+      e = function() {
+        root.removeEventListener('DOMAttrModified', e, false);
+        NATIVE_MUTATION_EVENTS = true;
+        root.id = l;
+      };
+      root.addEventListener('DOMAttrModified', e, false);
+      // now modify a property
+      root.id = 'nw';
+      f = root.id != 'nw';
+      root.id = l;
+      return f;
+    })() :
+    false,
+
+  // NOTE: BUGGY_XXXXX check both for existance and no known bugs,
+  // so through the code read it as "not supported", or "undefined"
+
+  // detect IE gEBTN comment nodes bug
+  BUGGY_GEBTN = NATIVE_GEBTN ?
+    (function() {
+      var t = context.createElement('div');
+      t.appendChild(context.createComment(''));
+      t = t.getElementsByTagName('*')[0];
+      return !!(t && t.nodeType == 8);
+    })() :
+    true,
+
+  // detect Opera gEBCN class UTF8 bug
+  BUGGY_GEBCN = NATIVE_GEBCN ?
+    (function() {
+      var t = context.createElement('div');
+      t.innerHTML = '<span class="台北abc 台北"></span>';
+      return !t.getElementsByClassName('台北')[0];
+    })() :
+    true,
+
+  // detect Safari < 3.1.2 bug where className
+  // case sensitivity is not treated correclty
+  // for example when no DOCTYPE was specified
+  BUGGY_QSAPI = NATIVE_QSAPI ?
+    (function() {
+      var f = false, t = root.className;
+      root.className = 'Case';
+      f = context.compatMode == 'BackCompat' &&
+        context.querySelector('.case') !== null;
+      root.className = t;
+      return f;
+    })() :
+    true,
+
+  /* END FEATURE TESTING */
+
+  // map of attribute names (in HTML and DOM namespaces)
+  // many are missing here, or maybe there are too many
+  // first two lines will cover most real cases anyway
+  Attributes = {
     'class': 'className', 'for': 'htmlFor',
     'classname': 'className', 'htmlfor': 'htmlFor',
     'tabindex': 'tabIndex', 'accesskey': 'accessKey', 'maxlength': 'maxLength',
@@ -47,26 +144,114 @@ NW.Dom = function() {
     'marginwidth': 'marginWidth', 'marginheight': 'marginHeight'
   },
 
-  // detect IE any version
-  IE = typeof document.fileSize != 'undefined',
+  // See Niels Leenheer blog http://rakaz.nl/item/css_selector_bugs_case_sensitivity
+  //
+  // Each attribute definition includes information about the case-sensitivity of its values.
+  // http://www.w3.org/TR/html4/types.html#h-6.1
+  //
+  // HTML 4 and XHTML both have some attributes that have pre-defined and limited sets of values.
+  // http://www.w3.org/TR/xhtml1/#h-4.11
 
-  // child pseudo selector (CSS3)
-  child_pseudo = /\:(nth|first|last|only)\-/,
+  insensitiveMap = {
+    // must be treated case insensitive in HTML (Quirks ?)
+    'dir': 0, 'scope': 0, 'clear': 0, 'defer': 0, 'nowrap': 0, 'declare': 0,
+    'frame': 0, 'rules': 0, 'shape': 0, 'nohref': 0, 'align': 0, 'valign': 0,
+    'noresize': 0, 'noshade': 0, 'scrolling': 0, 'method': 0, 'valuetype': 0,
+    'checked': 0, 'multiple': 0, 'selected': 0, 'disabled': 0, 'readonly': 0,
+    'compact': 0,
+    // must be trated case insensitive in both HTML and XHTML (Strict ?)
+    'http-equiv': 1, 'text': 1, 'link': 1, 'vlink': 1, 'alink': 1, 'lang': 1,
+    'axis': 1, 'hreflang': 1, 'rel': 1, 'rev': 1, 'charset': 1, 'codetype': 1,
+    'media': 1, 'bgcolor': 1, 'color': 1, 'face': 1, 'target': 1, 'enctype': 1,
+    'accept-charset': 1, 'accept': 1, 'language': 1, 'type': 1
+  },
 
-  // of-type pseudo selectors (CSS3)
-  oftype_pseudo = /\-(of-type)/,
+  // attribute referencing URL values need special treatment in IE
+  attributesUrl = {
+    'action': 2, 'data': 2, 'href': 2, 'longdesc': 2, 'lowsrc': 2, 'src': 2
+  },
+
+  // attribute names may contain an XML namespace
+  attributesXml = /(?:[-\w]|\\.)+:(?:[-\w]|\\.)+/,
+
+  // selection functions returning collections
+  compiledSelectors = { },
+
+  // matching functions returning booleans
+  compiledMatchers = { },
+
+  // place to add exotic functionalities
+  Selectors = {
+    // as a simple example this will check
+    // for chars out of standard asii table
+    //
+    // 'mySpecialSelector': {
+    //  'Expression': /\u0080-\uffff/,
+    //  'Callback': mySelectorCallback
+    //}
+    //
+    // 'mySelectorCallback' will be invoked
+    // only after passing all other standard
+    // checks and only if none of them worked
+  },
 
   // trim leading/trailing whitespaces
-  TR = /^\s+|\s+$/g,
+  trim = /^\s+|\s+$/g,
+
+  // nth pseudo selectors
+  position = /:(nth|of-type)/,
+
+  // Safari 2.0.x crashes with escaped (\\)
+  // unicode ranges in regular expressions
+
+  // ascii extended
+  ascii = /\x00-\xff/,
+  // ascii + unicode
+  encoding = '\u0080-\uffff',
+
+  // selector validator discard invalid chars
+  validator = new RegExp("[-_*\\w" + encoding + "]"),
+
+  // split comma separated selector groups, exclude commas inside () []
+  // example: (#div a, ul > li a) group 1 is (#div a) group 2 is (ul > li a)
+  group = /(([^,\(\)\[\]]+|\([^\(\)]+\)|\(.*\)|\[[^\[\]]+\]|\[.*\]|\\.|\*)+)/g,
+
+  // attribute operators
+  Operators = {
+    // ! is not really in the specs
+    // still unit tests have to pass
+    '!': "%p!=='%m'",
+    '=': "%p==='%m'",
+    '^': "%p.indexOf('%m')==0",
+    '*': "%p.indexOf('%m')>-1",
+    // sensitivity handled by compiler
+    // NOTE: working alternative
+    // '|': "/%m-/i.test(%p+'-')",
+    '|': "(%p+'-').indexOf('%m-')==0",
+    '~': "(' '+%p+' ').indexOf(' %m ')>-1",
+    // precompile in '%m' string length to optimize
+    // NOTE: working alternative
+    // '$': "%p.lastIndexOf('%m')==%p.length-'%m'.length"
+    '$': "%p.substr(%p.length - '%m'.length) === '%m'"
+  },
+
+  // optimization expressions
+  Optimize = {
+    ID: new RegExp("\\#((?:[-_\\w" + encoding + "]|\\\\.)+)*"),
+    TAG: new RegExp("((?:[-_\\w" + encoding + "]|\\\\.)+)*"),
+    CLASS: new RegExp("\\.((?:[-_\\w" + encoding + "]|\\\\.)+)*"),
+    // split last, right most, selector group token
+    TOKEN: /([^\ \>\+\~\,\(\)\[\]]+|\([^\(\)]+\)|\(.*\)|\[[^\[\]]+\]|\[.*\])+/g
+  },
 
   // precompiled Regular Expressions
   Patterns = {
-    // attribute
-    attribute: /^\[([-\w]*:?[-\w]+)\s*(?:([!^$*~|])?(\=)?\s*([\x22\x27])?([^\4]*?)\4|([^\4][^\]]*?))\](.*)/,
-    // nth child pseudos
-    npseudos: /^\:(nth-)?(first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
-    // simple pseudos
-    spseudos: /^\:([\w]+)(\(([\x22\x27])?(.*?(\(.*?\))?[^(]*?)\3\))?(.*)/,
+    // element attribute matcher
+    attribute: /^\[([-\w]*:?(?:[-\w])+)\s*(?:([!^$*~|]*)?(\=)?\s*(["']*)?([^'"]*?)\4)\](.*)/,
+    // structural pseudo-classes
+    spseudos: /^\:(root|empty|nth)?-?(first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
+    // uistates + dynamic + negation pseudo-classes
+    dpseudos: /^\:((?:[-\w]|\\.)+)(\(([\x22\x27]*)?(.*?(\(.*?\))?[^(]*?)\3\))?(.*)/,
     // E > F
     children: /^\s*\>\s*(.*)/,
     // E + F
@@ -78,266 +263,339 @@ NW.Dom = function() {
     // all
     all: /^\*(.*)/,
     // id
-    id: /^\#([-\w]+)(.*)/,
+    id: new RegExp("^\\#((?:[-_\\w" + encoding + "]|\\\\.)+)(.*)"),
     // tag
-    tagName: /^([-\w]+)(.*)/,
+    tagName: new RegExp("^((?:[-_\\w" + encoding + "]|\\\\.)+)(.*)"),
     // class
-    className: /^\.([-\w]+)(.*)/
+    className: new RegExp("^\\.((?:[-_\\w" + encoding + "]|\\\\.)+)(.*)")
   },
 
-  // convert nodeList to array
-  toArray =
-    function(iterable) {
-      if (!IE) {
-        toArray = function(iterable) {
-          return Array.prototype.slice.call(iterable);
-        };
-      } else {
-        toArray = function(iterable) {
-          var length = iterable.length, array = new Array(length);
-          while (length--) {
-            array[length] = iterable[length];
-          }
-          return array;
-        };
+  // current CSS3 grouping of Pseudo-Classes
+  // they allowed implementing extensions
+  // and to improve error notification
+  CSS3PseudoClasses = {
+    Structural: {
+      'root': 0, 'empty': 0,
+      'first-child': 0, 'last-child': 0, 'only-child': 0,
+      'first-of-type': 0, 'last-of-type': 0, 'only-of-type': 0,
+      'first-child-of-type': 0, 'last-child-of-type': 0, 'only-child-of-type': 0,
+      'nth-child': 0, 'nth-last-child': 0, 'nth-of-type': 0, 'nth-last-of-type': 0
+      // (the 3rd line is not in W3C CSS specs but is an accepted alias of 2nd line)
+    },
+    // originally separated in different pseudo-classes
+    // we have grouped them to optimize a bit size+speed
+    // all are going through the same code path (switch)
+    // the assigned value represent current spec status:
+    // 0 = CSS3, 1 = CSS2, 2 = maybe implemented
+    Others: {
+    //UIElementStates: {
+    // we group them to optimize
+      'enabled': 0, 'disabled': 0, 'checked': 0, 'selected': 1, 'indeterminate': 2,
+    //},
+    //Dynamic: {
+      'active': 0, 'hover': 0, 'visited': 0, 'link': 0, 'hover': 1,
+    //},
+    // Target: {
+      'target': 0,
+    //},
+    // Language: {
+      'lang': 0,
+    //},
+    // Negation: {
+      'not': 0,
+    //},
+    // Content: {
+    // http://www.w3.org/TR/2001/CR-css3-selectors-20011113/#content-selectors
+      'contains': 2
+    //}
+    }
+  },
+
+  // conditionals optimizers for the compiler
+
+  // do not change this, it is searched & replaced
+  ACCEPT_NODE = 'r[r.length]=c[k];continue main;',
+
+  // fix for IE gEBTN('*') returning collection with comment nodes
+  SKIP_COMMENTS = BUGGY_GEBTN ? 'if(e.nodeType!=1){continue;}' : '',
+
+  // use the textContent or innerText property to check CSS3 :contains
+  // Safari 2 has a bug with innerText and hidden content, using an
+  // internal replace on the innerHTML property avoids trashing it
+  CONTAINS_TEXT =
+    'textContent' in root ?
+    'e.textContent' :
+    (function() {
+      var t = context.createElement('div');
+      t.innerHTML = '<p>p</p>';
+      t.style.display = 'none';
+      return t.innerText.length > 0 ?
+        'e.innerText' :
+        'this.stripTags(e.innerHTML)';
+    })(),
+
+  // to check if the base context contains offending names
+  // @return nodeList (live)
+  OFFENDING_NAME =
+    function(name) {
+      return !!base.getElementsByName(name);
+    },
+
+  // to check extensions have not yet been registered
+  // @return boolean
+  IS_EMPTY =
+    function(object) {
+      if (object && typeof object == 'object') {
+        for (i in object) { return false; }
+        return true;
       }
-      // call lazy function definition
-      return toArray(iterable);
+      return false;
+    },
+
+  // compile a comma separated group of selector
+  // @mode boolean true for select, false for match
+  // @return function (compiled)
+  compileGroup =
+    function(selector, source, mode) {
+      var i = 0, seen = { }, parts, token;
+      if ((parts = selector.match(group))) {
+        // for each selector in the group
+        for ( ; i < parts.length; ++i) {
+          token = parts[i].replace(trim, '');
+          // avoid repeating the same token
+          // in comma separated group (p, p)
+          if (!seen[token]) {
+            seen[token] = true;
+            // reset element reference after the
+            // first comma if using select() mode
+            if (i > 0 && mode) {
+              source += 'e=c[k];';
+            }
+            // insert corresponding mode function
+            if (mode) {
+              source += compileSelector(token, ACCEPT_NODE);
+            } else {
+              source += compileSelector(token, 'return true;');
+            }
+          }
+        }
+      }
+      if (mode) {
+        // for select method
+        return new Function('c,s', 'var k,e,r,n,x=0;main:for(k=0,r=[];e=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
+      } else {
+        // for match method
+        return new Function('e,s', 'var n,x=0;' + source + 'return false;');
+      }
     },
 
   // compile a CSS3 string selector into
   // ad-hoc javascript matching function
+  // @return string (to be compiled)
   compileSelector =
-    // @mode boolean true for select, false for match
-    function(selector, source, mode) {
+    function(selector, source) {
 
-      var a, b, i,
-          // building placeholders
-          compare, match, param, test, type,
-          attributeValue, attributePresence;
+      var i, a, b, n, k, expr, match, result, status, test, type;
 
       while (selector) {
 
-        // * match all
+        // *** Universal selector
+        // * match all (empty block, do not remove)
         if ((match = selector.match(Patterns.all))) {
-          // on IE remove comment nodes to avoid this
-          source = 'if(e.nodeType==1){' + source + '}';
+          // do nothing, handled in the compiler where
+          // BUGGY_GEBTN return comment nodes (ex: IE)
         }
+        // *** ID selector
         // #Foo Id case sensitive
         else if ((match = selector.match(Patterns.id))) {
-          // necessary since form elements using reserved words as id/name can overwrite form properties (ex. name="id")
-          source = 'if(e.id=="' + match[1] + '"||((a=e.getAttributeNode("id"))&&a.value=="' + match[1] + '")){' + source + '}';
+          // document contains elements with names like "id" or "length" ?
+          if (OFFENDING_NAME('id')) {
+            // necessary since form elements using reserved words as
+            // id/name can overwrite form properties (ex. name="id")
+            // NOTE: tests available in Prototype selector test unit
+            source = 'if(e.id=="' + match[1] + '"||(e.nodeName=="FORM"&&e==e.ownerDocument.getElementById("' + match[1] + '"))){' + source + '}';
+          } else {
+            // faster/sufficient to pass jQuery selector test unit
+            source = 'if(e.id=="' + match[1] + '"){' + source + '}';
+          }
         }
-        // Foo Tag case insensitive
+        // *** Type selector
+        // Foo Tag (case insensitive)
         else if ((match = selector.match(Patterns.tagName))) {
           // both tagName & nodeName are Upper/Lower cased strings depending on their creation NAMESPACE (createElementNS et all)
           source = 'if(e.nodeName=="' + match[1].toUpperCase() + '"||e.nodeName=="' + match[1].toLowerCase() + '"){' + source + '}';
+          //source = 'if(e.nodeName=="' + match[1].toUpperCase() + '"){' + source + '}';
         }
-        // .Foo Class case sensitive
+        // *** Class selector
+        // .Foo Class (case sensitive)
         else if ((match = selector.match(Patterns.className))) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a list of whitespace-separated values
           // see section 6.4 Class selectors and notes at the bottom; explicitly non-normative in this specification.
-          source = 'if((" "+e.className+" ").replace(/\\s+/g," ").indexOf(" ' + match[1] + ' ")>=0){' + source + '}';
+          //source = 'if(((" "+e.className+" ").replace(/\\s+/g," ").indexOf(" ' + match[1] + ' ")>-1)){' + source + '}';
+          source = 'if(e.className&&(" "+e.className+" ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
         }
-        // [attr] [attr=value] [attr="value"] and !=, *=, ~=, |=, ^=, $=
+        // *** Attribute selector
+        // [attr] [attr=value] [attr="value"] [attr='value'] and !=, *=, ~=, |=, ^=, $=
+        // case sensitivity is treated differently depending on the document type (see map)
         else if ((match = selector.match(Patterns.attribute))) {
-
-          // map attribute names between HTML and DOM namespaces
-          compare = attributesMap[match[1].toLowerCase()] || match[1];
-
-          if (/\w+:\w+/.test(match[1])) {
-            // XML namespaced attributes
-            attributeValue = '(((a=e.getAttribute("' + match[1] + '",1))&&a)||"")';
-          } else if ("|action|data|href|longdesc|lowsrc|src|".indexOf(match[1]) > -1) {
-            // specific URI attributes
-            attributeValue = '(((a=e.getAttribute("' + match[1] + '",2))&&a)||"")';
+          // xml namespaced attribute ?
+          expr = match[1].split(':');
+          expr = expr.length == 2 ? expr[1] : expr[0];
+          // check case treatment from insensitiveMap
+          if (insensitiveMap[expr.toLowerCase()] ||
+            expr.toLowerCase() in insensitiveMap && STRICT_MODE) {
+            match[5] = match[5].toLowerCase();
           } else {
-            // dynamic check by property value
-            attributeValue = '(e.' + compare + '||"")';
+            expr = '';
           }
-
-          if (IE) {
-            // on IE check the "specified" property on the attribute node
-            attributePresence = '((a=e.getAttributeNode("' + match[1] + '"))&&a.specified)';
-          } else {
-            attributePresence = 'e.hasAttribute("' + match[1] + '")';
-          }
-
-          // match[1] - attribute name
-          // match[2] - operator type
-          // match[3] - equal sign
-          // match[4] - quotes
-          // match[5] - value
-
-          // no "*" operator in these conditionals
-          // .match() will handle it by exclusion
-          // for case insensitive matches use "|"
           source = 'if(' +
-            // match attribute or property
-            (match[2] && match[3] && match[5] && match[2] != '!' ?
-              // replace possible whitespaces with space in properties values
-              // and build a "-propval-" or " propval " string to exactly match
-              (match[2] == '~' ? '(" "+' : (match[2] == '|' ? '("-"+' : '')) + attributeValue +
-                (match[2] == '!' || match[2] == '~' ? '.replace(/\\s+/g," ")' : '') +
-              (match[2] == '~' ? '+" ")' : (match[2] == '|' ? '+"-")' : '')) +
-                // BEGIN: add an indexOf() or match() where it applies ( ! and ~ use indexOf)
-                (match[2] == '!' || match[2] == '~' ? '.indexOf("' : '.match(/') +
-                  // build the content of the indexOf search or the match
-                  (match[2] == '^' ? '^' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
-                    match[5] +
-                  (match[2] == '$' ? '$' : match[2] == '~' ? ' ' : match[2] == '|' ? '-' : '') +
-                // END: close the indexOf or match()
-                (match[2] == '!' || match[2] == '~' ? '")>-1' : (match[2] == '|' ? '/i' : '/') + ')') :
-              // add rigth side of comparison when no indexOf / match
-              // when we have to exactly match or not a value ( ! or = )
-              (match[3] && match[5] ?
-                attributeValue + (match[2] == '!' ? '!' : '=') + '="' + match[5] + '"' :
-                  // or just check for attribute presence
-                  attributePresence)) +
+            (Operators[(match[2] || match[3])] || 'this.hasAttribute(e,"' + match[1] + '")').
+              replace(/\%p/g, 'this.getAttribute(e,"' + match[1] + '")' +
+                (expr === '' ? '' : '.toLowerCase()')).
+                  replace(/\%m/g, match[5]) +
           '){' + source + '}';
+          expr = '';
         }
+        // *** Adjacent sibling combinator
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
-          source = 'while(e.previousSibling){e=e.previousSibling;if(e.nodeType==1){' + source + 'break;}}';
+          source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + 'break;}}';
         }
+        // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
-          source = 'while(e.previousSibling){e=e.previousSibling;if(e.nodeType==1){' + source.replace(/\}$/, 'break;}') + '}}';
+          k++; // count nested instances
+          source = 'var i%=0,y%=e,z%=this.getChildren(e.parentNode);while((e=z%[i%++])&&e!=y%){if(e.nodeType==1){'.replace(/%/g, k) + source + '}}';
+          //source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}';
         }
+        // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'while(e.parentNode.nodeType==1){e=e.parentNode;' + source + 'break;}';
+          source = 'if(e.nodeName!="HTML"){e=e.parentNode;' + source + '}';
         }
+        // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'while(e.parentNode.nodeType==1){e=e.parentNode;' + source.replace(/\}$/, 'break;}') + '}';
+          source = 'while(e.nodeName!="HTML"){e=e.parentNode;' + source + '}';
         }
+        // *** Structural pseudo-classes
+        // :root, :empty,
         // :first-child, :last-child, :only-child,
+        // :first-of-type, :last-of-type, :only-of-type,
         // :first-child-of-type, :last-child-of-type, :only-child-of-type,
         // :nth-child(), :nth-last-child(), :nth-of-type(), :nth-last-of-type()
-        else if ((match = selector.match(Patterns.npseudos)) && (match[2] || match[5])) {
-          // snapshot collection type to use Twin or Child
-          type = match[4] == 'of-type' ? 'Twin' : 'Child';
+        // (the 3rd line is not in W3C CSS specs but is an accepted alias of 2nd line)
+        else if ((match = selector.match(Patterns.spseudos)) &&
+          selector.match(/([-\w]+)/)[0] in CSS3PseudoClasses.Structural) {
 
-          if (match[5]) {
-            // remove the ( ) grabbed above
-            match[5] = match[5].replace(/\(|\)/g, '');
+          switch (match[1]) {
+            case 'root':
+              // only one root element for document, so break on match
+              source = 'if(e==e.ownerDocument.documentElement){' + source + 'break;}';
+              break;
+            case 'empty':
+              // IE does not support empty text nodes,
+              // original whitespaces not kept in DOM
+              source = 'if(!e.firstChild){' + source + '}';
+              break;
+            default:
+              type = match[4] == 'of-type' ? 'OfType' : 'Element';
 
-            if (match[5] == 'even') {
-              a = 2;
-              b = 0;
-            } else if (match[5] == 'odd') {
-              a = 2;
-              b = 1;
-            } else {
-              // assumes correct "an+b" format
-              a = match[5].match(/^-/) ? -1 : match[5].match(/^n/) ? 1 : 0;
-              a = a || ((param = match[5].match(/(-?\d{1,})n/)) ? parseInt(param[1], 10) : 0);
-              b = 0 || ((param = match[5].match(/(-?\d{1,})$/)) ? parseInt(param[1], 10) : 0);
-            }
+              if (match[5]) {
+                // remove the ( ) grabbed above
+                match[5] = match[5].replace(/\(|\)/g, '');
+                if (match[5] == 'even') {
+                  a = 2;
+                  b = 0;
+                } else if (match[5] == 'odd') {
+                  a = 2;
+                  b = 1;
+                } else {
+                  // assumes correct "an+b" format
+                  a = match[5].match(/^-/) ? -1 : match[5].match(/^n/) ? 1 : 0;
+                  a = a || ((n = match[5].match(/(-?\d{1,})n/)) ? parseInt(n[1], 10) : 0);
+                  b = 0 || ((n = match[5].match(/(-?\d{1,})$/)) ? parseInt(n[1], 10) : 0);
+                }
 
-            compare =
-              (match[2] == 'last' ?
-                '(s.' + type + 'Lengths[s.' + type + 'Parents[u]]' +
-                (match[4] == 'of-type' ? '[e.nodeName.toUpperCase()]' : '') + '-' + (b - 1) + ')' : b);
+                // use nthElement/nthOfType
+                expr = match[2] == 'last' ?
+                  'this.elementsCount(e,' + (match[4] ? 'true' : 'false') + ')-' + (b - 1) : b;
 
-            // handle 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
-            test = match[5] == 'even' ||
-              match[5] == 'odd' ||
-              a > Math.abs(b) ?
-                ('%' + a + '==' + b) :
-              a < 0 ?
-                '<=' + compare :
-              a > 0 ?
-                '>=' + compare :
-              a == 0 ?
-                '==' + compare :
-                '';
+                test =
+                  b < 0 ?
+                    a <= 1 ?
+                      '<=' + Math.abs(b) :
+                      '%' + a + '===' + (a + b) :
+                  a > Math.abs(b) ? '%' + a + '===' + b :
+                  a === Math.abs(b) ? '%' + a + '===' + 0 :
+                  a === 0 ? '==' + expr :
+                  a < 0 ? '<=' + b :
+                  a > 0 ? '>=' + b :
+                    '';
 
-            if (mode) {
-              // add function for select method (mode=true)
-              // requires prebuilt array get[Childs|Twins]
-              source = 'u=s.getIndex(e)+1;' +
-                'if(s.' + type + 'Indexes[u]' + test + '){' + source + '}';
-            } else {
-              // add function for "match" method (mode=false)
-              // this will not be in a loop, this is faster
-              // for "match" but slower for "select" and it
-              // also does not require prebuilt node array
-              source = 'if((n=e)){' +
-                'u=1' + (match[4] == 'of-type' ? ',t=e.nodeName;' : ';') +
-                'while((n=n.' + (match[2] == 'last' ? 'next' : 'previous') + 'Sibling)){' +
-                  'if(n.node' + (match[4] == 'of-type' ? 'Name==t' : 'Type==1') + '){++u;}' +
-                '}' +
-                'if(u' + test + '){' + source + '}' +
-              '}';
-            }
-          } else {
-            // handle 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
-            compare =
-              's.' + type + 'Lengths[s.' + type + 'Parents[u]]' +
-              (match[4] == 'of-type' ? '[e.nodeName.toUpperCase()]' : '');
-
-            if (mode) {
-              // add function for select method (mode=true)
-              source = 'u=s.getIndex(e)+1;' +
-                'if(' +
-                  (match[2] == 'first' ?
-                    's.' + type + 'Indexes[u]==1' :
-                    match[2] == 'only' ?
-                      compare + '==1' :
-                      match[2] == 'last' ?
-                        's.' + type + 'Indexes[u]==' + compare : '') +
-                '){' + source + '}';
-            } else {
-              // add function for match method (mode=false)
-              source = 'if((n=e)){' +
-                (match[4] ? 't=e.nodeName;' : '') +
-                'while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'Sibling)&&' +
-                  'n.node' + (match[4] ? 'Name!=t' : 'Type!=1') + ');' +
-                'if(!n&&(n=e)){' +
-                  (match[2] == 'first' || match[2] == 'last' ?
-                    '{' + source + '}' :
-                    'while((n=n.' + (match[2] == 'first' ? 'next' : 'previous') + 'Sibling)&&' +
-                        'n.node' + (match[4] ? 'Name!=t' : 'Type!=1') + ');' +
-                    'if(!n){' + source + '}') +
-                '}' +
-              '}';
-            }
+                // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
+                source = 'if((this.' + match[1] + type + '(e)' + test + ')){' + source + '}';
+              } else {
+                // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
+                source = 'if((this.' + match[2] + type + '(e))){' + source + '}';
+              }
+              break;
           }
+
         }
+        // *** Dynamic pseudo-classes
         // CSS3 :not, :root, :empty, :contains, :enabled, :disabled, :checked, :target
         // CSS2 :active, :focus, :hover (no way yet)
         // CSS1 :link, :visited
-        else if ((match = selector.match(Patterns.spseudos))) {
+        else if ((match = selector.match(Patterns.dpseudos)) &&
+          selector.match(/([-\w]+)/)[0] in CSS3PseudoClasses.Others) {
+
+          if (match[2]) {
+            // if the pseudo-class is one with a parameter
+            // remove round brackets grabbed by expression
+            match[2] = match[2].replace(/^\((.*)\)$/, '$1');
+          }
+
           switch (match[1]) {
             // CSS3 part of structural pseudo-classes
             case 'not':
-              source = compileSelector(match[2].replace(/\((.*)\)/, '$1'), source, mode).replace(/if([^\{]+)/, 'if(!$1)');
+              // compile nested selectors
+              expr = match[2].split(',');
+              for (i = 0; expr[i]; i++) {
+                source = compileSelector(expr[i], source).replace(/(if|while)([^\{]+)/, '$1(!($2))');
+              }
               break;
             case 'root':
-              source = 'if(e==(e.ownerDocument||e.document||e).documentElement){' + source + '}';
+              // only one root element for document, so break on match
+              source = 'if(e==e.ownerDocument.documentElement){' + source + 'break;}';
               break;
             case 'empty':
-              // IE does not support empty text nodes, HTML white spaces and CRLF are not in the DOM
-              source = 'if(/^\\s*$/.test(e.innerHTML)&&!/\\r|\\n/.test(e.innerHTML)){' + source + '}';
+              // IE does not support empty text nodes,
+              // original whitespaces not kept in DOM
+              source = 'if(!e.firstChild){' + source + '}';
               break;
+            // maybe deprecated in latest proposals
             case 'contains':
-              source = 'if((e.textContent||e.innerText||"").indexOf("' + match[2].replace(/\(|\)/g, '') + '")>-1){' + source + '}';
+              match[2] = match[2].replace(/^["']*|['"]*$/g, '');
+              source = 'if(' + CONTAINS_TEXT + '.indexOf("' + match[2] + '")>-1){' + source + '}';
               break;
             // CSS3 part of UI element states
+            case 'checked':
+              source = 'if(e.type&&e.checked){' + source + '}';
+              break;
             case 'enabled':
-              source = 'if(e.type&&e.type!="hidden"&&!e.disabled){' + source + '}';
+              // does not return hidden input fields, even if they are enabled
+              source = 'if(e.type&&!e.disabled&&e.type!="hidden"){' + source + '}';
               break;
             case 'disabled':
-              source = 'if(e.type&&e.type!="hidden"&&e.disabled){' + source + '}';
+              source = 'if(e.type&&e.disabled){' + source + '}';
               break;
-            case 'checked':
-              source = 'if(e.type&&e.type!="hidden"&&e.checked){' + source + '}';
+            case 'selected':
+              source = 'e.parentNode.selectedIndex;if(e.selected===true||e.selected=="selected"){' + source + '}';
               break;
             // CSS3 target element
             case 'target':
-              source = 'if(e.id==location.href.match(/#([_-\w]+)$/)[1]){' + source + '}';
+              source = 'if(e.id==location.href.match(/#((?:[-_\w]|\\.)+)$/)[1]){' + source + '}';
               break;
             // CSS1 & CSS2 link
             case 'link':
@@ -346,347 +604,778 @@ NW.Dom = function() {
             case 'visited':
               source = 'if(e.nodeName.toUpperCase()=="A"&&e.visited){' + source + '}';
               break;
-            // CSS1 & CSS2 user action
+            // CSS1 & CSS2 UI States IE & FF3 have native support
             // these capabilities may be emulated by event managers
             case 'active':
-              // IE & FF3 have native support
-              source = 'var d=(e.ownerDocument||e.document);' +
-                       'if(d.activeElement&&e===d.activeElement){' + source + '}';
-              break;
             case 'hover':
-              // IE & FF3 have native support
-              source = 'var d=(e.ownerDocument||e.document);' +
-                       'if(d.hoverElement&&e===d.hoverElement){' + source + '}';
-              break;
             case 'focus':
-              // IE & FF3 have native support
-              source = 'var d=(e.ownerDocument||e.document);' +
-                       'if(e.type&&e.type!="hidden"&&' +
-                         '((e.hasFocus&&e.hasFocus())||' +
-                         '(d.focusElement&&e===d.focusElement))){' + source + '}';
+              source = 'if(getUIState(e,"' + match[1] + '")){' + source + '}';
               break;
             default:
               break;
           }
         }
-        else throw new Error('NW.Dom.compileSelector: syntax error, unknown selector rule "' + selector + '"');
+        else if (!IS_EMPTY(Selectors)) {
+          // this is where external extensions are
+          // invoked if expressions match selectors
+          status = true;
+          for (name in Selectors) {
+            if ((match = selector.match(Selectors[name].Expression))) {
+              result = Selectors[name].Callback(match, source);
+              source = result.source;
+              status = result.status;
+            }
+            // if an extension fails to parse the selector
+            // it must return a false boolean in "status"
+            if (!status) {
+              // log error but continue execution, don't throw real exceptions
+              // because blocking following processes maybe is not a good idea
+              emit('DOMException: unknown pseudo selector "' + selector + '"');
+              return source;
+            }
+          }
+        }
+        else {
+          // see above, log error but continue execution
+          emit('DOMException: unknown token in selector "' + selector + '"');
+          return source;
+        }
 
-        selector = match[match.length - 1];
+        // ensure "match" is not null or empty since
+        // we do not throw real DOMExceptions above
+        selector = match && match[match.length - 1];
       }
 
       return source;
     },
 
-  // compile a comma separated group of selector
-  // @mode boolean true for select, false for match
-  compileGroup =
-    function(selector, mode) {
-      var i = 0, source = '', token, cachedTokens = {}, parts = selector.split(',');
-      // for each selector in the group
-      for ( ; i < parts.length; ++i) {
-        token = parts[i].replace(TR, '');
-        // if we have a selector string
-        if (token && token.length > 0) {
-          // avoid repeating the same token
-          // in comma separated group (p, p)
-          if (!cachedTokens[token]) {
-            cachedTokens[token] = token;
-            // insert corresponding mode function
-            if (mode) {
-              source += compileSelector(token, 'r[r.length]=c[k];', mode);
-            } else {
-              source += compileSelector(token, 'return true;', mode);
-            }
+  // enable/disable notifications
+  VERBOSE = false,
+
+  // a way to control user notification
+  emit =
+    function(message) {
+      if (VERBOSE) {
+        if (global.console && global.console.log) {
+          global.console.log(message);
+        } else {
+          if (/exception/i.test(message)) {
+            global.status = message;
+            global.defaultStatus = message;
+          } else {
+            global.status += message;
           }
         }
-      }
-      if (mode) {
-        // for select method
-        return new Function('c,s', 'var k=-1,e,r=[],n,j,u,t,a;while((e=c[++k])){' + source + '}return r;');
-      } else {
-        // for match method
-        return new Function('e', 'var n,u,a,t;' + source  + 'return false;');
       }
     },
 
-  // element selection
-  select =
-    function(selector, from) {
-
-      var elements = [];
-
-      if (!(from && (from.nodeType == 1 || from.nodeType == 9))) {
-        from = document;
+  // get specific host properties
+  // currently handle active/focus
+  // @return boolean
+  getUIState =
+    function(element, state) {
+      var host = element.ownerDocument || element;
+      if (state == 'focus' && host.hasFocus) {
+        return element.type && host.hasFocus() &&
+          element === host.activeElement;
       }
+      return ((state + 'Element') in host) &&
+        element === host[state + 'Element'];
+    },
 
+  // match element with selector
+  // @return boolean
+  match =
+    function(element, selector) {
+      // make sure an element node was passed
+      if (element && element.nodeType == 1) {
+        if (typeof selector == 'string' && selector.length) {
+          // save compiled matchers
+          if (!compiledMatchers[selector]) {
+            compiledMatchers[selector] = compileGroup(selector, '', false);
+          }
+          // result of compiled matcher
+          return compiledMatchers[selector].call(this, element, snap);
+        }
+        else {
+          emit('DOMException: "' + selector + '" is not a valid CSS selector.');
+        }
+      }
+      return false;
+    },
+
+  // select elements matching selector
+  // version using new Selector API
+  // @return array
+  select_qsa =
+    function (selector, from) {
       if (typeof selector == 'string' && selector.length) {
+        if (!from || from.nodeType == 9) {
+          try {
+            // use available Selectors API
+            return toArray((from || context).querySelectorAll(selector));
+          } catch(e) { }
+        }
+        // fall back to NWMatcher select
+        return client_api.call(this, selector, from || context);
+      }
+      return [ ];
+    },
 
-        if (cachingEnabled && Snapshot.hasElements) {
-          elements = Snapshot.Elements;
+  // select elements matching selector
+  // version using cross-browser client API
+  // @return array
+  client_api =
+    function client_api(selector, from) {
+
+      var done, elements, last, match, part, slice, token;
+
+      // only process valid strings
+      if (validator.test(selector)) {
+
+        // remove trailing/leading spaces
+        selector = selector.replace(trim, '');
+
+        // use the passed from context
+        from || (from = context);
+
+        // keep context live nodeLists
+        base = from.ownerDocument || from;
+        base.snapshot || (base.snapshot = new Snapshot(base));
+
+        // caching  enabled ?
+        if (cachingEnabled) {
+          // get store from base
+          snap = base.snapshot;
+          // valid base store
+          if (snap && !snap.isExpired) {
+            if (snap.Results[selector] &&
+              snap.Roots[selector] == from) {
+              return snap.Results[selector];
+            }
+          } else {
+            setCache(true, base);
+            snap = base.snapshot;
+          }
         } else {
-          elements = toArray(from.getElementsByTagName('*'));
-          Snapshot.Elements = elements;
-          Snapshot.hasTwinIndexes = false;
-          Snapshot.hasChildIndexes = false;
-        }
-
-        // normal nth/child pseudo selectors
-        if (selector.match(child_pseudo)) {
-          if (!cachingEnabled || !Snapshot.hasChildIndexes) {
-            getChilds(from, elements);
-            Snapshot.hasChildIndexes = true;
+          base.snapshot || (base.snapshot = { });
+          // an nth index/count selector
+          if (position.test(selector)) {
+            // need to clear storage
+            base.snapshot.ChildIndex = [ ];
+            base.snapshot.ChildCount = [ ];
+            base.snapshot.TwinsIndex = [ ];
+            base.snapshot.TwinsCount = [ ];
+            snap = base.snapshot;
           }
         }
 
-        // special of-type pseudo selectors
-        if (selector.match(oftype_pseudo)) {
-          if (!cachingEnabled || !Snapshot.hasTwinIndexes) {
-            getTwins(from, elements);
-            Snapshot.hasTwinIndexes = true;
+        // pre-filtering pass allow to scale proportionally with big DOM trees;
+        // this block can be safely removed, it is a speed booster on big pages
+        // and still maintain the mandatory "document ordered" result set
+
+        // commas separators are treated
+        // sequentially to maintain order
+        if (selector.indexOf(',') < 0) {
+
+          // ID optimization (on full selector)
+          if (!elements && (part = selector.match(Optimize.ID)) &&
+            (token = part[part.length - 1]) && from.getElementById) {
+            elements = [from.getElementById(token.replace(/\\/g, ''))];
+            if (elements[0]) {
+              if (selector == '#' + token) {
+                return elements;
+              }
+              // optimize partial existing id selections
+              if (selector.length != (selector.lastIndexOf('#' + token) + token.length + 1)) {
+                from = elements[0].parentNode;
+                elements = null;
+              }
+            } else {
+              return [ ];
+            }
           }
+
+          // MULTI TAG optimization (on full selector)
+          if (!elements && !(/[^> \w]/).test(selector) && NATIVE_GEBTN) {
+            part = selector.match(/([-_\w]+)/g);
+            if (part.length > 1) {
+              elements = byTags(part, from);
+              if (!(/[^ \w]/).test(selector)) {
+                done = true;
+              }
+            } else {
+              elements = byTag(part[0], from);
+              done = true;
+            }
+          }
+
+          // get right most selector token
+          last = selector.match(Optimize.TOKEN);
+          slice = last[last.length - 1];
+
+          // only slice before :not rules
+          slice = slice.split(':not')[0];
+
+          // TAG optimization (partial slice when using :not)
+          if (!elements && (part = slice.match(Optimize.TAG)) &&
+            (token = part[part.length - 1]) && NATIVE_GEBTN) {
+            elements = byTag(token, from);
+            if (selector == token) {
+              done = true;
+            }
+          }
+
+          // CLASS optimization (partial slice when using :not)
+          if (!elements && (part = slice.match(Optimize.CLASS)) &&
+            (token = part[part.length - 1]) && !ascii.test(token)) {
+            elements = byClass(token.replace(/\\/g, ''), from);
+            if (selector == '.' + token) {
+              done = true;
+            }
+          }
+
+        }
+        // end of prefiltering pass
+
+        if (!done) {
+          // when a context is not passed and no id, tag, class in selector
+          // elements is undefined, so we collect all elements from context
+          elements || (elements = toArray(byTag('*', from)));
+        } else {
+          if (!elements || elements.length === 0) {
+            return [ ];
+          }
+          return elements.constructor == Array ? elements : toArray(elements);
         }
 
-        Snapshot.hasElements = true;
-
-        // cache compiled selectors
+        // save compiled selectors
         if (!compiledSelectors[selector]) {
-          compiledSelectors[selector] = compileGroup(selector, true);
+          compiledSelectors[selector] = compileGroup(selector, '', true);
         }
 
         if (cachingEnabled) {
-
-          if (!(cachedResults.items[selector] && cachedResults.from[selector] == from)) {
-            cachedResults.items[selector] = compiledSelectors[selector](elements, Snapshot);
-            cachedResults.from[selector] = from;
-          }
-          // a previously cached selection of the same selector
-          return cachedResults.items[selector];
-
-        } else {
-
-          // a live selection of the requested selector
-          return compiledSelectors[selector](elements, Snapshot);
-
+          // a cached result set for the requested selector
+          snap.Results[selector] =
+            compiledSelectors[selector].call(this, elements, snap);
+          snap.Roots[selector] = from;
+          return snap.Results[selector];
         }
 
-      } else throw new Error('NW.Dom.select: "' + selector + '" is not a valid CSS selector.');
+        // a fresh result set for the requested selector
+        return compiledSelectors[selector].call(this, elements, snap);
 
-      return [];
+      }
+      else {
+        emit('DOMException: "' + selector + '" is not a valid CSS selector.');
+      }
+
+      return [ ];
     },
 
-  // snapshot of elements contained in rootElement
-  // also contains maps to make nth lookups faster
-  // updated when the elements in the DOM change
-  Snapshot = {
-    Elements: [],
-    TwinIndexes: [],
-    TwinLengths: [],
-    TwinParents: [],
-    ChildIndexes: [],
-    ChildLengths: [],
-    ChildParents: [],
-    hasElements: false,
-    hasTwinIndexes: false,
-    hasChildIndexes: false,
-    // passed to compiled functions
-    getIndex:
-      function(e) {
-        return getIndex(this.Elements, e);
-      }
-  },
+  // use the new native Selector API if available,
+  // if missing, use the cross-browser client api
+  // @return array
+  select = NATIVE_QSAPI ?
+    select_qsa :
+    client_api,
 
-  // get element index in a node array
-  getIndex =
-    function(array, element) {
-      // IE only (too slow in opera)
-      if (IE) {
-        getIndex = function(array, element) {
-          return element.sourceIndex || -1;
-        };
-      // gecko, webkit have native array indexOf
-      } else if (array.indexOf) {
-        getIndex = function(array, element) {
-          return array.indexOf(element);
-        };
-      // other browsers will use this replacement
-      } else {
-        getIndex = function(array, element) {
-          var i = array.length;
-          while (--i >= 0) {
-            if (element == array[i]) {
-              break;
+  // element by id
+  // @return array
+  byId =
+    function(id, from) {
+      return NW.Dom.select('[id="' + id + '"]', from);
+    },
+
+  // elements by tag
+  // @return nodeList (live)
+  byTag =
+    function(tag, from) {
+      tag || (tag = '*');
+      from || (from = context);
+      snap.From || (snap.From = { });
+      snap.Tags || (snap.Tags = { });
+      if (snap.From[tag] != from) {
+        snap.From[tag] = from;
+        snap.Tags[tag] = from.getElementsByTagName(tag);
+      }
+      return snap.Tags[tag];
+    },
+
+  // elements by name
+  // @return array
+  byName =
+    function(name, from) {
+      return NW.Dom.select('[name="' + name + '"]', from);
+    },
+
+  // elements by class
+  // @return nodeList (native GEBCN)
+  // @return array (non native GEBCN)
+  byClass = NATIVE_GEBCN ?
+    function(name, from) {
+      return (from || context).getElementsByClassName(name);
+    } :
+    function(name, from) {
+      // context is handled in byTag for non native gEBCN
+      var i = 0, j = 0, r = [ ], node, nodes = byTag('*', from);
+      name = ' ' + name + ' ';
+      while ((node = nodes[i++])) {
+        if (node.className && (' ' + node.className + ' ').indexOf(name) > -1) {
+          r[j++] = node;
+        }
+      }
+      return r;
+    },
+
+  // recursively get nested tagNames
+  // example: for "div" pass ["div"]
+  // "ul li a" pass ["ul", "li", "a"]
+  // @c array of tag names combinators
+  // @f from context or default
+  // @return array
+  byTags =
+    function(c, f) {
+      var e,
+        i, j, k,
+        n, o, p,
+        r = [ ], s = [ ], t = [ ];
+      e = [f || context];
+      i = 0;
+      while ((n = c[i++])) {
+        j= 0;
+        while ((o = e[j++])) {
+          k = 0;
+          r = byTag(n.replace(trim, ''), o);
+          while ((p = r[k++])) {
+            id = getID(p);
+            if (t[id]) {
+              // discard duplicates
+              continue;
             }
+            t[id] = true;
+            s[s.length] = p;
           }
-          return i;
-        };
-      }
-      // call lazy function definition
-      return getIndex(array, element);
-    },
-
-  // build a twin index map by tag position
-  getTwins =
-    function(f, c) {
-      var k = 0, e, r, p, s, x,
-        h = [f], b = [0], i = [0], l = [0];
-      while ((e = c[k++])) {
-        h[k] = e;
-        l[k] = 0;
-        p = e.parentNode;
-        r = e.nodeName;
-        if (s != p) {
-          x = getIndex(h, s = p);
         }
-        b[k] = x;
-        l[x] = l[x] || {};
-        l[x][r] = l[x][r] || 0;
-        i[k] = ++l[x][r];
+        e = s;
+        s = [ ];
       }
-      Snapshot.TwinParents = b;
-      Snapshot.TwinIndexes = i;
-      Snapshot.TwinLengths = l;
+      return e;
     },
 
-  // build a child index map by child position
-  getChilds =
-    function(f, c) {
-      var  k = 0, e, p, s, x,
-        h = [f], b = [0], i = [0], l = [0];
-      while ((e = c[k++])) {
-        h[k] = e;
-        l[k] = 0;
-        p = e.parentNode;
-        if (s != p) {
-          x = getIndex(h, s = p);
+  // attribute value
+  // @type string
+  getAttribute = NATIVE_HAS_ATTRIBUTE ?
+    function(element, attribute) {
+      return element.getAttribute(attribute) + "";
+    } :
+    function(element, attribute) {
+      var node, property;
+      if (attributesXml.test(attribute)) {
+        // XML namespaced attributes
+        return ((node = element.getAttributeNode(attribute, 1)) && node.value) + "";
+      } else if (attributesUrl[attribute.toLowerCase()]) {
+        // specific URI attributes (parameter 2 to fix IE bug)
+        return element.getAttribute(attribute, 2) + "";
+      }
+      // map attributes/properties names for HTML and DOM namespaces
+      property = Attributes[attribute.toLowerCase()] || attribute;
+      // fall back check for dynamic values of element properties
+      return (element.getAttribute(attribute) || element[property]) + "";
+    },
+
+  // attribute presence
+  // @return boolean
+  hasAttribute = NATIVE_HAS_ATTRIBUTE ?
+    function(element, attribute) {
+      return element.hasAttribute(attribute);
+    } :
+    function(element, attribute) {
+      // need to get at AttributeNode first on IE
+      var node = element.getAttributeNode(attribute);
+      // use both "specified" & "nodeValue" properties
+      return !!(node && (node.specified || node.nodeValue));
+    },
+
+  // get best children collection available
+  // @return nodeList (live)
+  getChildren = NATIVE_CHILDREN_PROPERTY ?
+    function(element) {
+      // document does not have a children collection in IE
+      return element.children || element.childNodes;
+    } :
+    function(element) {
+      // slower to loop through because contains text nodes
+      // empty text nodes could be removed to compensate
+      return element.childNodes;
+    },
+
+  // count elements, used internally
+  // to resolve "last-" type queries
+  // @return number
+  elementsCount =
+    function(element, oftype) {
+      return oftype ?
+        snap.TwinsCount[element.parentNode._cssId][element.nodeName] :
+        snap.ChildCount[element.parentNode._cssId];
+    },
+
+  // test element to be the only element child in its parent
+  // @return boolean
+  firstElement =
+    function(element) {
+      while ((element = element.previousSibling) && element.nodeType != 1) { }
+      return !element;
+    },
+
+  // test element to be the only element child in its parent
+  // @return boolean
+  lastElement =
+    function(element) {
+      while ((element = element.nextSibling) && element.nodeType != 1) { }
+      return !element;
+    },
+
+  // test element to be the only element child in its parent
+  // @return boolean
+  onlyElement =
+    function(element) {
+      return firstElement(element) && lastElement(element);
+    },
+
+  // test element to be the first element of-type in its parent
+  // @return boolean
+  firstOfType =
+    function(element) {
+      var nodeName = element.nodeName;
+      while ((element = element.previousSibling) && element.nodeName != nodeName) { }
+      return !element;
+    },
+
+  // test element to be the last element of-type in its parent
+  // @return boolean
+  lastOfType =
+    function(element) {
+      var nodeName = element.nodeName;
+      while ((element = element.nextSibling) && element.nodeName != nodeName) { }
+      return !element;
+    },
+
+  // test element to be the only element of-type in its parent
+  // @return boolean
+  onlyOfType =
+    function(element) {
+      return firstOfType(element) && lastOfType(element);
+    },
+
+  // child position by nodeType
+  // @return number
+  nthElement =
+    function(element) {
+      var i, j, id, node, nodes, parent;
+      id = getID(element);
+      if (!snap.ChildIndex[id]) {
+        i = 0;
+        j = 0;
+        parent = element.parentNode;
+        nodes = getChildren(parent);
+        while ((node = nodes[i++])) {
+          if (node.nodeType == 1) {
+            snap.ChildIndex[getID(node)] = ++j;
+          }
         }
-        b[k] = x;
-        i[k] = ++l[x];
+        if (parent.nodeType == 1) {
+          snap.ChildCount[getID(parent)] = j;
+        }
       }
-      Snapshot.ChildParents = b;
-      Snapshot.ChildIndexes = i;
-      Snapshot.ChildLengths = l;
+      return snap.ChildIndex[id];
     },
 
-  // set this to true to always enable or
-  // switch manually using setCache(true)
-  cachingEnabled = false,
+  // child position by nodeName
+  // @return number
+  nthOfType =
+    function(element) {
+      var i, j, id, node, nodes, parent, tag;
+      id = getID(element);
+      if (!snap.TwinsIndex[id]) {
+        i = 0;
+        j = 0;
+        parent = element.parentNode;
+        nodes = getChildren(parent);
+        tag = element.nodeName;
+        while ((node = nodes[i++])) {
+          // tagName ensures it is an element
+          // avoids visiting the DOCTYPE node
+          // and probably other comment nodes
+          if (node.tagName == tag) {
+            snap.TwinsIndex[getID(node)] = ++j;
+          }
+        }
+        if (parent.nodeType == 1) {
+          pid = getID(parent);
+          snap.TwinsCount[pid] || (snap.TwinsCount[pid] = { });
+          snap.TwinsCount[pid][tag] = j;
+        }
+      }
+      return snap.TwinsIndex[id];
+    },
 
-  // enable caching system
-  // @d optional document context
+  // convert nodeList to array
+  // @return array
+  toArray = NATIVE_SLICE_PROTO ?
+    function(list) {
+      var fix, elements;
+      if ((fix = list[0].ownerDocument.getElementById('length'))) {
+        fix.id = '';
+      }
+      elements = Array.prototype.slice.call(list);
+      if (fix) {
+        fix.id = 'length';
+      }
+      return elements;
+    } :
+    function(list) {
+      // avoid using the length property of nodeLists
+      // it may have been overwritten by bad HTML code
+      if (list.constructor == Array) {
+        return list;
+      }
+      var i = 0, array = [ ];
+      while ((array[i] = list[i++])) { }
+      array.length--;
+      return array;
+    },
+
+  // cssId expando on elements,
+  // used to keep child indexes
+  // during a selection session
+  cssId = 1,
+
+  // generate an ID
+  // @return string
+  getID =
+    function(element) {
+      return element._cssId || (element._cssId = 'NW_' + (new Date).getTime() + '_' + cssId++);
+    },
+
+  // BEGIN: local context caching system
+
+  // ****************** CACHING ******************
+  // keep caching states for each context document
+  // set manually by using setCache(true, context)
+  cachingEnabled = NATIVE_MUTATION_EVENTS,
+
+  // indexes/count of elements contained in rootElement
+  // expired by Mutation Events on DOM tree changes
+  Snapshot =
+    function(d) {
+      return {
+        // validation flag
+        isExpired: true,
+        // count of siblings by nodeType or nodeName
+        ChildCount: [ ],
+        TwinsCount: [ ],
+        // ordinal position by nodeType or nodeName
+        ChildIndex: [ ],
+        TwinsIndex: [ ],
+        // result sets and related root contexts
+        Results: [ ],
+        Roots: [ ]
+      };
+    },
+
+  // local indexes, cleared
+  // between selection calls
+  snap = new Snapshot(context),
+
+  // enable/disable context caching system
+  // @d optional document context (iframe, xml document)
+  // script loading context will be used as default context
   setCache =
     function(enable, d) {
-      expireCache();
-      d || (d = document);
-      if (!cachingEnabled && enable) {
-        // FireFox/Opera/Safari/KHTML support both Mutation Events
-        d.addEventListener('DOMAttrModified', expireCache, false);
-        d.addEventListener('DOMNodeInserted', expireCache, false);
-        d.addEventListener('DOMNodeRemoved', expireCache, false);
-        cachingEnabled = true;
-      } else if (cachingEnabled) {
-        d.removeEventListener('DOMAttrModified', expireCache, false);
-        d.removeEventListener('DOMNodeInserted', expireCache, false);
-        d.removeEventListener('DOMNodeRemoved', expireCache, false);
-        cachingEnabled = false;
+      d || (d = context);
+      if (!!enable) {
+        d.snapshot || (d.snapshot = new Snapshot(d));
+        startMutation(d);
+      } else {
+        stopMutation(d);
+      }
+      cachingEnabled = !!enable;
+    },
+
+  // invoked by mutation events to expire cached parts
+  mutationWrapper =
+    function(event) {
+      var d = event.target.ownerDocument || event.target;
+      stopMutation(d);
+      switch (event.type) {
+        case 'DOMAttrModified':
+          expireResults(d);
+          break;
+        case 'DOMNodeInserted':
+          expireCache(d);
+          break;
+        case 'DOMNodeRomoved':
+          expireCache(d);
+          break;
+        default:
+          break;
       }
     },
 
-  // expose the private method
+  // append mutation events
+  startMutation =
+    function(d) {
+      if (!d.isCaching) {
+        // FireFox/Opera/Safari/KHTML have support for Mutation Events
+        d.addEventListener('DOMAttrModified', mutationWrapper, false);
+        d.addEventListener('DOMNodeInserted', mutationWrapper, false);
+        d.addEventListener('DOMNodeRemoved', mutationWrapper, false);
+        d.isCaching = true;
+      }
+    },
+
+  // remove mutation events
+  stopMutation =
+    function(d) {
+      if (d.isCaching) {
+        d.removeEventListener('DOMAttrModified', mutationWrapper, false);
+        d.removeEventListener('DOMNodeInserted', mutationWrapper, false);
+        d.removeEventListener('DOMNodeRemoved', mutationWrapper, false);
+        d.isCaching = false;
+      }
+    },
+
+  // expireCache and expireResults may be invoked by
+  // Mutation Events or programmatically by scripts,
+  // use "this" as the context when invoked by events
+  // or the passed paramter when invoked by scripts
+
+  // expire complete cache and stop mutation
+  // document context is mandatory no checks
   expireCache =
-    function() {
-      Snapshot.hasElements = false;
-      Snapshot.hasTwinIndexes = false;
-      Snapshot.hasChildIndexes = false;
-      cachedResults = {
-        from: [],
-        items: []
-      };
+    function(d) {
+      if (d.snapshot) {
+        d.snapshot.isExpired = true;
+      }
+    },
+
+  // expire cached result and stop mutation
+  // document context is mandatory no checks
+  expireResults =
+    function(d) {
+      if (d.snapshot) {
+        d.snapshot.Roots = [ ];
+        d.snapshot.Results = [ ];
+      }
     };
 
-  if (
-    document.implementation.hasFeature("MutationEvents", "2.0") ||
-    document.implementation.hasFeature("Events", "2.0") &&
-    document.implementation.hasFeature("Core", "2.0")) {
-    // enable caching on browser supporting either Mutation Events (FF3/Safari/Opera/Konqueror)
-    // or Core Events 2.0 (FF2 supports Mutation Events but are not shown in the implementation)
-    setCache(true);
-    // on page unload remove event listeners and cleanup
-    window.addEventListener('beforeunload', function() {
-        window.removeEventListener('beforeunload', arguments.callee, false);
-        setCache(false);
-      }, false
-    );
-  }
+  // END: local context caching system
 
   return {
 
     // for testing purposes only!
     compile:
       function(selector) {
-        return compileGroup(selector, true).toString();
+        return compileGroup(selector, '', true);
       },
 
-    // expose caching methods
+    // enable/disable cache
     setCache: setCache,
 
+    // forced expire of DOM tree cache
     expireCache: expireCache,
 
-    // element match selector return boolean true/false
-    match:
-      function(element, selector) {
+    // forced expire of cached Results
+    expireResults: expireResults,
 
-        // make sure an element node was passed
-        if (!(element && element.nodeType == 1)) {
-          return false;
-        }
+    // element match selector, return boolean true/false
+    match: match,
 
-        if (typeof selector == 'string' && selector.length) {
+    // elements matching selector, starting from element
+    select: select,
 
-          // cache compiled matchers
-          if (!compiledMatchers[selector]) {
-            compiledMatchers[selector] = compileGroup(selector, false);
-          }
-
-          // result of compiled matcher
-          return compiledMatchers[selector](element);
-
-        } else throw new Error('NW.Dom.match: "' + selector + '" is not a valid CSS selector.');
-
-        return false;
+    // Safari 2 bug with innerText (gasp!)
+    // used to strip tags from innerHTML
+    // shouldn't be public, but needed
+    stripTags:
+      function(s) {
+        var r = /<\/?[^>]+>/gi;
+        s = s.replace(r, '');
+        return s;
       },
 
-    // elements matching selector optionally starting from node
-    select:
-      function(selector, from) {
-
-        // use native Selector API if available
-        if (typeof document.querySelectorAll != 'undefined') {
-
-          this.select = function(selector, from) {
-            if (typeof selector == 'string' && selector.length) {
-              from || (from = document);
-              try {
-                return toArray(from.querySelectorAll(selector));
-              } catch(e) {
-                // fall back to self contained select
-                return select(selector, from);
-              }
-            }
-            return [];
-          };
-
-        } else {
-
-          this.select = function(selector, from) {
-            return select(selector, from);
-          }
-
+    // add or overwrite Patterns
+    registerSelector:
+      function (name, rexp, func) {
+        if (!Selectors[name]) {
+          Selectors[name] = { };
+          Selectors[name].Expression = rexp;
+          Selectors[name].Callback = func;
         }
+      },
 
-        // call lazy function definition
-        return this.select(selector, from);
-      }
+    // add or overwrite Operators
+    registerOperator:
+      function (symbol, resolver) {
+        if (!Operators[symbol]) {
+          Operators[symbol] = resolver;
+        }
+      },
+
+    // retrieve element by id attr
+    byId: byId,
+
+    // retrieve elements by tag name
+    byTag: byTag,
+
+    // retrieve elements by name attr
+    byName: byName,
+
+    // retrieve elements by class name
+    byClass: byClass,
+
+    // retrieve all children elements
+    getChildren: getChildren,
+
+    // read the value of the attribute
+    // as was in the original HTML code
+    getAttribute: getAttribute,
+
+    // check for the attribute presence
+    // as was in the original HTML code
+    hasAttribute: hasAttribute,
+
+    // count elements by type or name
+    elementsCount: elementsCount,
+
+    // first child element any type
+    firstElement: firstElement,
+
+    // last child element any type
+    lastElement: lastElement,
+
+    // only child element any type
+    onlyElement: onlyElement,
+
+    // first child element of-type
+    firstOfType: firstOfType,
+
+    // last child element of-type
+    lastOfType: lastOfType,
+
+    // only child element of-type
+    onlyOfType: onlyOfType,
+
+    // nth child element any type
+    nthElement: nthElement,
+
+    // nth child element of-type
+    nthOfType: nthOfType,
+
+    // convert nodeList to array
+    toArray: toArray
 
   };
 
-}();
+}(this);
