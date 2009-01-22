@@ -43,8 +43,6 @@ NW.Dom = function(global) {
       test(object[method]);
     },
 
-  STRICT_MODE = /^CSS/i.test(context.compatMode),
-
   // detect native getAttribute/hasAttribute method,
   // frameworks extend these to elements, but seems
   // it does not work for XML namespaced attributes
@@ -152,18 +150,20 @@ NW.Dom = function(global) {
   // HTML 4 and XHTML both have some attributes that have pre-defined and limited sets of values.
   // http://www.w3.org/TR/xhtml1/#h-4.11
 
-  insensitiveMap = {
-    // must be treated case insensitive in HTML (Quirks ?)
-    'dir': 0, 'scope': 0, 'clear': 0, 'defer': 0, 'nowrap': 0, 'declare': 0,
-    'frame': 0, 'rules': 0, 'shape': 0, 'nohref': 0, 'align': 0, 'valign': 0,
-    'noresize': 0, 'noshade': 0, 'scrolling': 0, 'method': 0, 'valuetype': 0,
-    'checked': 0, 'multiple': 0, 'selected': 0, 'disabled': 0, 'readonly': 0,
-    'compact': 0,
+  insensitiveMap = /^CSS/i.test(context.compatMode) ? {
     // must be trated case insensitive in both HTML and XHTML (Strict ?)
-    'http-equiv': 1, 'text': 1, 'link': 1, 'vlink': 1, 'alink': 1, 'lang': 1,
-    'axis': 1, 'hreflang': 1, 'rel': 1, 'rev': 1, 'charset': 1, 'codetype': 1,
-    'media': 1, 'bgcolor': 1, 'color': 1, 'face': 1, 'target': 1, 'enctype': 1,
-    'accept-charset': 1, 'accept': 1, 'language': 1, 'type': 1
+    'accept': 1, 'accept-charset': 1, 'alink': 1, 'axis': 1,
+    'bgcolor': 1, 'charset': 1, 'codetype': 1, 'color': 1,
+    'face': 1, 'enctype': 1, 'hreflang': 1, 'http-equiv': 1,
+    'lang': 1, 'language': 1, 'link': 1, 'media': 1, 'rel': 1,
+    'rev': 1, 'target': 1, 'text': 1, 'type': 1, 'vlink': 1
+    } : {
+    // must be treated case insensitive in HTML (Quirks ?)
+    'align': 1, 'checked': 1, 'clear': 1, 'compact': 1, 'declare': 1,
+    'defer': 1, 'dir': 1, 'disabled': 1, 'frame': 1, 'method': 1,
+    'multiple': 1, 'nohref': 1, 'noresize': 1, 'noshade': 1, 'nowrap': 1,
+    'readonly': 1, 'rules': 1, 'scope': 1, 'scrolling': 1, 'selected': 1,
+    'shape': 1, 'valign': 1, 'valuetype': 1
   },
 
   // attribute referencing URL values need special treatment in IE
@@ -442,8 +442,7 @@ NW.Dom = function(global) {
           expr = match[1].split(':');
           expr = expr.length == 2 ? expr[1] : expr[0];
           // check case treatment from insensitiveMap
-          if (insensitiveMap[expr.toLowerCase()] ||
-            expr.toLowerCase() in insensitiveMap && STRICT_MODE) {
+          if (insensitiveMap[expr.toLowerCase()] === 1) {
             match[5] = match[5].toLowerCase();
           } else {
             expr = '';
