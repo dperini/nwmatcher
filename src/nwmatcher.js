@@ -955,6 +955,7 @@ NW.Dom = function(global) {
             t[id] = true;
             s[s.length] = p;
           }
+          t = [ ];
         }
         e = s;
         s = [ ];
