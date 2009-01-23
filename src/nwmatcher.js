@@ -935,11 +935,9 @@ NW.Dom = function(global) {
   // @return array
   byTags =
     function(c, f) {
-      var e,
-        i, j, k,
-        n, o, p,
-        r = [ ], s = [ ], t = [ ];
-      e = [f || context];
+      var i, j, k, n, o, p,
+        e = [f || context],
+		r = [ ], s = [ ], t = [ ];
       i = 0;
       while ((n = c[i++])) {
         j= 0;
@@ -955,10 +953,10 @@ NW.Dom = function(global) {
             t[id] = true;
             s[s.length] = p;
           }
-          t = [ ];
         }
         e = s;
         s = [ ];
+        t = [ ];
       }
       return e;
     },
