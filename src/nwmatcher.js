@@ -953,7 +953,7 @@ NW.Dom = function(global) {
           k = 0;
           r = byTag(n.replace(trim, ''), o);
           while ((p = r[k++])) {
-            id = getID(p);
+            id = (p._cssId || (p._cssId = ++cssId));
             if (t[id]) {
               // discard duplicates
               continue;
@@ -1066,52 +1066,50 @@ NW.Dom = function(global) {
   // @return number
   nthElement =
     function(element) {
-      var i, j, id, node, nodes, parent;
-      id = getID(element);
-      if (!snap.ChildIndex[id]) {
-        i = 0;
-        j = 0;
-        parent = element.parentNode;
-        nodes = getChildren(parent);
-        while ((node = nodes[i++])) {
-          if (node.nodeType == 1) {
-            snap.ChildIndex[getID(node)] = ++j;
+      var i, j, node, nodes, parent, cache = snap.ChildIndex;
+      if (!element._cssId || !cache[element._cssId]) {
+        if ((parent = element.parentNode)) {
+          i = 0;
+          j = 0;
+          nodes = parent[NATIVE_CHILDREN];
+          while ((node = nodes[i++])) {
+            if (node.nodeType == 1) {
+              cache[node._cssId || (node._cssId = ++cssId)] = ++j;
+            }
           }
-        }
-        if (parent.nodeType == 1) {
-          snap.ChildCount[getID(parent)] = j;
+          snap.ChildCount[parent._cssId || (parent._cssId = ++cssId)] = j;
+        } else {
+          return 0;
         }
       }
-      return snap.ChildIndex[id];
+      return cache[element._cssId];
     },
 
   // child position by nodeName
   // @return number
   nthOfType =
     function(element) {
-      var i, j, id, node, nodes, parent, tag;
-      id = getID(element);
-      if (!snap.TwinsIndex[id]) {
-        i = 0;
-        j = 0;
-        parent = element.parentNode;
-        nodes = getChildren(parent);
-        tag = element.nodeName;
-        while ((node = nodes[i++])) {
-          // tagName ensures it is an element
-          // avoids visiting the DOCTYPE node
-          // and probably other comment nodes
-          if (node.tagName == tag) {
-            snap.TwinsIndex[getID(node)] = ++j;
+      var i, j, node, nodes, pid, parent, tag, cache = snap.TwinsIndex;
+      if (!element._cssId || !cache[element._cssId]) {
+        if ((parent = element.parentNode)) {
+          i = 0;
+          j = 0;
+          nodes = parent[NATIVE_CHILDREN];
+          tag = element.nodeName;
+          while ((node = nodes[i++])) {
+            // tagName ensures it is an element
+            // avoids visiting the DOCTYPE node
+            // and probably other comment nodes
+            if (node.tagName == tag) {
+              cache[node._cssId || (node._cssId = ++cssId)] = ++j;
+            }
           }
-        }
-        if (parent.nodeType == 1) {
-          pid = getID(parent);
+          pid = (parent._cssId || (parent._cssId = ++cssId));
           snap.TwinsCount[pid] || (snap.TwinsCount[pid] = { });
           snap.TwinsCount[pid][tag] = j;
         }
       }
-      return snap.TwinsIndex[id];
+      return cache[element._cssId];
     },
 
   // convert nodeList to array
@@ -1144,13 +1142,6 @@ NW.Dom = function(global) {
   // used to keep child indexes
   // during a selection session
   cssId = 1,
-
-  // generate an ID
-  // @return string
-  getID =
-    function(element) {
-      return element._cssId || (element._cssId = 'NW_' + (new Date).getTime() + '_' + cssId++);
-    },
 
   // BEGIN: local context caching system
 
