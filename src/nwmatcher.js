@@ -21,14 +21,17 @@ NW.Dom = function(global) {
 
   var version = 'nwmatcher-1.1beta',
 
+  // processing context
+  base = global.document,
+
+  // current DOM viewport
+  view = base.defaultView,
+
   // script loading context
   context = global.document,
 
-  // context root element
+  // context root element (HTML)
   root = context.documentElement,
-
-  // processing context
-  base = context,
 
   /* BEGIN FEATURE TESTING */
 
@@ -43,18 +46,17 @@ NW.Dom = function(global) {
       test(object[method]);
     },
 
-  // detect native getAttribute/hasAttribute method,
-  // frameworks extend these to elements, but seems
-  // it does not work for XML namespaced attributes
-  NATIVE_GET_ATTRIBUTE = isNative(root, 'getAttribute'),
-  NATIVE_HAS_ATTRIBUTE = isNative(root, 'hasAttribute'),
-
   // NOTE: NATIVE_XXXXX check for existance of method only
   // so through the code read it as "supported", maybe BUGGY
 
-  // detect if used methods are native in browsers
+  // detect native getAttribute/hasAttribute methods,
+  // frameworks extend these to elements, but it seems
+  // this does not work for XML namespaced attributes,
+  // used to check both getAttribute/hasAttribute in IE
+  NATIVE_HAS_ATTRIBUTE = isNative(root, 'hasAttribute'),
+
+  // detect if DOM methods are native in browsers
   NATIVE_QSAPI = isNative(context, 'querySelector'),
-  NATIVE_GEBID = isNative(context, 'getElementById'),
   NATIVE_GEBTN = isNative(root, 'getElementsByTagName'),
   NATIVE_GEBCN = isNative(root, 'getElementsByClassName'),
 
@@ -190,7 +192,7 @@ NW.Dom = function(global) {
   // place to add exotic functionalities
   Selectors = {
     // as a simple example this will check
-    // for chars out of standard asii table
+    // for chars not in standard ascii table
     //
     // 'mySpecialSelector': {
     //  'Expression': /\u0080-\uffff/,
@@ -1274,7 +1276,7 @@ NW.Dom = function(global) {
         return s;
       },
 
-    // add or overwrite Patterns
+    // add selector patterns for user defined callbacks
     registerSelector:
       function (name, rexp, func) {
         if (!Selectors[name]) {
@@ -1284,7 +1286,8 @@ NW.Dom = function(global) {
         }
       },
 
-    // add or overwrite Operators
+    // add or overwrite user defined operators
+    // TODO: check when overwriting standard operators
     registerOperator:
       function (symbol, resolver) {
         if (!Operators[symbol]) {
