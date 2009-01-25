@@ -1213,7 +1213,7 @@ NW.Dom = function(global) {
         case 'DOMNodeInserted':
           expireCache(d);
           break;
-        case 'DOMNodeRomoved':
+        case 'DOMNodeRemoved':
           expireCache(d);
           break;
         default:
