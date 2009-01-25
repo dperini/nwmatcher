@@ -742,15 +742,12 @@ NW.Dom = function(global) {
         // use the passed from context
         from || (from = context);
 
-        // keep context live nodeLists
-        base = from.ownerDocument || from;
-        base.snapshot || (base.snapshot = new Snapshot(base));
-
         // caching  enabled ?
         if (cachingEnabled) {
-          // get store from base
+          // reference context ownerDocument
+          base = from.ownerDocument || from;
           snap = base.snapshot;
-          // valid base store
+          // valid base context storage
           if (snap && !snap.isExpired) {
             if (snap.Results[selector] &&
               snap.Roots[selector] == from) {
@@ -758,17 +755,6 @@ NW.Dom = function(global) {
             }
           } else {
             setCache(true, base);
-            snap = base.snapshot;
-          }
-        } else {
-          base.snapshot || (base.snapshot = { });
-          // an nth index/count selector
-          if (position.test(selector)) {
-            // need to clear storage
-            base.snapshot.ChildIndex = [ ];
-            base.snapshot.ChildCount = [ ];
-            base.snapshot.TwinsIndex = [ ];
-            base.snapshot.TwinsCount = [ ];
             snap = base.snapshot;
           }
         }
@@ -800,7 +786,7 @@ NW.Dom = function(global) {
           }
 
           // MULTI TAG optimization (on full selector)
-          if (!elements && !(/[^> \w]/).test(selector) && NATIVE_GEBTN) {
+          if (!elements && !Optimize.descendants.test(selector) && NATIVE_GEBTN) {
             part = selector.match(/([-_\w]+)/g);
             if (part.length > 1) {
               elements = byTags(part, from);
@@ -847,9 +833,9 @@ NW.Dom = function(global) {
           elements || (elements = toArray(byTag('*', from)));
         } else {
           if (!elements || elements.length === 0) {
-            return [ ];
+            elements = [ ];
           }
-          return elements.constructor == Array ? elements : toArray(elements);
+          elements = elements.constructor == Array ? elements : toArray(elements);
         }
 
         // save compiled selectors
@@ -887,29 +873,21 @@ NW.Dom = function(global) {
   // @return array
   byId =
     function(id, from) {
-      return NW.Dom.select('[id="' + id + '"]', from);
+      return this.select('[id="' + id + '"]', from);
     },
 
   // elements by tag
   // @return nodeList (live)
   byTag =
     function(tag, from) {
-      tag || (tag = '*');
-      from || (from = context);
-      snap.From || (snap.From = { });
-      snap.Tags || (snap.Tags = { });
-      if (snap.From[tag] != from) {
-        snap.From[tag] = from;
-        snap.Tags[tag] = from.getElementsByTagName(tag);
-      }
-      return snap.Tags[tag];
+      return (from || context).getElementsByTagName(tag || '*');
     },
 
   // elements by name
   // @return array
   byName =
     function(name, from) {
-      return NW.Dom.select('[name="' + name + '"]', from);
+      return this.select('[name="' + name + '"]', from);
     },
 
   // elements by class
@@ -940,7 +918,7 @@ NW.Dom = function(global) {
   byTags =
     function(c, f) {
       var i, j, k, n, o, p,
-        e = [f || context],
+        id, e = [f || context],
         r = [ ], s = [ ], t = [ ];
       i = 0;
       while ((n = c[i++])) {
@@ -1149,10 +1127,11 @@ NW.Dom = function(global) {
   // indexes/count of elements contained in rootElement
   // expired by Mutation Events on DOM tree changes
   Snapshot =
-    function(d) {
+    function() {
       return {
-        // validation flag
-        isExpired: true,
+        // validation flag, creating it already expired,
+        // code validation will set it valid first time
+        isExpired: false,
         // count of siblings by nodeType or nodeName
         ChildCount: [ ],
         TwinsCount: [ ],
@@ -1167,7 +1146,7 @@ NW.Dom = function(global) {
 
   // local indexes, cleared
   // between selection calls
-  snap = new Snapshot(context),
+  snap = new Snapshot(),
 
   // enable/disable context caching system
   // @d optional document context (iframe, xml document)
@@ -1176,7 +1155,7 @@ NW.Dom = function(global) {
     function(enable, d) {
       d || (d = context);
       if (!!enable) {
-        d.snapshot || (d.snapshot = new Snapshot(d));
+        d.snapshot = new Snapshot();
         startMutation(d);
       } else {
         stopMutation(d);
@@ -1233,7 +1212,7 @@ NW.Dom = function(global) {
   // document context is mandatory no checks
   expireCache =
     function(d) {
-      if (d.snapshot) {
+      if (d && d.snapshot) {
         d.snapshot.isExpired = true;
       }
     };
@@ -1245,7 +1224,7 @@ NW.Dom = function(global) {
     // for testing purposes only!
     compile:
       function(selector) {
-        return compileGroup(selector, '', true);
+        return compileGroup(selector, '', true).toString();
       },
 
     // enable/disable cache
