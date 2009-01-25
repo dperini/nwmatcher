@@ -49,8 +49,6 @@ NW.Dom = function(global) {
   NATIVE_GET_ATTRIBUTE = isNative(root, 'getAttribute'),
   NATIVE_HAS_ATTRIBUTE = isNative(root, 'hasAttribute'),
 
-  NATIVE_CHILDREN_PROPERTY = 'children' in root,
-
   // NOTE: NATIVE_XXXXX check for existance of method only
   // so through the code read it as "supported", maybe BUGGY
 
@@ -59,6 +57,15 @@ NW.Dom = function(global) {
   NATIVE_GEBID = isNative(context, 'getElementById'),
   NATIVE_GEBTN = isNative(root, 'getElementsByTagName'),
   NATIVE_GEBCN = isNative(root, 'getElementsByClassName'),
+
+  // get name of best children collection property available
+  // detect Safari 2.0.x different children implementation
+  NATIVE_CHILDREN =
+    'children' in root ?
+      (view && global !== view ?
+        'childNodes' :
+        'children') :
+      'childNodes',
 
   // nodeList can be converted by Array.slice() natively
   // on Opera 9.27 an id="length" will fold Array.slice()
@@ -996,16 +1003,14 @@ NW.Dom = function(global) {
     },
 
   // get best children collection available
+  // Safari 2.0.x "children" implementation
+  // differs, taken care by feature testing
   // @return nodeList (live)
-  getChildren = NATIVE_CHILDREN_PROPERTY ?
+  getChildren =
     function(element) {
-      // document does not have a children collection in IE
-      return element.children || element.childNodes;
-    } :
-    function(element) {
-      // slower to loop through because contains text nodes
-      // empty text nodes could be removed to compensate
-      return element.childNodes;
+      // childNodes is slower to loop through because it contains text nodes
+      // empty text nodes could be removed at startup to compensate this a bit
+      return element[NATIVE_CHILDREN] || element.childNodes;
     },
 
   // count elements, used internally
