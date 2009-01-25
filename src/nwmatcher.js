@@ -1204,7 +1204,7 @@ NW.Dom = function(global) {
       stopMutation(d);
       switch (event.type) {
         case 'DOMAttrModified':
-          expireResults(d);
+          expireCache(d);
           break;
         case 'DOMNodeInserted':
           expireCache(d);
@@ -1240,27 +1240,14 @@ NW.Dom = function(global) {
       }
     },
 
-  // expireCache and expireResults may be invoked by
-  // Mutation Events or programmatically by scripts,
-  // use "this" as the context when invoked by events
-  // or the passed paramter when invoked by scripts
-
-  // expire complete cache and stop mutation
+  // expire complete cache
+  // can be invoked by Mutation Events or
+  // programmatically by other code/scripts
   // document context is mandatory no checks
   expireCache =
     function(d) {
       if (d.snapshot) {
         d.snapshot.isExpired = true;
-      }
-    },
-
-  // expire cached result and stop mutation
-  // document context is mandatory no checks
-  expireResults =
-    function(d) {
-      if (d.snapshot) {
-        d.snapshot.Roots = [ ];
-        d.snapshot.Results = [ ];
       }
     };
 
@@ -1279,9 +1266,6 @@ NW.Dom = function(global) {
 
     // forced expire of DOM tree cache
     expireCache: expireCache,
-
-    // forced expire of cached Results
-    expireResults: expireResults,
 
     // element match selector, return boolean true/false
     match: match,
