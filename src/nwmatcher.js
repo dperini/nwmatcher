@@ -523,9 +523,10 @@ NW.Dom = function(global) {
                   b = 0 || ((n = match[5].match(/(-?\d{1,})$/)) ? parseInt(n[1], 10) : 0);
                 }
 
-                // use nthElement/nthOfType
-                expr = match[2] == 'last' ?
-                  'this.elementsCount(e,' + (match[4] ? 'true' : 'false') + ')-' + (b - 1) : b;
+                // executed after the count is computed
+                expr = match[2] == 'last' ? (match[4] ?
+                    's.TwinsCount[e.parentNode._cssId][e.nodeName]' :
+                    's.ChildCount[e.parentNode._cssId]') + '-' + (b - 1) : b;
 
                 test =
                   b < 0 ?
@@ -944,7 +945,7 @@ NW.Dom = function(global) {
     function(c, f) {
       var i, j, k, n, o, p,
         e = [f || context],
-		r = [ ], s = [ ], t = [ ];
+        r = [ ], s = [ ], t = [ ];
       i = 0;
       while ((n = c[i++])) {
         j= 0;
@@ -1011,16 +1012,6 @@ NW.Dom = function(global) {
       // childNodes is slower to loop through because it contains text nodes
       // empty text nodes could be removed at startup to compensate this a bit
       return element[NATIVE_CHILDREN] || element.childNodes;
-    },
-
-  // count elements, used internally
-  // to resolve "last-" type queries
-  // @return number
-  elementsCount =
-    function(element, oftype) {
-      return oftype ?
-        snap.TwinsCount[element.parentNode._cssId][element.nodeName] :
-        snap.ChildCount[element.parentNode._cssId];
     },
 
   // test element to be the only element child in its parent
@@ -1348,9 +1339,6 @@ NW.Dom = function(global) {
     // check for the attribute presence
     // as was in the original HTML code
     hasAttribute: hasAttribute,
-
-    // count elements by type or name
-    elementsCount: elementsCount,
 
     // first child element any type
     firstElement: firstElement,
