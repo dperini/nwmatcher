@@ -553,7 +553,7 @@ NW.Dom = function(global) {
 
         }
         // *** Dynamic pseudo-classes
-        // CSS3 :not, :root, :empty, :contains, :enabled, :disabled, :checked, :target
+        // CSS3 :not, :contains, :enabled, :disabled, :checked, :target
         // CSS2 :active, :focus, :hover (no way yet)
         // CSS1 :link, :visited
         else if ((match = selector.match(Patterns.dpseudos)) &&
@@ -573,15 +573,6 @@ NW.Dom = function(global) {
               for (i = 0; expr[i]; i++) {
                 source = compileSelector(expr[i], source).replace(/(if|while)([^\{]+)/, '$1(!($2))');
               }
-              break;
-            case 'root':
-              // only one root element for document, so break on match
-              source = 'if(e==e.ownerDocument.documentElement){' + source + 'break;}';
-              break;
-            case 'empty':
-              // IE does not support empty text nodes,
-              // original whitespaces not kept in DOM
-              source = 'if(!e.firstChild){' + source + '}';
               break;
             // maybe deprecated in latest proposals
             case 'contains':
