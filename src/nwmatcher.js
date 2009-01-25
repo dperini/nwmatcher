@@ -159,7 +159,8 @@ NW.Dom = function(global) {
   // HTML 4 and XHTML both have some attributes that have pre-defined and limited sets of values.
   // http://www.w3.org/TR/xhtml1/#h-4.11
 
-  insensitiveMap = /^CSS/i.test(context.compatMode) ? {
+  // Safari 2.0.x seems to always treat attributes as in Quirks mode
+  insensitiveMap = /^CSS/i.test(context.compatMode) || (view && global !== view) ? {
     // must be trated case insensitive in both HTML and XHTML (Strict ?)
     'accept': 1, 'accept-charset': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'codetype': 1, 'color': 1,
@@ -250,7 +251,9 @@ NW.Dom = function(global) {
     TAG: new RegExp("((?:[-_\\w" + encoding + "]|\\\\.)+)*"),
     CLASS: new RegExp("\\.((?:[-_\\w" + encoding + "]|\\\\.)+)*"),
     // split last, right most, selector group token
-    TOKEN: /([^\ \>\+\~\,\(\)\[\]]+|\([^\(\)]+\)|\(.*\)|\[[^\[\]]+\]|\[.*\])+/g
+    TOKEN: /([^\ \>\+\~\,\(\)\[\]]+|\([^\(\)]+\)|\(.*\)|\[[^\[\]]+\]|\[.*\])+/g,
+    descendants: /[^> \w]/,
+    siblings: /[^+~\w]/
   },
 
   // precompiled Regular Expressions
