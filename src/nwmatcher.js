@@ -1042,7 +1042,7 @@ NW.Dom = function(global) {
     function(element) {
       var i, j, node, nodes, parent, cache = snap.ChildIndex;
       if (!element._cssId || !cache[element._cssId]) {
-        if ((parent = element.parentNode)) {
+        if ((parent = element.parentNode).nodeType == 1) {
           i = 0;
           j = 0;
           nodes = parent[NATIVE_CHILDREN];
@@ -1053,6 +1053,7 @@ NW.Dom = function(global) {
           }
           snap.ChildCount[parent._cssId || (parent._cssId = ++cssId)] = j;
         } else {
+          // does not have a parent (ex.: document)
           return 0;
         }
       }
@@ -1065,7 +1066,7 @@ NW.Dom = function(global) {
     function(element) {
       var i, j, node, nodes, pid, parent, tag, cache = snap.TwinsIndex;
       if (!element._cssId || !cache[element._cssId]) {
-        if ((parent = element.parentNode)) {
+        if ((parent = element.parentNode).nodeType == 1) {
           i = 0;
           j = 0;
           nodes = parent[NATIVE_CHILDREN];
@@ -1081,6 +1082,9 @@ NW.Dom = function(global) {
           pid = (parent._cssId || (parent._cssId = ++cssId));
           snap.TwinsCount[pid] || (snap.TwinsCount[pid] = { });
           snap.TwinsCount[pid][tag] = j;
+        } else {
+          // does not have a parent (ex.: document)
+          return 0;
         }
       }
       return cache[element._cssId];
