@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.1beta
  * Created: 20070722
- * Release: 20090117
+ * Release: 20090127
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -756,6 +756,11 @@ NW.Dom = function(global) {
           } else {
             setCache(true, base);
             snap = base.snapshot;
+          }
+        } else {
+          if (position.test(selector)) {
+            // need to clear storage
+            snap = new Snapshot();
           }
         }
 
