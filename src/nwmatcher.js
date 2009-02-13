@@ -1253,9 +1253,7 @@ NW.Dom = function(global) {
     // shouldn't be public, but needed
     stripTags:
       function(s) {
-        var r = /<\/?[^>]+>/gi;
-        s = s.replace(r, '');
-        return s;
+        return s.replace(/<\/?("[^\"]*"|'[^\']*'|[^>])+>/gi, '');
       },
 
     // add selector patterns for user defined callbacks
