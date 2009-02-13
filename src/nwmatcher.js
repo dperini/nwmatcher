@@ -112,7 +112,8 @@ NW.Dom = function(global) {
     })() :
     true,
 
-  // detect Opera gEBCN class UTF8 bug
+  // detect Opera gEBCN second class and/or UTF8 bugs
+  // test is taken from the jQuery selector test suite
   BUGGY_GEBCN = NATIVE_GEBCN ?
     (function() {
       var t = context.createElement('div');
@@ -898,7 +899,7 @@ NW.Dom = function(global) {
   // elements by class
   // @return nodeList (native GEBCN)
   // @return array (non native GEBCN)
-  byClass = NATIVE_GEBCN ?
+  byClass = !BUGGY_GEBCN ?
     function(name, from) {
       return (from || context).getElementsByClassName(name);
     } :
