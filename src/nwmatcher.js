@@ -42,7 +42,7 @@ NW.Dom = function(global) {
       typeof object[method] != 'string' &&
       // IE & W3C browser return "[native code]"
       // Safari <= 2.0.4 will return "[function]"
-      (/\{\s*\[native code\]\s*\}|^\[function\]$/).
+      (/\{\s*\[native code[^\]]*\]\s*\}|^\[function\]$/).
       test(object[method]);
     },
 
