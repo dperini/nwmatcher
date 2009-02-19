@@ -260,7 +260,7 @@ NW.Dom = function(global) {
   // precompiled Regular Expressions
   Patterns = {
     // element attribute matcher
-    attribute: /^\[([-\w]*:?(?:[-\w])+)\s*(?:([!^$*~|]*)?(\=)?\s*(["']*)?([^'"]*?)\4)\](.*)/,
+    attribute: /^\[\s*([-\w]*:?(?:[-\w])+)\s*(?:([!^$*~|]*)?(\=)?\s*(["']*)?([^'"]*?)\4)\s*\](.*)/,
     // structural pseudo-classes
     spseudos: /^\:(root|empty|nth)?-?(first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
     // uistates + dynamic + negation pseudo-classes
