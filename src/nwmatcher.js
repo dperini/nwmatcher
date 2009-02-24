@@ -177,13 +177,11 @@ NW.Dom = function(global) {
     'shape': 1, 'valign': 1, 'valuetype': 1
   },
 
-  // attribute referencing URL values need special treatment in IE
-  attributesUrl = {
-    'action': 2, 'data': 2, 'href': 2, 'longdesc': 2, 'lowsrc': 2, 'src': 2
+  // attribute referencing URI values need special treatment in IE
+  attributesURI = {
+    'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
+    'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2 
   },
-
-  // attribute names may contain an XML namespace
-  attributesXml = /(?:[-\w]|\\.)+:(?:[-\w]|\\.)+/,
 
   // selection functions returning collections
   compiledSelectors = { },
@@ -762,7 +760,6 @@ NW.Dom = function(global) {
           if (!elements && (part = selector.match(Optimize.ID)) &&
             (token = part[part.length - 1]) && from.getElementById) {
             elements = [byId(token, from)];
-            // double check to ensure it is not a name attribute on IE
             if (elements[0]) {
               if (selector == '#' + token) {
                 return elements;
@@ -952,11 +949,11 @@ NW.Dom = function(global) {
     function(element, attribute) {
       var node = element.getAttributeNode(attribute);
       return (node && node.value) + '';
-    } : 
+    } :
     function(element, attribute) {
       var node;
       // specific URI attributes (parameter 2 to fix IE bug)
-      if (attributesUrl[attribute.toLowerCase()]) {
+      if (attributesURI[attribute.toLowerCase()]) {
         return element.getAttribute(attribute, 2) + '';
       }
       node = element.getAttributeNode(attribute);
