@@ -761,7 +761,7 @@ NW.Dom = function(global) {
           // ID optimization (on full selector)
           if (!elements && (part = selector.match(Optimize.ID)) &&
             (token = part[part.length - 1]) && from.getElementById) {
-            elements = [byId(token.replace(/\\/g, ''), from)];
+            elements = [byId(token, from)];
             // double check to ensure it is not a name attribute on IE
             if (elements[0]) {
               if (selector == '#' + token) {
@@ -810,7 +810,7 @@ NW.Dom = function(global) {
           // CLASS optimization (partial slice when using :not)
           if (!elements && (part = slice.match(Optimize.CLASS)) &&
             (token = part[part.length - 1]) && !ascii.test(token)) {
-            elements = byClass(token.replace(/\\/g, ''), from);
+            elements = byClass(token, from);
             if (selector == '.' + token) {
               done = true;
             }
@@ -890,7 +890,7 @@ NW.Dom = function(global) {
   // @return array
   byName =
     function(name, from) {
-      return this.select('[name="' + name + '"]', from);
+      return this.select('[name="' + name.replace(/\\/g, '') + '"]', from || context);
     },
 
   // elements by class
@@ -898,12 +898,12 @@ NW.Dom = function(global) {
   // @return array (non native GEBCN)
   byClass = !BUGGY_GEBCN ?
     function(name, from) {
-      return (from || context).getElementsByClassName(name);
+      return (from || context).getElementsByClassName(name.replace(/\\/g, ''));
     } :
     function(name, from) {
       // context is handled in byTag for non native gEBCN
       var i = 0, j = 0, r = [ ], node, nodes = byTag('*', from);
-      name = ' ' + name + ' ';
+      name = ' ' + name.replace(/\\/g, '') + ' ';
       while ((node = nodes[i++])) {
         if (node.className && (' ' + node.className + ' ').indexOf(name) > -1) {
           r[j++] = node;
@@ -960,7 +960,7 @@ NW.Dom = function(global) {
         return element.getAttribute(attribute, 2) + '';
       }
       node = element.getAttributeNode(attribute);
-      return (node && node.value) + "";
+      return (node && node.value) + '';
     },
 
   // attribute presence
