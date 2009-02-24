@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.1beta
  * Created: 20070722
- * Release: 20090219
+ * Release: 20090224
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -778,7 +778,7 @@ NW.Dom = function(global) {
             (token = part[part.length - 1]) && from.getElementById) {
             elements = [from.getElementById(token.replace(/\\/g, ''))];
             // double check to ensure it is not a name attribute on IE
-            if (elements[0] && getAttribute(elements[0], 'id') == token.replace(/\\/g, '')) {
+            if (elements[0]) {
               if (selector == '#' + token) {
                 return elements;
               }
