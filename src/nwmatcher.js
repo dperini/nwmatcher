@@ -347,13 +347,6 @@ NW.Dom = function(global) {
         'this.stripTags(e.innerHTML)';
     })(),
 
-  // to check if the base context contains offending names
-  // @return nodeList (live)
-  OFFENDING_NAME =
-    function(name) {
-      return !!base.getElementsByName(name);
-    },
-
   // to check extensions have not yet been registered
   // @return boolean
   IS_EMPTY =
@@ -421,16 +414,8 @@ NW.Dom = function(global) {
         // *** ID selector
         // #Foo Id case sensitive
         else if ((match = selector.match(Patterns.id))) {
-          // document contains elements with names like "id" or "length" ?
-          if (OFFENDING_NAME('id')) {
-            // necessary since form elements using reserved words as
-            // id/name can overwrite form properties (ex. name="id")
-            // NOTE: tests available in Prototype selector test unit
-            source = 'if(e.id=="' + match[1] + '"||(e.nodeName=="FORM"&&e==e.ownerDocument.getElementById("' + match[1] + '"))){' + source + '}';
-          } else {
-            // faster/sufficient to pass jQuery selector test unit
-            source = 'if(e.id=="' + match[1] + '"){' + source + '}';
-          }
+          // document can contain conflicting elements (id/name)
+          source = 'if((n=e.getAttributeNode("id"))&&n.value=="' + match[1] + '"){' + source + '}';
         }
         // *** Type selector
         // Foo Tag (case insensitive)
