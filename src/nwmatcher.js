@@ -950,21 +950,17 @@ NW.Dom = function(global) {
   // @type string
   getAttribute = NATIVE_HAS_ATTRIBUTE ?
     function(element, attribute) {
-      return element.getAttribute(attribute) + "";
-    } :
+      var node = element.getAttributeNode(attribute);
+      return (node && node.value) + '';
+    } : 
     function(element, attribute) {
-      var node, property;
-      if (attributesXml.test(attribute)) {
-        // XML namespaced attributes
-        return ((node = element.getAttributeNode(attribute, 1)) && node.value) + "";
-      } else if (attributesUrl[attribute.toLowerCase()]) {
-        // specific URI attributes (parameter 2 to fix IE bug)
-        return element.getAttribute(attribute, 2) + "";
+      var node;
+      // specific URI attributes (parameter 2 to fix IE bug)
+      if (attributesUrl[attribute.toLowerCase()]) {
+        return element.getAttribute(attribute, 2) + '';
       }
-      // map attributes/properties names for HTML and DOM namespaces
-      property = Attributes[attribute.toLowerCase()] || attribute;
-      // fall back check for dynamic values of element properties
-      return (element.getAttribute(attribute) || element[property]) + "";
+      node = element.getAttributeNode(attribute);
+      return (node && node.value) + "";
     },
 
   // attribute presence
