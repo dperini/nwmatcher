@@ -761,7 +761,7 @@ NW.Dom = function(global) {
           // ID optimization (on full selector)
           if (!elements && (part = selector.match(Optimize.ID)) &&
             (token = part[part.length - 1]) && from.getElementById) {
-            elements = [from.getElementById(token.replace(/\\/g, ''))];
+            elements = [byId(token.replace(/\\/g, ''), from)];
             // double check to ensure it is not a name attribute on IE
             if (elements[0]) {
               if (selector == '#' + token) {
@@ -865,7 +865,18 @@ NW.Dom = function(global) {
   // @return array
   byId =
     function(id, from) {
-      return this.select('[id="' + id + '"]', from);
+      var result = null;
+      from || (from = context);
+      id = id.replace(/\\/g, '');
+      if (from.getElementById) {
+        result = from.getElementById(id);
+        if (result && typeof result.id != 'string' && id != result.getAttributeNode('id').value) {
+          result = null;
+        }
+      } else {
+        result = this.select('[id="' + id + '"]', from)[0] || null;
+      }
+      return result;
     },
 
   // elements by tag
