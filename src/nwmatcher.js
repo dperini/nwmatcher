@@ -856,13 +856,12 @@ NW.Dom = function(global) {
         if (result && id != getAttribute(result, 'id') && from.getElementsByName) {
           names = from.getElementsByName(id);
           result = null;
-          if (names.length > 0) {
-            do {
-              if (names[i].getAttributeNode('id').value == id) {
-                result = names[i];
-                break;
-              }
-            } while (names[i++]);
+          while (names[i]) {
+            if (names[i].getAttributeNode('id').value == id) {
+              result = names[i];
+              break;
+            }
+            i++;
           }
         }
       } else {
