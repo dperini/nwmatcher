@@ -180,7 +180,7 @@ NW.Dom = function(global) {
   // attribute referencing URI values need special treatment in IE
   attributesURI = {
     'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
-    'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2 
+    'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2
   },
 
   // selection functions returning collections
@@ -715,7 +715,7 @@ NW.Dom = function(global) {
   client_api =
     function client_api(selector, from) {
 
-      var done, elements, last, match, part, slice, token;
+      var elements, last, match, part, slice, token;
 
       // only process valid strings
       if (validator.test(selector)) {
@@ -768,6 +768,8 @@ NW.Dom = function(global) {
                 from = elements[0].parentNode;
                 elements = null;
               }
+            } else {
+              return [ ];
             }
           }
 
@@ -776,52 +778,39 @@ NW.Dom = function(global) {
             part = selector.match(/([-_\w]+)/g);
             if (part.length > 1) {
               elements = byTags(part, from);
-              if (!(/[^ \w]/).test(selector)) {
-                done = true;
-              }
             } else {
               elements = byTag(part[0], from);
-              done = true;
             }
           }
 
-          // get right most selector token
-          last = selector.match(Optimize.TOKEN);
-          slice = last[last.length - 1];
+          if (!elements) {
 
-          // only slice before :not rules
-          slice = slice.split(':not')[0];
+            // get right most selector token
+            last = selector.match(Optimize.TOKEN);
+            slice = last[last.length - 1];
 
-          // TAG optimization (partial slice when using :not)
-          if (!elements && (part = slice.match(Optimize.TAG)) &&
-            (token = part[part.length - 1]) && NATIVE_GEBTN) {
-            elements = byTag(token, from);
-            if (selector == token) {
-              done = true;
+            // only slice before :not rules
+            slice = slice.split(':not')[0];
+
+            // TAG optimization (partial slice when using :not)
+            if (!elements && (part = slice.match(Optimize.TAG)) &&
+              (token = part[part.length - 1]) && NATIVE_GEBTN) {
+              elements = byTag(token, from);
             }
-          }
 
-          // CLASS optimization (partial slice when using :not)
-          if (!elements && (part = slice.match(Optimize.CLASS)) &&
-            (token = part[part.length - 1]) && !ascii.test(token)) {
-            elements = byClass(token, from);
-            if (selector == '.' + token) {
-              done = true;
+            // CLASS optimization (partial slice when using :not)
+            if (!elements && (part = slice.match(Optimize.CLASS)) &&
+              (token = part[part.length - 1]) && !ascii.test(token)) {
+              elements = byClass(token, from);
             }
+
           }
 
         }
         // end of prefiltering pass
 
-        if (!done) {
-          // when a context is not passed and no id, tag, class in selector
-          // elements is undefined, so we collect all elements from context
-          elements || (elements = toArray(byTag('*', from)));
-        } else {
-          if (!elements || elements.length === 0) {
-            elements = [ ];
-          }
-          elements = elements.constructor == Array ? elements : toArray(elements);
+        if (!elements || elements.length === 0) {
+          elements = toArray(byTag('*', from));
         }
 
         // save compiled selectors
