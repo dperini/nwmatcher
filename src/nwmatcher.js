@@ -763,14 +763,11 @@ NW.Dom = function(global) {
             if (elements[0]) {
               if (selector == '#' + token) {
                 return elements;
-              }
-              // optimize partial existing id selections
-              if (selector.length != (selector.lastIndexOf('#' + token) + token.length + 1)) {
+              } else if (selector.length != (selector.lastIndexOf('#' + token) + token.length + 1)) {
+                // optimize partial existing id selections
                 from = elements[0].parentNode;
                 elements = null;
               }
-            } else {
-              return [ ];
             }
           }
 
@@ -862,16 +859,25 @@ NW.Dom = function(global) {
   // @return array
   byId =
     function(id, from) {
-      var result = null;
+      var i = 0, names, result;
       from || (from = context);
       id = id.replace(/\\/g, '');
       if (from.getElementById) {
         result = from.getElementById(id);
-        if (result && typeof result.id != 'string' && id != result.getAttributeNode('id').value) {
+        if (result && id != getAttribute(result, 'id') && from.getElementsByName) {
+          names = from.getElementsByName(id);
           result = null;
+          if (names.length > 0) {
+            do {
+              if (names[i].getAttributeNode('id').value == id) {
+                result = names[i];
+                break;
+              }
+            } while (names[i++]);
+          }
         }
       } else {
-        result = this.select('[id="' + id + '"]', from)[0] || null;
+        result = NW.Dom.select('[id="' + id + '"]', from)[0] || null;
       }
       return result;
     },
