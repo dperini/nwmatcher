@@ -153,6 +153,10 @@ NW.Dom = function(global) {
   // map of attribute names (in HTML and DOM namespaces)
   // many are missing here, or maybe there are too many
   // first two lines will cover most real cases anyway
+  /*
+  // we do not have to write attributes and
+  // we have a fixed internal getAttribute
+  // maybe we can skip this case juggling
   Attributes = {
     'class': 'className', 'for': 'htmlFor',
     'classname': 'className', 'htmlfor': 'htmlFor',
@@ -163,6 +167,7 @@ NW.Dom = function(global) {
     'cellpadding': 'cellPadding', 'cellspacing': 'cellSpacing',
     'marginwidth': 'marginWidth', 'marginheight': 'marginHeight'
   },
+  */
 
   // See Niels Leenheer blog http://rakaz.nl/item/css_selector_bugs_case_sensitivity
   //
