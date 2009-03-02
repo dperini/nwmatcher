@@ -304,7 +304,7 @@ NW.Dom = function(global) {
       'enabled': 0, 'disabled': 0, 'checked': 0, 'selected': 1, 'indeterminate': 2,
     //},
     //Dynamic: {
-      'active': 0, 'hover': 0, 'visited': 0, 'link': 0, 'hover': 1,
+      'active': 0, 'hover': 0, 'visited': 0, 'link': 0,
     //},
     // Target: {
       'target': 0,
@@ -438,7 +438,7 @@ NW.Dom = function(global) {
           expr = match[1].split(':');
           expr = expr.length == 2 ? expr[1] : expr[0];
           // check case treatment from insensitiveMap
-          if (insensitiveMap[expr.toLowerCase()] === 1) {
+          if (insensitiveMap[expr.toLowerCase()]) {
             match[5] = match[5].toLowerCase();
           } else {
             expr = '';
@@ -578,7 +578,11 @@ NW.Dom = function(global) {
               source = 'if(e.type&&e.disabled){' + source + '}';
               break;
             case 'selected':
-              source = 'e.parentNode.selectedIndex;if(e.selected===true||e.selected=="selected"){' + source + '}';
+              // fix Safari selectedIndex property bug
+              for (i = 0, n = byTag('select'); n[i]; i++) {
+                n[i].selectedIndex;
+              }
+              source = 'if(e.form&&e.selected){' + source + '}';
               break;
             // CSS3 target element
             case 'target':
