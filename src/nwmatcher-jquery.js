@@ -134,7 +134,7 @@ NW.Dom.registerSelector('jQuery-pseudo', RE2, jquery_PseudoSelectors);
   // # cleaned
   var cnt = 0,
 
-  context = global.document;
+  context = global.document,
 
   root = context.documentElement,
 
