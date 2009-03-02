@@ -57,6 +57,7 @@ NW.Dom = function(global) {
 
   // detect if DOM methods are native in browsers
   NATIVE_QSAPI = isNative(context, 'querySelector'),
+  NATIVE_GEBID = isNative(context, 'getElementById'),
   NATIVE_GEBTN = isNative(root, 'getElementsByTagName'),
   NATIVE_GEBCN = isNative(root, 'getElementsByClassName'),
 
@@ -101,6 +102,17 @@ NW.Dom = function(global) {
 
   // NOTE: BUGGY_XXXXX check both for existance and no known bugs,
   // so through the code read it as "not supported", or "undefined"
+
+  BUGGY_GEBID = NATIVE_GEBID ?
+    (function() {
+      var f = false, t = context.createElement('div');
+      t.innerHTML = '<a name="Z"></a>';
+      root.insertBefore(t, root.firstChild);
+      f = !!t.ownerDocument.getElementById('Z');
+      root.removeChild(t);
+      return f;
+    })() :
+    true,
 
   // detect IE gEBTN comment nodes bug
   BUGGY_GEBTN = NATIVE_GEBTN ?
