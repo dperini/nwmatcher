@@ -232,8 +232,9 @@ NW.Dom = function(global) {
 
   // ascii extended
   ascii = /\x00-\xff/,
-  // ascii + unicode
-  encoding = '\u0080-\uffff',
+  // http://www.w3.org/TR/css3-syntax/#characters
+  // unicode/ISO 10646 characters 161 and higher
+  encoding = '\u00a1-\uffff',
 
   // selector validator discard invalid chars
   validator = new RegExp("[-_*\\w" + encoding + "]"),
