@@ -573,11 +573,9 @@ NW.Dom = function(global) {
           switch (match[1]) {
             // CSS3 part of structural pseudo-classes
             case 'not':
-              // compile nested selectors
-              expr = match[2].split(',');
-              for (i = 0; expr[i]; i++) {
-                source = compileSelector(expr[i], source).replace(/(if|while)([^\{]+)/, '$1(!($2))');
-              }
+              // compile nested selectors, need to escape double quotes characters
+              // since the string we are inserting into already uses double quotes
+              source = 'if(!this.match(e, "' + match[2].replace(/\x22/g, '\\"') + '")){' + source +'}';
               break;
             // maybe deprecated in latest proposals
             case 'contains':
@@ -778,8 +776,25 @@ NW.Dom = function(global) {
         // sequentially to maintain order
         if (selector.indexOf(',') < 0) {
 
+          // get right most selector token
+          last = selector.match(Optimize.TOKEN);
+          slice = last[last.length - 1];
+
+          // only slice before :not rules
+          slice = slice.split(':not')[0];
+
+          // MULTI TAG optimization (on full selector)
+          if (!Optimize.descendants.test(selector) && NATIVE_GEBTN) {
+            part = selector.match(/([-_\w]+)/g);
+            if (part.length > 1) {
+              elements = byTags(part, from);
+            } else {
+              elements = byTag(part[0], from);
+            }
+          } else
+
           // ID optimization (on full selector)
-          if (!elements && (part = selector.match(Optimize.ID)) &&
+          if ((part = slice.match(Optimize.ID)) &&
             (token = part[part.length - 1]) && from.getElementById) {
             elements = [byId(token, from)];
             if (elements[0]) {
@@ -793,39 +808,18 @@ NW.Dom = function(global) {
             } else {
               return [ ];
             }
-          }
+          } else
 
-          // MULTI TAG optimization (on full selector)
-          if (!elements && !Optimize.descendants.test(selector) && NATIVE_GEBTN) {
-            part = selector.match(/([-_\w]+)/g);
-            if (part.length > 1) {
-              elements = byTags(part, from);
-            } else {
-              elements = byTag(part[0], from);
-            }
-          }
+          // TAG optimization (partial slice when using :not)
+          if ((part = slice.match(Optimize.TAG)) &&
+            (token = part[part.length - 1]) && NATIVE_GEBTN) {
+            elements = byTag(token, from);
+          } else
 
-          if (!elements) {
-
-            // get right most selector token
-            last = selector.match(Optimize.TOKEN);
-            slice = last[last.length - 1];
-
-            // only slice before :not rules
-            slice = slice.split(':not')[0];
-
-            // TAG optimization (partial slice when using :not)
-            if (!elements && (part = slice.match(Optimize.TAG)) &&
-              (token = part[part.length - 1]) && NATIVE_GEBTN) {
-              elements = byTag(token, from);
-            }
-
-            // CLASS optimization (partial slice when using :not)
-            if (!elements && (part = slice.match(Optimize.CLASS)) &&
-              (token = part[part.length - 1]) && !ascii.test(token)) {
-              elements = byClass(token, from);
-            }
-
+          // CLASS optimization (partial slice when using :not)
+          if ((part = slice.match(Optimize.CLASS)) &&
+            (token = part[part.length - 1]) && !ascii.test(token)) {
+            elements = byClass(token, from);
           }
 
         }
