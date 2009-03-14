@@ -602,7 +602,7 @@ NW.Dom = function(global) {
               break;
             // CSS3 target element
             case 'target':
-              source = 'if(e.id==location.href.match(/#((?:[-_\w]|\\.)+)$/)[1]){' + source + '}';
+              source = 'if(e.id==location.href.match(/#((?:[-_\\w]|\\\\.)+)$/)[1]){' + source + '}';
               break;
             // CSS1 & CSS2 link
             case 'link':
