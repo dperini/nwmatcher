@@ -24,14 +24,15 @@ NW.Dom = function(global) {
   // processing context
   base = global.document,
 
-  // current DOM viewport
-  view = base.defaultView,
-
   // script loading context
   context = global.document,
 
   // context root element (HTML)
   root = context.documentElement,
+
+  // current DOM viewport/window, also used
+  // to detect Safari 2x [object AbstractView]
+  view = base.defaultView || base.parentWindow,
 
   /* BEGIN FEATURE TESTING */
 
@@ -413,7 +414,7 @@ NW.Dom = function(global) {
         return new Function('c,s', 'var k,e,r,n,C,N,T,X=0,x=0;main:for(k=0,r=[];e=N=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
       } else {
         // for match method
-        return new Function('e,s', 'var n,x=0;' + source + 'return false;');
+        return new Function('e,s', 'var n,C,N,T,x=0;' + source + 'return false;');
       }
     },
 
@@ -451,7 +452,7 @@ NW.Dom = function(global) {
         else if ((match = selector.match(Patterns.className))) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a list of whitespace-separated values
           // see section 6.4 Class selectors and notes at the bottom; explicitly non-normative in this specification.
-          //source = 'if(((" "+e.className+" ").replace(/\\s+/g," ").indexOf(" ' + match[1] + ' ")>-1)){' + source + '}';
+          //source = 'if((" "+e.className+" ").replace(/\\s+/g," ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
           source = 'C=e.className;if(C&&(" "+C+" ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
         }
         // *** Attribute selector
@@ -470,7 +471,6 @@ NW.Dom = function(global) {
               replace(/\%p/g, 'this.getAttribute(e,"' + match[1] + '")' +
                 (expr ? '' : '.toLowerCase()')).replace(/\%m/g, match[5]) +
           '){' + source + '}';
-          expr = '';
         }
         // *** Adjacent sibling combinator
         // E + F (F adiacent sibling of E)
@@ -551,10 +551,10 @@ NW.Dom = function(global) {
                     '';
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
-                source = 'if((this.' + match[1] + type + '(e)' + test + ')){' + source + '}';
+                source = 'if(this.' + match[1] + type + '(e)' + test + '){' + source + '}';
               } else {
                 // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
-                source = 'if((this.' + match[2] + type + '(e))){' + source + '}';
+                source = 'if(this.' + match[2] + type + '(e)){' + source + '}';
               }
               break;
           }
@@ -606,8 +606,8 @@ NW.Dom = function(global) {
               break;
             // CSS3 target element
             case 'target':
-              n = location.href.match(/#((?:[-_\w]|\\.)+)$/);
-              source = 'if(e.id=="' + (n && n[1]) + '"){' + source + '}';
+              n = base.location.hash;
+              source = 'if(e.id=="' + n + '"){' + source + '}';
               break;
             // CSS1 & CSS2 link
             case 'link':
@@ -751,10 +751,11 @@ NW.Dom = function(global) {
         // use the passed from context
         from || (from = context);
 
+        // reference context ownerDocument
+        base = from.ownerDocument || from;
+
         // caching  enabled ?
         if (cachingEnabled) {
-          // reference context ownerDocument
-          base = from.ownerDocument || from;
           snap = base.snapshot;
           // valid base context storage
           if (snap && !snap.isExpired) {
