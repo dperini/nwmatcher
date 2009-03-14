@@ -349,7 +349,7 @@ NW.Dom = function(global) {
   // conditionals optimizers for the compiler
 
   // do not change this, it is searched & replaced
-  ACCEPT_NODE = 'r[r.length]=c[k];continue main;',
+  ACCEPT_NODE = 'r[X++]=N;continue main;',
 
   // fix for IE gEBTN('*') returning collection with comment nodes
   SKIP_COMMENTS = BUGGY_GEBTN ? 'if(e.nodeType!=1){continue;}' : '',
@@ -397,7 +397,7 @@ NW.Dom = function(global) {
             // reset element reference after the
             // first comma if using select() mode
             if (i > 0 && mode) {
-              source += 'e=c[k];';
+              source += 'e=N;';
             }
             // insert corresponding mode function
             if (mode) {
@@ -410,7 +410,7 @@ NW.Dom = function(global) {
       }
       if (mode) {
         // for select method
-        return new Function('c,s', 'var k,e,r,n,x=0;main:for(k=0,r=[];e=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
+        return new Function('c,s', 'var k,e,r,n,C,N,T,X=0,x=0;main:for(k=0,r=[];e=N=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
       } else {
         // for match method
         return new Function('e,s', 'var n,x=0;' + source + 'return false;');
@@ -443,7 +443,7 @@ NW.Dom = function(global) {
         // Foo Tag (case insensitive)
         else if ((match = selector.match(Patterns.tagName))) {
           // both tagName & nodeName are Upper/Lower cased strings depending on their creation NAMESPACE (createElementNS et all)
-          source = 'if(e.nodeName=="' + match[1].toUpperCase() + '"||e.nodeName=="' + match[1].toLowerCase() + '"){' + source + '}';
+          source = 'T=e.nodeName;if(T=="' + match[1].toUpperCase() + '"||T=="' + match[1].toLowerCase() + '"){' + source + '}';
           //source = 'if(e.nodeName=="' + match[1].toUpperCase() + '"){' + source + '}';
         }
         // *** Class selector
@@ -452,7 +452,7 @@ NW.Dom = function(global) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a list of whitespace-separated values
           // see section 6.4 Class selectors and notes at the bottom; explicitly non-normative in this specification.
           //source = 'if(((" "+e.className+" ").replace(/\\s+/g," ").indexOf(" ' + match[1] + ' ")>-1)){' + source + '}';
-          source = 'if(e.className&&(" "+e.className+" ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
+          source = 'C=e.className;if(C&&(" "+C+" ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
         }
         // *** Attribute selector
         // [attr] [attr=value] [attr="value"] [attr='value'] and !=, *=, ~=, |=, ^=, $=
