@@ -538,7 +538,7 @@ NW.Dom = function(global) {
 
                 // executed after the count is computed
                 expr = match[2] == 'last' ? (match[4] ?
-                    's.TwinsCount[e.parentNode._cssId][e.nodeName]' :
+                    's.TwinsCount[e.parentNode._cssId][e.nodeName.toLowerCase()]' :
                     's.ChildCount[e.parentNode._cssId]') + '-' + (b - 1) : b;
 
                 test =
@@ -1053,8 +1053,8 @@ NW.Dom = function(global) {
   nthElement =
     function(element) {
       var i, j, node, nodes, parent, cache = snap.ChildIndex;
-      if (!element._cssId || !cache[element._cssId]) {
-        if ((parent = element.parentNode).nodeType == 1) {
+      if ((parent = element.parentNode).nodeType == 1) {
+        if (!element._cssId || !cache[element._cssId]) {
           i = 0;
           j = 0;
           nodes = parent[NATIVE_CHILDREN];
@@ -1064,42 +1064,37 @@ NW.Dom = function(global) {
             }
           }
           snap.ChildCount[parent._cssId || (parent._cssId = ++cssId)] = j;
-        } else {
-          // does not have a parent (ex.: document)
-          return 0;
         }
+        return cache[element._cssId];
       }
-      return cache[element._cssId];
+      // does not have a parent (ex.: document)
+      return 0;
     },
 
   // child position by nodeName
   // @return number
   nthOfType =
     function(element) {
-      var i, j, node, nodes, pid, parent, tag, cache = snap.TwinsIndex;
-      if (!element._cssId || !cache[element._cssId]) {
-        if ((parent = element.parentNode).nodeType == 1) {
+      var i, j, name, node, nodes, pid, parent, cache = snap.TwinsIndex;
+      if ((parent = element.parentNode).nodeType == 1) {
+        if (!element._cssId || !cache[element._cssId]) {
           i = 0;
           j = 0;
           nodes = parent[NATIVE_CHILDREN];
-          tag = element.nodeName;
+          name = element.nodeName.toLowerCase();
           while ((node = nodes[i++])) {
-            // tagName ensures it is an element
-            // avoids visiting the DOCTYPE node
-            // and probably other comment nodes
-            if (node.tagName == tag) {
+            if (node.nodeName.toLowerCase() == name) {
               cache[node._cssId || (node._cssId = ++cssId)] = ++j;
             }
           }
           pid = (parent._cssId || (parent._cssId = ++cssId));
           snap.TwinsCount[pid] || (snap.TwinsCount[pid] = { });
-          snap.TwinsCount[pid][tag] = j;
-        } else {
-          // does not have a parent (ex.: document)
-          return 0;
+          snap.TwinsCount[pid][name] = j;
         }
+        return cache[element._cssId];
       }
-      return cache[element._cssId];
+      // does not have a parent (ex.: document)
+      return 0;
     },
 
   // cache access to native slice
