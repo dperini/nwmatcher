@@ -460,18 +460,15 @@ NW.Dom = function(global) {
         else if ((match = selector.match(Patterns.attribute))) {
           // xml namespaced attribute ?
           expr = match[1].split(':');
-          expr = expr.length == 2 ? expr[1] : expr[0];
+          expr = expr.length == 2 ? expr[1] : expr[0] + '';
           // check case treatment from insensitiveMap
           if (insensitiveMap[expr.toLowerCase()]) {
             match[5] = match[5].toLowerCase();
-          } else {
-            expr = '';
           }
           source = 'if(' +
             (Operators[(match[2] || match[3])] || 'this.hasAttribute(e,"' + match[1] + '")').
               replace(/\%p/g, 'this.getAttribute(e,"' + match[1] + '")' +
-                (expr === '' ? '' : '.toLowerCase()')).
-                  replace(/\%m/g, match[5]) +
+                (expr ? '' : '.toLowerCase()')).replace(/\%m/g, match[5]) +
           '){' + source + '}';
           expr = '';
         }
@@ -601,14 +598,16 @@ NW.Dom = function(global) {
               break;
             case 'selected':
               // fix Safari selectedIndex property bug
-              for (i = 0, n = byTag('select'); n[i]; i++) {
+              n = byTag('select');
+              for (i = 0; n[i]; i++) {
                 n[i].selectedIndex;
               }
               source = 'if(e.form&&e.selected){' + source + '}';
               break;
             // CSS3 target element
             case 'target':
-              source = 'if(e.id==location.href.match(/#((?:[-_\\w]|\\\\.)+)$/)[1]){' + source + '}';
+              n = location.href.match(/#((?:[-_\w]|\\.)+)$/);
+              source = 'if(e.id=="' + (n && n[1]) + '"){' + source + '}';
               break;
             // CSS1 & CSS2 link
             case 'link':
