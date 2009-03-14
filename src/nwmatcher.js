@@ -74,10 +74,16 @@ NW.Dom = function(global) {
   // on Opera 9.27 an id="length" will fold Array.slice()
   NATIVE_SLICE_PROTO =
     (function() {
+      var f = false, t = context.createElement('div');
       try {
-        return !!Array.prototype.slice.call(root.childNodes)[0];
-      } catch(e) { }
-      return false;
+        t.innerHTML = '<div id="length"></div>';
+        root.insertBefore(t, root.firstChild);
+        f = !![].slice.call(t.childNodes, 0)[0];
+      } catch(e) {
+      } finally {
+        root.removeChild(t).innerHTML = '';
+      }
+      return f;
     })(),
 
   // check for Mutation Events, DOMAttrModified should be
@@ -1096,26 +1102,18 @@ NW.Dom = function(global) {
       return cache[element._cssId];
     },
 
+  // cache access to native slice
+  slice = Array.prototype.slice,
+
   // convert nodeList to array
   // @return array
   toArray = NATIVE_SLICE_PROTO ?
     function(list) {
-      var fix, elements;
-      if ((fix = list[0].ownerDocument.getElementById('length'))) {
-        fix.id = '';
-      }
-      elements = Array.prototype.slice.call(list);
-      if (fix) {
-        fix.id = 'length';
-      }
-      return elements;
+      return slice.call(list);
     } :
     function(list) {
       // avoid using the length property of nodeLists
       // it may have been overwritten by bad HTML code
-      if (list.constructor == Array) {
-        return list;
-      }
       var i = 0, array = [ ];
       while ((array[i] = list[i++])) { }
       array.length--;
