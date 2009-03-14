@@ -20,7 +20,7 @@ var jquery_ChildSelectors = function(match, source) {
 
   var status = true,
   // do not change this, it is searched & replaced
-  ACCEPT_NODE = 'r[r.length]=c[k];continue main;';
+  ACCEPT_NODE = 'r[X++]=N;continue main;';
 
   if (match[2]) {
     match[2] = match[2].replace(/^\((.*)\)$/, '$1');
@@ -70,7 +70,7 @@ var jquery_PseudoSelectors = function(match, source) {
 
   var status = true,
   // do not change this, it is searched & replaced
-  ACCEPT_NODE = 'r[r.length]=c[k];continue main;';
+  ACCEPT_NODE = 'r[X++]=N;continue main;';
 
   switch(match[1]) {
     case 'has':
