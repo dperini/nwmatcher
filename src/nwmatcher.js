@@ -598,7 +598,7 @@ NW.Dom = function(global) {
               break;
             case 'selected':
               // fix Safari selectedIndex property bug
-              n = byTag('select');
+              n = base.getElementsByTagName('select');
               for (i = 0; n[i]; i++) {
                 n[i].selectedIndex;
               }
@@ -794,7 +794,7 @@ NW.Dom = function(global) {
             if (part.length > 1) {
               elements = byTags(part, from);
             } else {
-              elements = byTag(part[0], from);
+              elements = from.getElementsByTagName(part[0]);
             }
           } else
 
@@ -818,7 +818,7 @@ NW.Dom = function(global) {
           // TAG optimization (partial slice when using :not)
           if ((part = slice.match(Optimize.TAG)) &&
             (token = part[part.length - 1]) && NATIVE_GEBTN) {
-            elements = byTag(token, from);
+            elements = from.getElementsByTagName(token);
           } else
 
           // CLASS optimization (partial slice when using :not)
@@ -831,7 +831,7 @@ NW.Dom = function(global) {
         // end of prefiltering pass
 
         if (!elements || elements.length === 0) {
-          elements = toArray(byTag('*', from));
+          elements = toArray(from.getElementsByTagName('*'));
         }
 
         // save compiled selectors
@@ -914,7 +914,7 @@ NW.Dom = function(global) {
     } :
     function(name, from) {
       // context is handled in byTag for non native gEBCN
-      var i = 0, j = 0, r = [ ], node, nodes = byTag('*', from);
+      var i = 0, j = 0, r = [ ], node, nodes = from.getElementsByTagName('*');
       name = ' ' + name.replace(/\\/g, '') + ' ';
       while ((node = nodes[i++])) {
         if (node.className && (' ' + node.className + ' ').indexOf(name) > -1) {
@@ -932,25 +932,26 @@ NW.Dom = function(global) {
   // @return array
   byTags =
     function(c, f) {
-      var i, j, k, n, o, p,
+      var h, i, j, k, n, o, p,
         id, e = [f || context],
         r = [ ], s = [ ], t = [ ];
+      h = 0;
       i = 0;
       while ((n = c[i++])) {
         j= 0;
         while ((o = e[j++])) {
           k = 0;
-          r = byTag(n.replace(trim, ''), o);
+          r = o.getElementsByTagName(n.replace(trim, ''));
           while ((p = r[k++])) {
             id = (p._cssId || (p._cssId = ++cssId));
-            if (t[id]) {
-              // discard duplicates
-              continue;
+            // discard duplicates
+            if (!t[id]) {
+              t[id] = true;
+              s[h++] = p;
             }
-            t[id] = true;
-            s[s.length] = p;
           }
         }
+        h = 0;
         e = s;
         s = [ ];
         t = [ ];
