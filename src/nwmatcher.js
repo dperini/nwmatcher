@@ -30,8 +30,8 @@ NW.Dom = function(global) {
   // context root element (HTML)
   root = context.documentElement,
 
-  // current DOM viewport/window, also used
-  // to detect Safari 2x [object AbstractView]
+  // current DOM viewport/window, also used to
+  // detect Safari 2.0.x [object AbstractView]
   view = base.defaultView || base.parentWindow,
 
   /* BEGIN FEATURE TESTING */
@@ -41,8 +41,8 @@ NW.Dom = function(global) {
   isNative = function(object, method) {
     return object && method in object &&
       typeof object[method] != 'string' &&
-      // IE & W3C browser return "[native code]"
-      // Safari <= 2.0.4 will return "[function]"
+      // IE/W3C browsers will return [native code]
+      // Safari 2.0.x and older will return [function]
       (/\{\s*\[native code[^\]]*\]\s*\}|^\[function\]$/).
       test(object[method]);
     },
@@ -443,9 +443,9 @@ NW.Dom = function(global) {
         // *** Type selector
         // Foo Tag (case insensitive)
         else if ((match = selector.match(Patterns.tagName))) {
-          // both tagName & nodeName are Upper/Lower cased strings depending on their creation NAMESPACE (createElementNS et all)
+          // both tagName and nodeName properties may be upper or lower case
+          // depending on their creation NAMESPACE in createElementNS()
           source = 'T=e.nodeName;if(T=="' + match[1].toUpperCase() + '"||T=="' + match[1].toLowerCase() + '"){' + source + '}';
-          //source = 'if(e.nodeName=="' + match[1].toUpperCase() + '"){' + source + '}';
         }
         // *** Class selector
         // .Foo Class (case sensitive)
@@ -480,19 +480,17 @@ NW.Dom = function(global) {
         // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
-          k++; // count nested instances
-          source = 'var i%=0,y%=e,z%=this.getChildren(e.parentNode);while((e=z%[i%++])&&e!=y%){if(e.nodeType==1){'.replace(/%/g, k) + source + '}}';
-          //source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}';
+          source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}';
         }
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'if(e.nodeName!="HTML"){e=e.parentNode;' + source + '}';
+          source = 'if((e=e.parentNode)&&e.nodeType==1){' + source + '}';
         }
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'while(e.nodeName!="HTML"){e=e.parentNode;' + source + '}';
+          source = 'while((e=e.parentNode)&&e.nodeType==1){' + source + '}';
         }
         // *** Structural pseudo-classes
         // :root, :empty,
@@ -611,10 +609,10 @@ NW.Dom = function(global) {
               break;
             // CSS1 & CSS2 link
             case 'link':
-              source = 'if(e.nodeName.toUpperCase()=="A"&&e.href){' + source + '}';
+              source = 'if(e.nodeName.toLowerCase()=="a"&&e.href){' + source + '}';
               break;
             case 'visited':
-              source = 'if(e.nodeName.toUpperCase()=="A"&&e.visited){' + source + '}';
+              source = 'if(e.nodeName.toLowerCase()=="a"&&e.visited){' + source + '}';
               break;
             // CSS1 & CSS2 UI States IE & FF3 have native support
             // these capabilities may be emulated by event managers
@@ -1028,8 +1026,8 @@ NW.Dom = function(global) {
   // @return boolean
   firstOfType =
     function(element) {
-      var nodeName = element.nodeName;
-      while ((element = element.previousSibling) && element.nodeName != nodeName) { }
+      var nodeName = element.nodeName.toLowerCase();
+      while ((element = element.previousSibling) && element.nodeName.toLowerCase() != nodeName) { }
       return !element;
     },
 
@@ -1037,8 +1035,8 @@ NW.Dom = function(global) {
   // @return boolean
   lastOfType =
     function(element) {
-      var nodeName = element.nodeName;
-      while ((element = element.nextSibling) && element.nodeName != nodeName) { }
+      var nodeName = element.nodeName.toLowerCase();
+      while ((element = element.nextSibling) && element.nodeName.toLowerCase() != nodeName) { }
       return !element;
     },
 
