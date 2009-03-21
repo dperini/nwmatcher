@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.1.1
  * Created: 20070722
- * Release: 20090314
+ * Release: 20090321
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -411,10 +411,10 @@ NW.Dom = function(global) {
       }
       if (mode) {
         // for select method
-        return new Function('c,s', 'var k,e,r,n,C,N,T,X=0,x=0;main:for(k=0,r=[];e=N=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
+        return new Function('c,s,d,h', 'var k,e,r,n,C,N,T,X=0,x=0;main:for(k=0,r=[];e=N=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
       } else {
         // for match method
-        return new Function('e,s', 'var n,C,N,T,x=0;' + source + 'return false;');
+        return new Function('e,s,d,h', 'var n,C,N,T,x=0;' + source + 'return false;');
       }
     },
 
@@ -512,7 +512,7 @@ NW.Dom = function(global) {
           switch (match[1]) {
             case 'root':
               // only one root element for document, so break on match
-              source = 'if(e==e.ownerDocument.documentElement){' + source + 'break;}';
+              source = 'if(e==h){' + source + 'break;}';
               break;
             case 'empty':
               // IE does not support empty text nodes,
@@ -540,8 +540,8 @@ NW.Dom = function(global) {
 
                 // executed after the count is computed
                 expr = match[2] == 'last' ? (match[4] ?
-                    's.TwinsCount[e.parentNode._cssId][e.nodeName.toLowerCase()]' :
-                    's.ChildCount[e.parentNode._cssId]') + '-' + (b - 1) : b;
+                    '(e==h?1:s.TwinsCount[e.parentNode._cssId][e.nodeName.toLowerCase()])' :
+                    '(e==h?1:s.ChildCount[e.parentNode._cssId])') + '-' + (b - 1) : b;
 
                 test =
                   b < 0 ?
@@ -716,12 +716,14 @@ NW.Dom = function(global) {
       // make sure an element node was passed
       if (element && element.nodeType == 1) {
         if (typeof selector == 'string' && selector.length) {
+          base = element.ownerDocument;
+          root = base.documentElement;
           // save compiled matchers
           if (!compiledMatchers[selector]) {
             compiledMatchers[selector] = compileGroup(selector, '', false);
           }
           // result of compiled matcher
-          return compiledMatchers[selector].call(this, element, snap);
+          return compiledMatchers[selector].call(this, element, snap, base, root);
         }
         else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
@@ -767,6 +769,9 @@ NW.Dom = function(global) {
 
         // reference context ownerDocument
         base = from.ownerDocument || from;
+
+        // document root node element
+        root = base.documentElement;
 
         // caching  enabled ?
         if (cachingEnabled) {
@@ -857,13 +862,13 @@ NW.Dom = function(global) {
         if (cachingEnabled) {
           // a cached result set for the requested selector
           snap.Results[selector] =
-            compiledSelectors[selector].call(this, elements, snap);
+            compiledSelectors[selector].call(this, elements, snap, base, root);
           snap.Roots[selector] = from;
           return snap.Results[selector];
         }
 
         // a fresh result set for the requested selector
-        return compiledSelectors[selector].call(this, elements, snap);
+        return compiledSelectors[selector].call(this, elements, snap, base, root);
 
       }
       else {
