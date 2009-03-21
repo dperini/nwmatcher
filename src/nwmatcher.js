@@ -1052,8 +1052,8 @@ NW.Dom = function(global) {
   nthElement =
     function(element) {
       var i, j, node, nodes, parent, cache = snap.ChildIndex;
-      if ((parent = element.parentNode).nodeType == 1) {
-        if (!element._cssId || !cache[element._cssId]) {
+      if (!element._cssId || !cache[element._cssId]) {
+        if ((parent = element.parentNode).nodeType == 1) {
           i = 0;
           j = 0;
           nodes = parent[NATIVE_CHILDREN];
@@ -1063,11 +1063,12 @@ NW.Dom = function(global) {
             }
           }
           snap.ChildCount[parent._cssId || (parent._cssId = ++cssId)] = j;
+        } else {
+          // does not have a parent (ex.: document)
+          return 0;
         }
-        return cache[element._cssId];
       }
-      // does not have a parent (ex.: document)
-      return 0;
+      return cache[element._cssId];
     },
 
   // child position by nodeName
@@ -1075,8 +1076,8 @@ NW.Dom = function(global) {
   nthOfType =
     function(element) {
       var i, j, name, node, nodes, pid, parent, cache = snap.TwinsIndex;
-      if ((parent = element.parentNode).nodeType == 1) {
-        if (!element._cssId || !cache[element._cssId]) {
+      if (!element._cssId || !cache[element._cssId]) {
+        if ((parent = element.parentNode).nodeType == 1) {
           i = 0;
           j = 0;
           nodes = parent[NATIVE_CHILDREN];
@@ -1089,11 +1090,12 @@ NW.Dom = function(global) {
           pid = (parent._cssId || (parent._cssId = ++cssId));
           snap.TwinsCount[pid] || (snap.TwinsCount[pid] = { });
           snap.TwinsCount[pid][name] = j;
+        } else {
+          // does not have a parent (ex.: document)
+          return 0;
         }
-        return cache[element._cssId];
       }
-      // does not have a parent (ex.: document)
-      return 0;
+      return cache[element._cssId];
     },
 
   // cache access to native slice
