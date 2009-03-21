@@ -486,8 +486,8 @@ NW.Dom = function(global) {
           //source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}';
           k++;
           source =
-          'var N' + k + '=e;e=e.parentNode.firstChild;' +
-          'while((e=e.nextSibling)&&e!=N' + k + '){if(e.nodeType==1){' + source + '}}';
+            'var N' + k + '=e;e=e.parentNode.firstChild;' +
+            'while((e=e.nextSibling)&&e!=N' + k + '){if(e.nodeType==1){' + source + '}}';
         }
         // *** Child combinator
         // E > F (F children of E)
@@ -559,7 +559,16 @@ NW.Dom = function(global) {
                 source = 'if(this.' + match[1] + type + '(e)' + test + '){' + source + '}';
               } else {
                 // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
-                source = 'if(this.' + match[2] + type + '(e)){' + source + '}';
+                // too much overhead calling functions out of the main loop ?
+                //source = 'if(this.' + match[2] + type + '(e)){' + source + '}';
+                source = (match[4] ? 'T=e.nodeName;' : '') +
+                  'n=e;while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'Sibling)&&' +
+                    'n.node' + (match[4] ? 'Name!=T' : 'Type!=1') + ');' +
+                  'if(!n){' + (match[2] == 'first' || match[2] == 'last' ? source :
+                  'n=e;while((n=n.' + (match[2] == 'only' ? 'previous' : 'next') + 'Sibling)&&' +
+                    'n.node' + (match[4] ? 'Name!=T' : 'Type!=1') + ');' +
+                  'if(!n){' + source + '}') +
+                  '}';
               }
               break;
           }
