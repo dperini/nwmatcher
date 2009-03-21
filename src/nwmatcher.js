@@ -426,6 +426,8 @@ NW.Dom = function(global) {
 
       var i, a, b, n, k, expr, match, result, status, test, type;
 
+      k = 0;
+
       while (selector) {
 
         // *** Universal selector
@@ -480,7 +482,12 @@ NW.Dom = function(global) {
         // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
-          source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}';
+          // previousSibling particularly slow on Gecko based browsers prior to FF3.1
+          //source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}';
+          k++;
+          source =
+          'var N' + k + '=e;e=e.parentNode.firstChild;' +
+          'while((e=e.nextSibling)&&e!=N' + k + '){if(e.nodeType==1){' + source + '}}';
         }
         // *** Child combinator
         // E > F (F children of E)
