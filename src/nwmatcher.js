@@ -375,7 +375,7 @@ NW.Dom = function(global) {
   IS_EMPTY =
     function(object) {
       if (object && typeof object == 'object') {
-        for (i in object) { return false; }
+        for (var i in object) { return false; }
         return true;
       }
       return false;
