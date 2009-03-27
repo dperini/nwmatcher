@@ -487,7 +487,7 @@ NW.Dom = function(global) {
           k++;
           source =
             'var N' + k + '=e;e=e.parentNode.firstChild;' +
-            'while((e=e.nextSibling)&&e!=N' + k + '){if(e.nodeType==1){' + source + '}}';
+            'do{if(e.nodeType==1){' + source + '}}while(e!=N' + k + '&&(e=e.nextSibling));';
         }
         // *** Child combinator
         // E > F (F children of E)
