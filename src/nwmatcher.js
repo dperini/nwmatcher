@@ -103,6 +103,7 @@ NW.Dom = function(global) {
       root.id = 'nw';
       f = root.id != 'nw';
       root.id = l;
+      e = null;
       return f;
     })() :
     false,
@@ -112,11 +113,12 @@ NW.Dom = function(global) {
 
   BUGGY_GEBID = NATIVE_GEBID ?
     (function() {
-      var f = false, t = context.createElement('div');
+      var f, t = context.createElement('div');
       t.innerHTML = '<a name="Z"></a>';
       root.insertBefore(t, root.firstChild);
       f = !!t.ownerDocument.getElementById('Z');
       root.removeChild(t);
+      t = null;
       return f;
     })() :
     true,
@@ -124,10 +126,12 @@ NW.Dom = function(global) {
   // detect IE gEBTN comment nodes bug
   BUGGY_GEBTN = NATIVE_GEBTN ?
     (function() {
-      var t = context.createElement('div');
+      var f, t = context.createElement('div');
       t.appendChild(context.createComment(''));
       t = t.getElementsByTagName('*')[0];
-      return !!(t && t.nodeType == 8);
+      f = !!(t && t.nodeType == 8);
+      t = null;
+      return f;
     })() :
     true,
 
@@ -135,9 +139,11 @@ NW.Dom = function(global) {
   // test is taken from the jQuery selector test suite
   BUGGY_GEBCN = NATIVE_GEBCN ?
     (function() {
-      var t = context.createElement('div');
+      var f, t = context.createElement('div');
       t.innerHTML = '<span class="台北abc 台北"></span>';
-      return !t.getElementsByClassName('台北')[0];
+      f = !t.getElementsByClassName('台北')[0];
+      t = null;
+      return f;
     })() :
     true,
 
@@ -146,7 +152,7 @@ NW.Dom = function(global) {
   // for example when no DOCTYPE was specified
   BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
-      var f = false, t = root.className;
+      var f, t = root.className;
       root.className = 'Case';
       f = context.compatMode == 'BackCompat' &&
         context.querySelector('.case') !== null;
