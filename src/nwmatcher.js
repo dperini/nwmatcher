@@ -755,132 +755,184 @@ NW.Dom = function(global) {
       return [ ];
     },
 
+  lastSelector,
+  lastContext,
+  lastSlice,
+
   // select elements matching selector
   // version using cross-browser client API
   // @return array
   client_api =
     function client_api(selector, from) {
 
-      var elements, last, match, part, slice, token;
+      var i = 0, done, elements, node, parts, token;
 
-      // only process valid strings
-      if (validator.test(selector)) {
-
-        // remove trailing/leading spaces
-        selector = selector.replace(trim, '');
-
-        // use the passed from context
+      // extract context if changed
+      if (!from || lastContext != from) {
+        // save passed context
+        lastContext = from;
+        // ensure from context is set
         from || (from = context);
+        // reference context ownerDocument and document root (HTML)
+        root = (base = from.ownerDocument || from).documentElement;
+      }
 
-        // reference context ownerDocument
-        base = from.ownerDocument || from;
+      if (lastSelector != selector) {
+        // process valid selector strings
+        if (validator.test(selector)) {
+          // save passed selector
+          lastSelector = selector;
+          // get right most selector token
+          parts = selector.match(Optimize.TOKEN);
+          // only last slice before :not rules
+          lastSlice = parts[parts.length - 1].split(':not')[0];
+        } else {
+          emit('DOMException: "' + selector + '" is not a valid CSS selector.');
+          return [ ];
+        }
+      }
 
-        // document root node element
-        root = base.documentElement;
-
-        // caching  enabled ?
-        if (cachingEnabled) {
-          snap = base.snapshot;
-          // valid base context storage
-          if (snap && !snap.isExpired) {
-            if (snap.Results[selector] &&
-              snap.Roots[selector] == from) {
-              return snap.Results[selector];
-            }
-          } else {
-            setCache(true, base);
-            snap = base.snapshot;
+      // caching  enabled ?
+      if (cachingEnabled) {
+        snap = base.snapshot;
+        // valid base context storage
+        if (snap && !snap.isExpired) {
+          if (snap.Results[selector] &&
+            snap.Roots[selector] == from) {
+            return snap.Results[selector];
           }
         } else {
-          if (position.test(selector)) {
-            // need to clear storage
-            snap = new Snapshot();
-          }
+          setCache(true, base);
+          snap = base.snapshot;
         }
+      } else {
+        if (position.test(selector)) {
+          // need to clear storage
+          snap = new Snapshot();
+        }
+      }
 
-        // pre-filtering pass allow to scale proportionally with big DOM trees;
-        // this block can be safely removed, it is a speed booster on big pages
-        // and still maintain the mandatory "document ordered" result set
+      // pre-filtering pass allow to scale proportionally with big DOM trees;
+      // this block can be safely removed, it is a speed booster on big pages
+      // and still maintain the mandatory "document ordered" result set
 
-        // commas separators are treated
-        // sequentially to maintain order
-        if (selector.indexOf(',') < 0) {
+      // commas separators are treated
+      // sequentially to maintain order
+      if (selector.indexOf(',') < 0) {
 
-          // get right most selector token
-          last = selector.match(Optimize.TOKEN);
-          slice = last[last.length - 1];
-
-          // only slice before :not rules
-          slice = slice.split(':not')[0];
-
-          // MULTI TAG optimization (on full selector)
-          if (!Optimize.descendants.test(selector) && NATIVE_GEBTN) {
-            part = selector.match(/([-_\w]+)/g);
-            if (part.length > 1) {
-              elements = byTags(part, from);
+        // CLASS optimization
+        if ((parts = lastSlice.match(Optimize.CLASS)) &&
+          (token = parts[parts.length - 1])) {
+          elements = byClass(token, from);
+          if (selector == '.' + token) {
+            if (cachingEnabled && elements.length > 0) {
+              done = true;
             } else {
-              elements = from.getElementsByTagName(part[0]);
+              return elements;
             }
-          } else
+          }
+        } else
 
-          // ID optimization (on full selector)
-          if ((part = slice.match(Optimize.ID)) &&
-            (token = part[part.length - 1]) && from.getElementById) {
-            elements = [byId(token, from)];
-            if (elements[0]) {
-              if (selector == '#' + token) {
+        // MULTI TAG optimization
+        if (!Optimize.descendants.test(selector) &&
+          (parts = selector.match(/([-_\w]+)|(>)/g)) && NATIVE_GEBTN) {
+          if (parts.length > 1) {
+            elements = byTags(parts, from);
+          } else {
+            elements = toArray(from.getElementsByTagName(parts[0]));
+          }
+          if (cachingEnabled && elements.length > 0) {
+            done = true;
+          } else {
+            return elements;
+          }
+        } else
+
+        // TAG optimization
+        if ((parts = lastSlice.match(Optimize.TAG)) &&
+          (token = parts[parts.length - 1]) && NATIVE_GEBTN) {
+          elements = from.getElementsByTagName(token);
+          if (selector == token) {
+            if (cachingEnabled && elements.length > 0) {
+              done = true;
+            } else {
+              return toArray(elements);
+            }
+          }
+        } else
+
+        // ID optimization
+        if ((parts = lastSlice.match(Optimize.ID)) &&
+          (token = parts[parts.length - 1]) && from.getElementById) {
+          elements = [byId(token, from)];
+          if (elements[0]) {
+            if (selector == '#' + token) {
+              if (cachingEnabled && elements.length > 0) {
+                done = true;
+              } else {
                 return elements;
-              } else if (selector.length != (selector.lastIndexOf('#' + token) + token.length + 1)) {
-                // optimize partial existing id selections
-                from = elements[0].parentNode;
-                elements = null;
               }
             } else {
-              return [ ];
+              //if (selector.length != (selector.lastIndexOf('#' + token) + token.length + 1)) {
+              // optimize narrowing context
+              from = elements[0].parentNode;
+              elements = null;
             }
-          } else
-
-          // TAG optimization (partial slice when using :not)
-          if ((part = slice.match(Optimize.TAG)) &&
-            (token = part[part.length - 1]) && NATIVE_GEBTN) {
-            elements = from.getElementsByTagName(token);
-          } else
-
-          // CLASS optimization (partial slice when using :not)
-          if ((part = slice.match(Optimize.CLASS)) &&
-            (token = part[part.length - 1]) && !ascii.test(token)) {
-            elements = byClass(token, from);
+          } else {
+            return [ ];
           }
-
         }
-        // end of prefiltering pass
-
-        if (!elements || elements.length === 0) {
-          elements = toArray(from.getElementsByTagName('*'));
-        }
-
-        // save compiled selectors
-        if (!compiledSelectors[selector]) {
-          compiledSelectors[selector] = compileGroup(selector, '', true);
-        }
-
-        if (cachingEnabled) {
-          // a cached result set for the requested selector
-          snap.Results[selector] =
-            compiledSelectors[selector].call(this, elements, snap, base, root);
-          snap.Roots[selector] = from;
-          return snap.Results[selector];
-        }
-
-        // a fresh result set for the requested selector
-        return compiledSelectors[selector].call(this, elements, snap, base, root);
 
       }
-      else {
-        emit('DOMException: "' + selector + '" is not a valid CSS selector.');
+
+      if (!elements || elements.length === 0) {
+
+        var tag = lastSlice.match(/\b([-_\w]+)\b/);
+        elements = from.getElementsByTagName('*');
+
+        if ((parts = lastSlice.match(/\#([-_\w]+)$/)) && selector == '#' + parts[1]) {
+          while ((node = elements[i++])) {
+            if (node.id == parts[1]) {
+              return [node];
+            }
+          }
+          return [ ];
+        } else
+
+        if ((parts = lastSlice.match(/\b([-_\w]+)?(?:(\.[-_\w]+)|(\#[-_\w]+))/))) {
+          while ((node = elements[i++])) {
+            if (
+              (!parts[1] || node.nodeName == parts[1]) && (
+              (!parts[3] || (parts[2] == '#' && node.id == parts[3])) ||
+              (!parts[3] || (parts[2] == '.' && node.className == parts[3]))
+            )) {
+              return [node];
+            }
+          }
+        } else
+
+        elements = toArray(elements);
+
+      }
+      // end of prefiltering pass
+
+      // save compiled selectors
+      if (!done && !compiledSelectors[selector]) {
+        compiledSelectors[selector] = compileGroup(selector, '', true);
       }
 
-      return [ ];
+      if (cachingEnabled) {
+        // a cached result set for the requested selector
+        snap.Results[selector] = done ? elements :
+          compiledSelectors[selector].call(this, elements, snap, base, root);
+        snap.Roots[selector] = from;
+        return snap.Results[selector];
+      }
+
+      // a fresh result set for the requested selector
+      return done ?
+        elements :
+        compiledSelectors[selector].call(this, elements, snap, base, root);
     },
 
   // use the new native Selector API if available,
@@ -963,23 +1015,41 @@ NW.Dom = function(global) {
       h = 0;
       i = 0;
       while ((n = c[i++])) {
-        j= 0;
-        while ((o = e[j++])) {
-          k = 0;
-          r = o.getElementsByTagName(n.replace(trim, ''));
-          while ((p = r[k++])) {
-            id = (p._cssId || (p._cssId = ++cssId));
-            // discard duplicates
-            if (!t[id]) {
-              t[id] = true;
-              s[h++] = p;
+        if (n == '>') {
+          j = 0;
+          while ((o = e[j++])) {
+            k = 0;
+            r = o[NATIVE_CHILDREN];
+            while ((p = r[k++])) {
+              if (p.nodeName.toLowerCase() == c[i].toLowerCase()) {
+                s[h++] = p;
+              }
             }
           }
+          i++;
+          h = 0;
+          e = s;
+          s = [ ];
+          t = [ ];
+        } else {
+          j= 0;
+          while ((o = e[j++])) {
+            k = 0;
+            r = o.getElementsByTagName(n.replace(trim, ''));
+            while ((p = r[k++])) {
+              id = (p._cssId || (p._cssId = ++cssId));
+              // discard duplicates
+              if (!t[id]) {
+                t[id] = true;
+                s[h++] = p;
+              }
+            }
+          }
+          h = 0;
+          e = s;
+          s = [ ];
+          t = [ ];
         }
-        h = 0;
-        e = s;
-        s = [ ];
-        t = [ ];
       }
       return e;
     },
