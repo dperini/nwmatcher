@@ -450,6 +450,8 @@ NW.Dom = function(global) {
         else if ((match = selector.match(Patterns.id))) {
           // document can contain conflicting elements (id/name)
           source = 'if((n=e.getAttributeNode("id"))&&n.value=="' + match[1] + '"){' + source + '}';
+          //source = 'if(e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
+          //source = 'if(e.id=="' + match[1] + '"){' + source + '}';
         }
         // *** Type selector
         // Foo Tag (case insensitive)
@@ -457,6 +459,8 @@ NW.Dom = function(global) {
           // both tagName and nodeName properties may be upper or lower case
           // depending on their creation NAMESPACE in createElementNS()
           source = 'T=e.nodeName;if(T=="' + match[1].toUpperCase() + '"||T=="' + match[1].toLowerCase() + '"){' + source + '}';
+          //source = 'if(e.nodeName=="' + match[1].toUpperCase() + '"){' + source + '}';
+          //source = 'if(/' + match[1] + '/i.test(e.nodeName)){' + source + '}';
         }
         // *** Class selector
         // .Foo Class (case sensitive)
@@ -520,8 +524,8 @@ NW.Dom = function(global) {
 
           switch (match[1]) {
             case 'root':
-              // only one root element for document, so break on match
-              source = 'if(e==h){' + source + 'break;}';
+              // only one root element for document
+              source = 'if(e===h){' + source + '}';
               break;
             case 'empty':
               // IE does not support empty text nodes,
@@ -610,14 +614,15 @@ NW.Dom = function(global) {
               break;
             // CSS3 part of UI element states
             case 'checked':
-              source = 'if(e.type&&e.checked){' + source + '}';
+              source = 'if("form" in e&&e.checked===true){' + source + '}';
               break;
             case 'enabled':
-              // does not return hidden input fields, even if they are enabled
-              source = 'if(e.type&&!e.disabled&&e.type!="hidden"){' + source + '}';
+              // does not return hidden input fields, even if they are enabled, maybe
+              // we should remove this requirement, but it will fail Protoype unit test
+              source = 'if("form" in e&&e.disabled===false&&e.type!="hidden"){' + source + '}';
               break;
             case 'disabled':
-              source = 'if(e.type&&e.disabled){' + source + '}';
+              source = 'if("form" in e&&e.disabled===true){' + source + '}';
               break;
             case 'selected':
               // fix Safari selectedIndex property bug
@@ -625,7 +630,7 @@ NW.Dom = function(global) {
               for (i = 0; n[i]; i++) {
                 n[i].selectedIndex;
               }
-              source = 'if(e.form&&e.selected){' + source + '}';
+              source = 'if("form" in e&&e.selected===true){' + source + '}';
               break;
             // CSS3 target element
             case 'target':
@@ -642,9 +647,14 @@ NW.Dom = function(global) {
             // CSS1 & CSS2 UI States IE & FF3 have native support
             // these capabilities may be emulated by event managers
             case 'active':
+              source = 'if("activeElement" in d&&e===d.activeElement){' + source + '}';                                               
+              break;
             case 'hover':
+              source = 'if("hoverElement" in d&&e===d.hoverElement){' + source + '}';
+              break;
             case 'focus':
-              source = 'if(getUIState(e,"' + match[1] + '")){' + source + '}';
+              //source = 'if("form" in e&&e===d.activeElement){' + source + '}';
+              source = 'if(typeof d.hasFocus=="function"&&d.hasFocus()===true&&e===d.activeElement){' + source + '}';
               break;
             default:
               break;
@@ -702,20 +712,6 @@ NW.Dom = function(global) {
           }
         }
       }
-    },
-
-  // get specific host properties
-  // currently handle active/focus
-  // @return boolean
-  getUIState =
-    function(element, state) {
-      var host = element.ownerDocument || element;
-      if (state == 'focus' && host.hasFocus) {
-        return element.type && host.hasFocus() &&
-          element === host.activeElement;
-      }
-      return ((state + 'Element') in host) &&
-        element === host[state + 'Element'];
     },
 
   // match element with selector
