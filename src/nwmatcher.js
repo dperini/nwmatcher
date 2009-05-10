@@ -943,10 +943,10 @@ NW.Dom = function(global) {
     client_api,
 
   // element by id
-  // @return array
+  // @return element reference or null
   byId =
     function(id, from) {
-      var i = 0, names, result;
+      var i = 0, element, names, result;
       from || (from = context);
       id = id.replace(/\\/g, '');
       if (from.getElementById) {
@@ -954,12 +954,11 @@ NW.Dom = function(global) {
         if (result && id != getAttribute(result, 'id') && from.getElementsByName) {
           names = from.getElementsByName(id);
           result = null;
-          while (names[i]) {
-            if (names[i].getAttributeNode('id').value == id) {
-              result = names[i];
+          while ((element = names[i++])) {
+            if (element.getAttributeNode('id').value == id) {
+              result = element;
               break;
             }
-            i++;
           }
         }
       } else {
@@ -987,14 +986,15 @@ NW.Dom = function(global) {
   // @return array (non native GEBCN)
   byClass = !BUGGY_GEBCN ?
     function(name, from) {
-      return (from || context).getElementsByClassName(name.replace(/\\/g, ''));
+      return slice.call(from.getElementsByClassName(name.replace(/\\/g, '')), 0);
     } :
     function(name, from) {
       // context is handled in byTag for non native gEBCN
-      var i = 0, j = 0, r = [ ], node, nodes = from.getElementsByTagName('*');
-      name = ' ' + name.replace(/\\/g, '') + ' ';
+      var i = 0, j = 0, r = [ ], node,
+        nodes = from.getElementsByTagName('*'),
+        name = new RegExp("(^|\\s)" + name + "(\\s|$)");
       while ((node = nodes[i++])) {
-        if (node.className && (' ' + node.className + ' ').indexOf(name) > -1) {
+        if (name.test(node.className)) {
           r[j++] = node;
         }
       }
@@ -1058,8 +1058,7 @@ NW.Dom = function(global) {
   // @type string
   getAttribute = NATIVE_HAS_ATTRIBUTE ?
     function(element, attribute) {
-      var node = element.getAttributeNode(attribute);
-      return (node && node.value) + '';
+      return element.getAttribute(attribute) + '';
     } :
     function(element, attribute) {
       var node;
