@@ -234,17 +234,20 @@ NW.Dom = function(global) {
   // nth pseudo selectors
   position = /:(nth|of-type)/,
 
-  // Safari 2.0.x crashes with escaped (\\)
-  // unicode ranges in regular expressions
-
   // ascii extended
   ascii = /\x00-\xff/,
+
   // http://www.w3.org/TR/css3-syntax/#characters
   // unicode/ISO 10646 characters 161 and higher
-  encoding = '\u00a1-\uffff',
+  // encoding = '|[\\u00a1-\\uffff]',// correct
+  // NOTE: Safari 2.0.x crashes with escaped (\\)
+  // Unicode ranges in regular expressions so we
+  // use a negated character range class instead
+  // NOTE: [^\\w\\W] tested as good replacement
+  encoding = '|[^\\x00-\\xa0]',
 
   // selector validator discard invalid chars
-  validator = new RegExp("[-_*\\w" + encoding + "]"),
+  validator = new RegExp("([-_*\\w]" + encoding + ")"),
 
   // split comma separated selector groups, exclude commas inside () []
   // example: (#div a, ul > li a) group 1 is (#div a) group 2 is (ul > li a)
@@ -271,9 +274,9 @@ NW.Dom = function(global) {
 
   // optimization expressions
   Optimize = {
-    ID: new RegExp("\\#((?:[-_\\w" + encoding + "]|\\\\.)+)*"),
-    TAG: new RegExp("((?:[-_\\w" + encoding + "]|\\\\.)+)*"),
-    CLASS: new RegExp("\\.((?:[-_\\w" + encoding + "]|\\\\.)+)*"),
+    ID: new RegExp("#((?:[-_\\w]" + encoding + "|\\\\.)+)*"),
+    TAG: new RegExp("((?:[-_\\w]" + encoding + "|\\\\.)+)*"),
+    CLASS: new RegExp("\\.((?:[-_\\w]" + encoding + "|\\\\.)+)*"),
     // split last, right most, selector group token
     TOKEN: /([^\ \>\+\~\,\(\)\[\]]+|\([^\(\)]+\)|\(.*\)|\[[^\[\]]+\]|\[.*\])+/g,
     descendants: /[^> \w]/,
@@ -299,11 +302,11 @@ NW.Dom = function(global) {
     // all
     all: /^\*(.*)/,
     // id
-    id: new RegExp("^\\#((?:[-_\\w" + encoding + "]|\\\\.)+)(.*)"),
+    id: new RegExp("^#((?:[-_\\w]" + encoding + "|\\\\.)+)(.*)"),
     // tag
-    tagName: new RegExp("^((?:[-_\\w" + encoding + "]|\\\\.)+)(.*)"),
+    tagName: new RegExp("^((?:[-_\\w]" + encoding + "]\\\\.)+)(.*)"),
     // class
-    className: new RegExp("^\\.((?:[-_\\w" + encoding + "]|\\\\.)+)(.*)")
+    className: new RegExp("^\\.((?:[-_\\w]" + encoding + "|\\\\.)+)(.*)")
   },
 
   // current CSS3 grouping of Pseudo-Classes
