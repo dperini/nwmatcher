@@ -147,16 +147,22 @@ NW.Dom = function(global) {
     })() :
     true,
 
-  // detect Safari < 3.1.2 bug where className
-  // case sensitivity is not treated correclty
-  // for example when no DOCTYPE was specified
+  // QSA bugs
+  // className case sensitivity is not treated correclty (when no DOCTYPE)
+  // hidden input fields skipped when querying for enabled/disabled pseudos
   BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
       var f, t = root.className;
+      // case sensitivity part
       root.className = 'Case';
       f = context.compatMode == 'BackCompat' &&
         context.querySelector('.case') !== null;
       root.className = t;
+      // hidden fields part
+      t = context.createElement('div');
+      t.innerHTML = '<input type="hidden" />';
+      f = f || t.querySelectorAll(':enabled').length != 1;
+      t = null;
       return f;
     })() :
     true,
@@ -619,7 +625,7 @@ NW.Dom = function(global) {
             case 'enabled':
               // does not return hidden input fields, even if they are enabled, maybe
               // we should remove this requirement, but it will fail Protoype unit test
-              source = 'if("form" in e&&e.disabled===false&&e.type!="hidden"){' + source + '}';
+              source = 'if("form" in e&&e.disabled===false){' + source + '}';
               break;
             case 'disabled':
               source = 'if("form" in e&&e.disabled===true){' + source + '}';
@@ -938,9 +944,9 @@ NW.Dom = function(global) {
   // use the new native Selector API if available,
   // if missing, use the cross-browser client api
   // @return array
-  select = NATIVE_QSAPI ?
-    select_qsa :
-    client_api,
+  select = BUGGY_QSAPI ?
+    client_api :
+    select_qsa,
 
   // element by id
   // @return element reference or null
