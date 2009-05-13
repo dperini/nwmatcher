@@ -147,24 +147,30 @@ NW.Dom = function(global) {
     true,
 
   // QSA bugs
+  QSAPI_BLACK_LIST = '',
   // className case sensitivity is not treated correclty (when no DOCTYPE)
-  // hidden input fields skipped when querying for enabled/disabled pseudos
+  // hidden input fields skipped when querying for :enabled/:disabled pseudos
+  // does not honour mailto: protocol hyperlinks when using the :link pseudo
   BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
-      var isBuggy, div, save = root.className;
+      var isBuggy, div = context.createElement('div');
       // case sensitivity part
-      root.className = 'Case';
+      div.innerHTML = '<span class="Case"></span>';
       isBuggy = context.compatMode == 'BackCompat' &&
-        context.querySelector('.case') !== null;
-      root.className = save;
+        div.querySelector('.case') !== null;
       // hidden fields part
-      div = context.createElement('div');
       div.innerHTML = '<input type="hidden" />';
       isBuggy = isBuggy || div.querySelectorAll(':enabled').length != 1;
+      isBuggy && (QSAPI_BLACK_LIST += ':enabled|:disabled');
+      div.innerHTML = '<a id="" href="mailto:a@bc.de">Link</a>';
+      isBuggy = isBuggy || div.querySelectorAll(':link').length != 1;
+      isBuggy && (QSAPI_BLACK_LIST += '|:link');
       div = null;
       return isBuggy;
     })() :
     true,
+
+  QSAPI_FAILS = new RegExp(QSAPI_BLACK_LIST),
 
   /* END FEATURE TESTING */
 
@@ -748,7 +754,7 @@ NW.Dom = function(global) {
   select_qsa =
     function (selector, from) {
       if (typeof selector == 'string' && selector.length) {
-        if (!from || from.nodeType == 9) {
+        if ((!from || from.nodeType == 9) && (!BUGGY_QSAPI || !QSAPI_FAILS.test(selector))) {
           try {
             // use available Selectors API
             return toArray((from || context).querySelectorAll(selector));
@@ -943,9 +949,9 @@ NW.Dom = function(global) {
   // use the new native Selector API if available,
   // if missing, use the cross-browser client api
   // @return array
-  select = BUGGY_QSAPI ?
-    client_api :
-    select_qsa,
+  select = NATIVE_QSAPI ?
+    select_qsa :
+    client_api,
 
   // element by id
   // @return element reference or null
