@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.1.1
  * Created: 20070722
- * Release: 20090321
+ * Release: 20090512
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -98,7 +98,7 @@ NW.Dom = function(global) {
         root.id = id;
       };
       root.addEventListener('DOMAttrModified', handler, false);
-      // now modify attribute
+      // now modify a property
       root.id = 'nw';
       isBuggy = root.id != 'nw';
       root.id = id;
@@ -336,7 +336,7 @@ NW.Dom = function(global) {
       'first-of-type': 0, 'last-of-type': 0, 'only-of-type': 0,
       'first-child-of-type': 0, 'last-child-of-type': 0, 'only-child-of-type': 0,
       'nth-child': 0, 'nth-last-child': 0, 'nth-of-type': 0, 'nth-last-of-type': 0
-      // (the 3rd line is not in W3C CSS specs but is an accepted alias of 2nd line)
+      // (the 4rd line is not in W3C CSS specs but is an accepted alias of 3nd line)
     },
     // originally separated in different pseudo-classes
     // we have grouped them to optimize a bit size+speed
@@ -417,7 +417,7 @@ NW.Dom = function(global) {
             seen[token] = true;
             // reset element reference after the
             // first comma if using select() mode
-            if (i > 0 && mode) {
+            if (i > 0) {
               source += 'e=N;';
             }
             // insert corresponding mode function
@@ -434,7 +434,7 @@ NW.Dom = function(global) {
         return new Function('c,s,d,h', 'var k,e,r,n,C,N,T,X=0,x=0;main:for(k=0,r=[];e=N=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
       } else {
         // for match method
-        return new Function('e,s,d,h', 'var n,C,N,T,x=0;' + source + 'return false;');
+        return new Function('e,s,d,h', 'var n,C,N=e,T,X=0,x=0;' + source + 'return false;');
       }
     },
 
@@ -1330,10 +1330,10 @@ NW.Dom = function(global) {
 
   return {
 
-    // for testing purposes only!
+    // for testing purposes !
     compile:
-      function(selector) {
-        return compileGroup(selector, '', true).toString();
+      function(selector, mode) {
+        return compileGroup(selector, '', mode || false).toString();
       },
 
     // enable/disable cache
