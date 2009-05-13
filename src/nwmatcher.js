@@ -98,7 +98,7 @@ NW.Dom = function(global) {
         root.id = id;
       };
       root.addEventListener('DOMAttrModified', handler, false);
-      // now modify a property
+      // now modify attribute
       root.id = 'nw';
       isBuggy = root.id != 'nw';
       root.id = id;
@@ -346,10 +346,10 @@ NW.Dom = function(global) {
     Others: {
     //UIElementStates: {
     // we group them to optimize
-      'enabled': 0, 'disabled': 0, 'checked': 0, 'selected': 1, 'indeterminate': 2,
+      'checked': 0, 'disabled': 0, 'enabled': 0, 'selected': 1, 'indeterminate': 2,
     //},
     //Dynamic: {
-      'active': 0, 'hover': 0, 'visited': 0, 'link': 0,
+      'active': 0, 'focus': 0, 'hover': 0, 'link': 0, 'visited': 0,
     //},
     // Target: {
       'target': 0,
@@ -646,26 +646,25 @@ NW.Dom = function(global) {
             // CSS3 target element
             case 'target':
               n = base.location.hash;
-              source = 'if(e.id=="' + n + '"){' + source + '}';
+              source = 'if(e.id!=""&&e.id=="' + n + '"&&"href" in e){' + source + '}';
               break;
             // CSS1 & CSS2 link
             case 'link':
-              source = 'if(e.nodeName.toLowerCase()=="a"&&e.href){' + source + '}';
+              source = 'if("href" in e&&!e.visited&&!e.name){' + source + '}';
               break;
             case 'visited':
-              source = 'if(e.nodeName.toLowerCase()=="a"&&e.visited){' + source + '}';
+              source = 'if("href" in e&&!!e.visited){' + source + '}';
               break;
             // CSS1 & CSS2 UI States IE & FF3 have native support
             // these capabilities may be emulated by event managers
             case 'active':
-              source = 'if("activeElement" in d&&e===d.activeElement){' + source + '}';                                               
+              source = 'if("activeElement" in d&&e===d.activeElement){' + source + '}';
               break;
             case 'hover':
               source = 'if("hoverElement" in d&&e===d.hoverElement){' + source + '}';
               break;
             case 'focus':
-              //source = 'if("form" in e&&e===d.activeElement){' + source + '}';
-              source = 'if(typeof d.hasFocus=="function"&&d.hasFocus()===true&&e===d.activeElement){' + source + '}';
+              source = 'if("form" in e&&e===d.activeElement&&typeof d.hasFocus=="function"&&d.hasFocus()===true){' + source + '}';
               break;
             default:
               break;
