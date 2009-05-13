@@ -75,36 +75,35 @@ NW.Dom = function(global) {
   // on Opera 9.27 an id="length" will fold Array.slice()
   NATIVE_SLICE_PROTO =
     (function() {
-      var f = false, t = context.createElement('div');
+      var isBuggy = false, div = context.createElement('div');
       try {
-        t.innerHTML = '<div id="length"></div>';
-        root.insertBefore(t, root.firstChild);
-        f = !![].slice.call(t.childNodes, 0)[0];
+        div.innerHTML = '<div id="length"></div>';
+        root.insertBefore(div, root.firstChild);
+        isBuggy = !![].slice.call(div.childNodes, 0)[0];
       } catch(e) {
       } finally {
-        root.removeChild(t).innerHTML = '';
+        root.removeChild(div).innerHTML = '';
       }
-      return f;
+      return isBuggy;
     })(),
 
   // check for Mutation Events, DOMAttrModified should be
   // enough to ensure DOMNodeInserted/DOMNodeRemoved exist
   NATIVE_MUTATION_EVENTS = root.addEventListener ?
     (function() {
-      var e, l, f = false;
-      l = root.id;
-      e = function() {
-        root.removeEventListener('DOMAttrModified', e, false);
+      var isBuggy, id = root.id,
+      handler = function() {
+        root.removeEventListener('DOMAttrModified', handler, false);
         NATIVE_MUTATION_EVENTS = true;
-        root.id = l;
+        root.id = id;
       };
-      root.addEventListener('DOMAttrModified', e, false);
+      root.addEventListener('DOMAttrModified', handler, false);
       // now modify a property
       root.id = 'nw';
-      f = root.id != 'nw';
-      root.id = l;
-      e = null;
-      return f;
+      isBuggy = root.id != 'nw';
+      root.id = id;
+      handler = null;
+      return isBuggy;
     })() :
     false,
 
@@ -113,25 +112,25 @@ NW.Dom = function(global) {
 
   BUGGY_GEBID = NATIVE_GEBID ?
     (function() {
-      var f, t = context.createElement('div');
-      t.innerHTML = '<a name="Z"></a>';
-      root.insertBefore(t, root.firstChild);
-      f = !!t.ownerDocument.getElementById('Z');
-      root.removeChild(t);
-      t = null;
-      return f;
+      var isBuggy, div = context.createElement('div');
+      div.innerHTML = '<a name="Z"></a>';
+      root.insertBefore(div, root.firstChild);
+      isBuggy = !!div.ownerDocument.getElementById('Z');
+      root.removeChild(div);
+      div = null;
+      return isBuggy;
     })() :
     true,
 
   // detect IE gEBTN comment nodes bug
   BUGGY_GEBTN = NATIVE_GEBTN ?
     (function() {
-      var f, t = context.createElement('div');
-      t.appendChild(context.createComment(''));
-      t = t.getElementsByTagName('*')[0];
-      f = !!(t && t.nodeType == 8);
-      t = null;
-      return f;
+      var isBuggy, div = context.createElement('div');
+      div.appendChild(context.createComment(''));
+      div = div.getElementsByTagName('*')[0];
+      isBuggy = !!(div && div.nodeType == 8);
+      div = null;
+      return isBuggy;
     })() :
     true,
 
@@ -139,11 +138,11 @@ NW.Dom = function(global) {
   // test is taken from the jQuery selector test suite
   BUGGY_GEBCN = NATIVE_GEBCN ?
     (function() {
-      var f, t = context.createElement('div');
-      t.innerHTML = '<span class="台北abc 台北"></span>';
-      f = !t.getElementsByClassName('台北')[0];
-      t = null;
-      return f;
+      var isBuggy, div = context.createElement('div');
+      div.innerHTML = '<span class="台北abc 台北"></span>';
+      isBuggy = !div.getElementsByClassName('台北')[0];
+      div = null;
+      return isBuggy;
     })() :
     true,
 
@@ -152,18 +151,18 @@ NW.Dom = function(global) {
   // hidden input fields skipped when querying for enabled/disabled pseudos
   BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
-      var f, t = root.className;
+      var isBuggy, div, save = root.className;
       // case sensitivity part
       root.className = 'Case';
-      f = context.compatMode == 'BackCompat' &&
+      isBuggy = context.compatMode == 'BackCompat' &&
         context.querySelector('.case') !== null;
-      root.className = t;
+      root.className = save;
       // hidden fields part
-      t = context.createElement('div');
-      t.innerHTML = '<input type="hidden" />';
-      f = f || t.querySelectorAll(':enabled').length != 1;
-      t = null;
-      return f;
+      div = context.createElement('div');
+      div.innerHTML = '<input type="hidden" />';
+      isBuggy = isBuggy || div.querySelectorAll(':enabled').length != 1;
+      div = null;
+      return isBuggy;
     })() :
     true,
 
