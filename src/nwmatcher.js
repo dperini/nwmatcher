@@ -34,6 +34,9 @@ NW.Dom = function(global) {
   // detect Safari 2.0.x [object AbstractView]
   view = base.defaultView || base.parentWindow,
 
+  // cache access to native slice
+  slice = Array.prototype.slice,
+
   /* BEGIN FEATURE TESTING */
 
   // detect native method in object
@@ -71,15 +74,15 @@ NW.Dom = function(global) {
         'children') :
       'childNodes',
 
-  // nodeList can be converted by Array.slice() natively
-  // on Opera 9.27 an id="length" will fold Array.slice()
+  // nodeList can be converted by native .slice()
+  // Opera 9.27 and an id="length" will fold this
   NATIVE_SLICE_PROTO =
     (function() {
       var isBuggy = false, div = context.createElement('div');
       try {
         div.innerHTML = '<div id="length"></div>';
         root.insertBefore(div, root.firstChild);
-        isBuggy = !![].slice.call(div.childNodes, 0)[0];
+        isBuggy = !!slice.call(div.childNodes, 0)[0];
       } catch(e) {
       } finally {
         root.removeChild(div).innerHTML = '';
@@ -98,7 +101,7 @@ NW.Dom = function(global) {
         root.id = id;
       };
       root.addEventListener('DOMAttrModified', handler, false);
-      // now modify a property
+      // now modify an attribute
       root.id = 'nw';
       isBuggy = root.id != 'nw';
       root.id = id;
@@ -147,7 +150,7 @@ NW.Dom = function(global) {
     true,
 
   // QSA bugs
-  QSAPI_BLACK_LIST = '',
+  QSAPI_BLACK_LIST = [],
   // className case sensitivity is not treated correclty (when no DOCTYPE)
   // hidden input fields skipped when querying for :enabled/:disabled pseudos
   // does not honour mailto: protocol hyperlinks when using the :link pseudo
@@ -158,19 +161,23 @@ NW.Dom = function(global) {
       div.innerHTML = '<span class="Case"></span>';
       isBuggy = context.compatMode == 'BackCompat' &&
         div.querySelector('.case') !== null;
-      // hidden fields part
-      div.innerHTML = '<input type="hidden" />';
-      isBuggy = isBuggy || div.querySelectorAll(':enabled').length != 1;
-      isBuggy && (QSAPI_BLACK_LIST += ':enabled|:disabled');
-      div.innerHTML = '<a id="" href="mailto:a@bc.de">Link</a>';
-      isBuggy = isBuggy || div.querySelectorAll(':link').length != 1;
-      isBuggy && (QSAPI_BLACK_LIST += '|:link');
+      if (!isBuggy) {
+        // Webkit #25720 hidden fields bugs
+        div.innerHTML = '<input type="hidden" />';
+        div.querySelectorAll(':enabled').length != 1 &&
+          QSAPI_BLACK_LIST.push(':enabled', ':disabled');
+        // Webkit #xxxxx unconfirmed :link bugs
+        div.innerHTML = '<a href="http://www.google.com/"></a>';
+        div.querySelectorAll(':link').length != 1 &&
+          QSAPI_BLACK_LIST.push(':link');
+        isBuggy = QSAPI_BLACK_LIST.length > 0;
+      }
       div = null;
       return isBuggy;
     })() :
     true,
 
-  QSAPI_FAILS = new RegExp(QSAPI_BLACK_LIST),
+  QSAPI_FAILS = new RegExp(QSAPI_BLACK_LIST.join('|')),
 
   /* END FEATURE TESTING */
 
@@ -650,7 +657,7 @@ NW.Dom = function(global) {
               break;
             // CSS1 & CSS2 link
             case 'link':
-              source = 'if("href" in e&&!e.visited&&!e.name){' + source + '}';
+              source = 'if("href" in e&&!e.visited){' + source + '}';
               break;
             case 'visited':
               source = 'if("href" in e&&!!e.visited){' + source + '}';
@@ -1202,9 +1209,6 @@ NW.Dom = function(global) {
       }
       return cache[element._cssId];
     },
-
-  // cache access to native slice
-  slice = Array.prototype.slice,
 
   // convert nodeList to array
   // @return array
