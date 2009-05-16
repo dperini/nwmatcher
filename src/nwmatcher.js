@@ -629,15 +629,15 @@ NW.Dom = function(global) {
               break;
             // CSS3 part of UI element states
             case 'checked':
-              source = 'if("form" in e&&e.checked===true){' + source + '}';
+              source = 'if("form" in e&&/radio|checkbox/i.test(e.type)&&e.checked===true){' + source + '}';
               break;
             case 'enabled':
-              // does not return hidden input fields, even if they are enabled, maybe
-              // we should remove this requirement, but it will fail Protoype unit test
-              source = 'if("form" in e&&e.disabled===false){' + source + '}';
+              // does not consider hidden input fields
+              source = 'if((("form" in e&&e.type!=="hidden")||this.isLink(e))&&e.disabled===false){' + source + '}';
               break;
             case 'disabled':
-              source = 'if("form" in e&&e.disabled===true){' + source + '}';
+              // does not consider hidden input fields
+              source = 'if((("form" in e&&e.type!=="hidden")||this.isLink(e))&&e.disabled===true){' + source + '}';
               break;
             case 'selected':
               // fix Safari selectedIndex property bug
@@ -654,10 +654,10 @@ NW.Dom = function(global) {
               break;
             // CSS1 & CSS2 link
             case 'link':
-              source = 'if("href" in e&&!e.visited){' + source + '}';
+              source = 'if(this.isLink(e)&&!e.visited){' + source + '}';
               break;
             case 'visited':
-              source = 'if("href" in e&&!!e.visited){' + source + '}';
+              source = 'if(this.isLink(e)&&!!e.visited){' + source + '}';
               break;
             // CSS1 & CSS2 UI States IE & FF3 have native support
             // these capabilities may be emulated by event managers
