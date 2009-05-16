@@ -335,7 +335,7 @@ NW.Dom = function(global) {
 
   // current CSS3 grouping of Pseudo-Classes
   // they allowed implementing extensions
-  // and to improve error notification
+  // and improve error notifications
   CSS3PseudoClasses = {
     Structural: {
       'root': 0, 'empty': 0,
@@ -534,20 +534,17 @@ NW.Dom = function(global) {
         // :root, :empty,
         // :first-child, :last-child, :only-child,
         // :first-of-type, :last-of-type, :only-of-type,
-        // :first-child-of-type, :last-child-of-type, :only-child-of-type,
         // :nth-child(), :nth-last-child(), :nth-of-type(), :nth-last-of-type()
-        // (the 3rd line is not in W3C CSS specs but is an accepted alias of 2nd line)
         else if ((match = selector.match(Patterns.spseudos)) &&
           selector.match(/([-\w]+)/)[0] in CSS3PseudoClasses.Structural) {
 
           switch (match[1]) {
             case 'root':
-              // only one root element for document
+              // element root of the document
               source = 'if(e===h){' + source + '}';
               break;
             case 'empty':
-              // IE does not support empty text nodes,
-              // original whitespaces not kept in DOM
+              // element that has no children
               source = 'if(!e.firstChild){' + source + '}';
               break;
             default:
