@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.1.1
  * Created: 20070722
- * Release: 20090512
+ * Release: 20090516
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -149,35 +149,35 @@ NW.Dom = function(global) {
     })() :
     true,
 
-  // QSA bugs
-  QSAPI_BLACK_LIST = [],
-  // className case sensitivity is not treated correclty (when no DOCTYPE)
-  // hidden input fields skipped when querying for :enabled/:disabled pseudos
-  // does not honour mailto: protocol hyperlinks when using the :link pseudo
-  BUGGY_QSAPI = NATIVE_QSAPI ?
-    (function() {
-      var isBuggy, div = context.createElement('div');
-      // case sensitivity part
-      div.innerHTML = '<span class="Case"></span>';
-      isBuggy = context.compatMode == 'BackCompat' &&
-        div.querySelector('.case') !== null;
-      if (!isBuggy) {
-        // Webkit #25720 hidden fields bugs
-        div.innerHTML = '<input type="hidden" />';
-        div.querySelectorAll(':enabled').length != 1 &&
-          QSAPI_BLACK_LIST.push(':enabled', ':disabled');
-        // Webkit #xxxxx unconfirmed :link bugs
-        div.innerHTML = '<a href="http://www.google.com/"></a>';
-        div.querySelectorAll(':link').length != 1 &&
-          QSAPI_BLACK_LIST.push(':link');
-        isBuggy = QSAPI_BLACK_LIST.length > 0;
-      }
-      div = null;
-      return isBuggy;
-    })() :
-    true,
+  // check Seletor API implementations
+  BUGGY_QSAPI = NATIVE_QSAPI ? (function() {
+    var isBuggy, pattern = [], div = context.createElement('div');
 
-  QSAPI_FAILS = new RegExp(QSAPI_BLACK_LIST.join('|')),
+    // WebKit case sensitivity bug with className (when no DOCTYPE)
+    // https://bugs.webkit.org/show_bug.cgi?id=19047
+    div.innerHTML = '<b class="X"></b>';
+    if (context.compatMode == 'BackCompat' && div.querySelector('.x') !== null) {
+      return { 'test': function() { return true; } };
+    }
+
+    // check :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
+    // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
+    div.innerHTML = '<input type="hidden" />';
+    // IE8 throws error with these pseudos
+    try {
+      isBuggy = div.querySelectorAll(':enabled').length === 1;
+    } catch(e) { }
+    isBuggy && pattern.push(':enabled', ':disabled');
+
+    // check :link bugs with hyperlinks matching (Firefox/Safari)
+    div.innerHTML = '<a href="x"></a>';
+    div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
+
+    return pattern.length
+      ? new RegExp(pattern.join('|'))
+      : { 'test': function() { return false; } };
+  })() :
+  true,
 
   /* END FEATURE TESTING */
 
@@ -756,8 +756,8 @@ NW.Dom = function(global) {
   // @return array
   select_qsa =
     function (selector, from) {
-      if (typeof selector == 'string' && selector.length) {
-        if ((!from || from.nodeType == 9) && (!BUGGY_QSAPI || !QSAPI_FAILS.test(selector))) {
+      if (validator.test(selector)) {
+        if ((!from || from.nodeType == 9) && !BUGGY_QSAPI.test(selector)) {
           try {
             // use available Selectors API
             return toArray((from || context).querySelectorAll(selector));
@@ -1348,6 +1348,11 @@ NW.Dom = function(global) {
 
     // elements matching selector, starting from element
     select: select,
+
+    isLink:
+      function(e) {
+        return e.href !== '' && /a|area|link/i.test(e.nodeName);
+      },
 
     // Safari 2 bug with innerText (gasp!)
     // used to strip tags from innerHTML
