@@ -685,16 +685,16 @@ NW.Dom = function(global) {
             if ((match = selector.match(Selectors[name].Expression))) {
               result = Selectors[name].Callback(match, source);
               source = result.source;
-              status = result.status;
+              status |= result.status;
             }
-            // if an extension fails to parse the selector
-            // it must return a false boolean in "status"
-            if (!status) {
-              // log error but continue execution, don't throw real exceptions
-              // because blocking following processes maybe is not a good idea
-              emit('DOMException: unknown pseudo selector "' + selector + '"');
-              return source;
-            }
+          }
+          // if an extension fails to parse the selector
+          // it must return a false boolean in "status"
+          if (!status) {
+            // log error but continue execution, don't throw real exceptions
+            // because blocking following processes maybe is not a good idea
+            emit('DOMException: unknown pseudo selector "' + selector + '"');
+            return source;
           }
         }
         else {
