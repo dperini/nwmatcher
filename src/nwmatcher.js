@@ -1097,6 +1097,13 @@ NW.Dom = function(global) {
       return !!(node && (node.specified || node.nodeValue));
     },
 
+  // check if element matches the :link pseudo
+  isLink =
+    function(element) {
+      var nodeName = element.nodeName.toLowerCase();
+      return hasAttribute(element,'href') && nodeName == 'a' || nodeName == 'area' || nodeName == 'link';
+    },
+
   // get best children collection available
   // Safari 2.0.x "children" implementation
   // differs, taken care by feature testing
@@ -1349,11 +1356,6 @@ NW.Dom = function(global) {
     // elements matching selector, starting from element
     select: select,
 
-    isLink:
-      function(e) {
-        return e.href !== '' && /a|area|link/i.test(e.nodeName);
-      },
-
     // Safari 2 bug with innerText (gasp!)
     // used to strip tags from innerHTML
     // shouldn't be public, but needed
@@ -1392,6 +1394,9 @@ NW.Dom = function(global) {
 
     // retrieve elements by class name
     byClass: byClass,
+
+    // check if element matches the :link pseudo
+    isLink: isLink,
 
     // retrieve all children elements
     getChildren: getChildren,
