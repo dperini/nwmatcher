@@ -5,9 +5,9 @@
  * nwmatcher.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.1.1
+ * Version: 1.2.0beta
  * Created: 20070722
- * Release: 20090516
+ * Release: 20090526
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -19,7 +19,7 @@ window.NW || (window.NW = {});
 
 NW.Dom = function(global) {
 
-  var version = 'nwmatcher-1.1.1',
+  var version = 'nwmatcher-1.2.0beta',
 
   // processing context
   base = global.document,
@@ -377,7 +377,7 @@ NW.Dom = function(global) {
   // conditionals optimizers for the compiler
 
   // do not change this, it is searched & replaced
-  ACCEPT_NODE = 'r[X++]=N;continue main;',
+  ACCEPT_NODE = 'r.push(N);continue main;',
 
   // fix for IE gEBTN('*') returning collection with comment nodes
   SKIP_COMMENTS = BUGGY_GEBTN ? 'if(e.nodeType!=1){continue;}' : '',
@@ -438,10 +438,10 @@ NW.Dom = function(global) {
       }
       if (mode) {
         // for select method
-        return new Function('c,s,d,h', 'var k,e,r,n,C,N,T,X=0,x=0;main:for(k=0,r=[];e=N=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
+        return new Function('c,s,d,h', 'var k,e,r,n,C,N,T,x=0;main:for(k=0,r=[];e=N=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
       } else {
         // for match method
-        return new Function('e,s,d,h', 'var n,C,N=e,T,X=0,x=0;' + source + 'return false;');
+        return new Function('e,s,d,h', 'var n,C,N=e,T,x=0;' + source + 'return false;');
       }
     },
 
@@ -755,18 +755,22 @@ NW.Dom = function(global) {
   // version using new Selector API
   // @return array
   select_qsa =
-    function (selector, from) {
+    function (selector, from, data) {
+
+      data || (data = new Array());
+
       if (validator.test(selector)) {
         if ((!from || from.nodeType == 9) && !BUGGY_QSAPI.test(selector)) {
           try {
             // use available Selectors API
-            return toArray((from || context).querySelectorAll(selector));
+            return data.concat(toArray((from || context).querySelectorAll(selector)));
           } catch(e) { }
         }
         // fall back to NWMatcher select
         return client_api.call(this, selector, from || context);
       }
-      return [ ];
+
+      return data;
     },
 
   lastSelector,
@@ -777,9 +781,11 @@ NW.Dom = function(global) {
   // version using cross-browser client API
   // @return array
   client_api =
-    function client_api(selector, from) {
+    function client_api(selector, from, data) {
 
       var i = 0, done, elements, node, parts, token;
+
+      data || (data = new Array());
 
       // extract context if changed
       if (!from || lastContext != from) {
@@ -802,7 +808,7 @@ NW.Dom = function(global) {
           lastSlice = parts[parts.length - 1].split(':not')[0];
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
-          return [ ];
+          return data;
         }
       }
 
@@ -842,7 +848,7 @@ NW.Dom = function(global) {
             if (cachingEnabled && elements.length > 0) {
               done = true;
             } else {
-              return elements;
+              return data.concat(elements);
             }
           }
         } else
@@ -858,7 +864,7 @@ NW.Dom = function(global) {
           if (cachingEnabled && elements.length > 0) {
             done = true;
           } else {
-            return elements;
+            return data.concat(elements);
           }
         } else
 
@@ -870,7 +876,7 @@ NW.Dom = function(global) {
             if (cachingEnabled && elements.length > 0) {
               done = true;
             } else {
-              return toArray(elements);
+              return data.concat(toArray(elements));
             }
           }
         } else
@@ -884,7 +890,7 @@ NW.Dom = function(global) {
               if (cachingEnabled && elements.length > 0) {
                 done = true;
               } else {
-                return elements;
+                return data.concat(elements);
               }
             } else {
               //if (selector.length != (selector.lastIndexOf('#' + token) + token.length + 1)) {
@@ -893,7 +899,7 @@ NW.Dom = function(global) {
               elements = null;
             }
           } else {
-            return [ ];
+            return data;
           }
         }
 
@@ -901,16 +907,16 @@ NW.Dom = function(global) {
 
       if (!elements || elements.length === 0) {
 
-        var tag = lastSlice.match(/\b([-_\w]+)\b/);
         elements = from.getElementsByTagName('*');
 
         if ((parts = lastSlice.match(/\#([-_\w]+)$/)) && selector == '#' + parts[1]) {
           while ((node = elements[i++])) {
             if (node.id == parts[1]) {
-              return [node];
+              data.push(node);
+              return data;
             }
           }
-          return [ ];
+          return data;
         } else
 
         if ((parts = lastSlice.match(/\b([-_\w]+)?(?:(\.[-_\w]+)|(\#[-_\w]+))/))) {
@@ -920,12 +926,13 @@ NW.Dom = function(global) {
               (!parts[3] || (parts[2] == '#' && node.id == parts[3])) ||
               (!parts[3] || (parts[2] == '.' && node.className == parts[3]))
             )) {
-              return [node];
+              data.push(node);
+              return data;
             }
           }
-        } else
-
-        elements = toArray(elements);
+        } else {
+          elements = toArray(elements);
+        }
 
       }
       // end of prefiltering pass
@@ -937,16 +944,17 @@ NW.Dom = function(global) {
 
       if (cachingEnabled) {
         // a cached result set for the requested selector
-        snap.Results[selector] = done ? elements :
-          compiledSelectors[selector].call(this, elements, snap, base, root);
+        snap.Results[selector] = done ?
+		  data.concat(elements) :
+          data.concat(compiledSelectors[selector].call(this, elements, snap, base, root));
         snap.Roots[selector] = from;
         return snap.Results[selector];
       }
 
       // a fresh result set for the requested selector
       return done ?
-        elements :
-        compiledSelectors[selector].call(this, elements, snap, base, root);
+        data.concat(elements) :
+        data.concat(compiledSelectors[selector].call(this, elements, snap, base, root));
     },
 
   // use the new native Selector API if available,
@@ -1023,7 +1031,7 @@ NW.Dom = function(global) {
   // @return array
   byTags =
     function(c, f) {
-      var h, i, j, k, n, o, p,
+      var i, j, k, n, o, p,
         id, e = [f || context],
         r = [ ], s = [ ], t = [ ];
       h = 0;
@@ -1036,7 +1044,7 @@ NW.Dom = function(global) {
             r = o[NATIVE_CHILDREN];
             while ((p = r[k++])) {
               if (p.nodeName.toLowerCase() == c[i].toLowerCase()) {
-                s[h++] = p;
+                s.push(p);
               }
             }
           }
@@ -1055,7 +1063,7 @@ NW.Dom = function(global) {
               // discard duplicates
               if (!t[id]) {
                 t[id] = true;
-                s[h++] = p;
+                s.push(p);
               }
             }
           }
@@ -1223,9 +1231,10 @@ NW.Dom = function(global) {
     function(list) {
       // avoid using the length property of nodeLists
       // it may have been overwritten by bad HTML code
-      var i = 0, array = [ ];
-      while ((array[i] = list[i++])) { }
-      array.length--;
+      var i = 0, item, array = [ ];
+      while ((item = list[i++])) {
+        array.push(item);
+      }
       return array;
     },
 
