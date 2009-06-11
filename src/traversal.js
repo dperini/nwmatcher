@@ -1,8 +1,15 @@
+/*
+ * Element Traversal methods from Juriy Zaytsev (kangax)
+ * used to emulate Prototype up/down/previous/next methods
+ */
+
 (function(D){
   
   // TODO: all of this needs tests
-  var match = D.match;
-  
+  var match = D.match,
+  nextProperty = document.documentElement.nextElementSibling ? 'nextElementSibling' : 'nextSibling',
+  prevProperty = document.documentElement.previousElementSibling ? 'previousElementSibling' : 'previousSibling';
+
   function walkElements(property, element, expr) {
     var i = 0, isIndex = typeof expr == 'number';
     if (typeof expr == "undefined") {
@@ -38,7 +45,7 @@
    * @return {HTMLElement | undefined}
    */
   function next(element, expr) {
-    return walkElements('nextSibling', element, expr);
+    return walkElements(nextProperty, element, expr);
   }
   /**
    * @method previous
@@ -47,7 +54,7 @@
    * @return {HTMLElement | undefined}
    */
   function previous(element, expr) {
-    return walkElements('previousSibling', element, expr);
+    return walkElements(prevProperty, element, expr);
   }
   /**
    * @method down
