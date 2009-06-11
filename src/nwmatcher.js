@@ -767,7 +767,7 @@ NW.Dom = function(global) {
           } catch(e) { }
         }
         // fall back to NWMatcher select
-        return client_api.call(this, selector, from || context);
+        return client_api.call(this, selector, from || context, data);
       }
 
       return data;
