@@ -271,7 +271,7 @@ NW.Dom = function(global) {
   encoding = '|[^\\x00-\\xa0]',
 
   // selector validator discard invalid chars
-  validator = new RegExp("([-_*\\w]" + encoding + ")"),
+  validator = new RegExp("([-*\\w]" + encoding + ")"),
 
   // split comma separated selector groups, exclude commas inside () []
   // example: (#div a, ul > li a) group 1 is (#div a) group 2 is (ul > li a)
@@ -298,9 +298,9 @@ NW.Dom = function(global) {
 
   // optimization expressions
   Optimize = {
-    ID: new RegExp("#((?:[-_\\w]" + encoding + "|\\\\.)+)*"),
-    TAG: new RegExp("((?:[-_\\w]" + encoding + "|\\\\.)+)*"),
-    CLASS: new RegExp("\\.((?:[-_\\w]" + encoding + "|\\\\.)+)*"),
+    ID: new RegExp("#((?:[-\\w]" + encoding + "|\\\\.)+)*"),
+    TAG: new RegExp("((?:[-\\w]" + encoding + "|\\\\.)+)*"),
+    CLASS: new RegExp("\\.((?:[-\\w]" + encoding + "|\\\\.)+)*"),
     // split last, right most, selector group token
     TOKEN: /([^\ \>\+\~\,\(\)\[\]]+|\([^\(\)]+\)|\(.*\)|\[[^\[\]]+\]|\[.*\])+/g,
     descendants: /[^> \w]/,
@@ -326,11 +326,11 @@ NW.Dom = function(global) {
     // all
     all: /^\*(.*)/,
     // id
-    id: new RegExp("^#((?:[-_\\w]" + encoding + "|\\\\.)+)(.*)"),
+    id: new RegExp("^#((?:[-\\w]" + encoding + "|\\\\.)+)(.*)"),
     // tag
-    tagName: new RegExp("^((?:[-_\\w]" + encoding + "]\\\\.)+)(.*)"),
+    tagName: new RegExp("^((?:[-\\w]" + encoding + "]\\\\.)+)(.*)"),
     // class
-    className: new RegExp("^\\.((?:[-_\\w]" + encoding + "|\\\\.)+)(.*)")
+    className: new RegExp("^\\.((?:[-\\w]" + encoding + "|\\\\.)+)(.*)")
   },
 
   // current CSS3 grouping of Pseudo-Classes
@@ -855,7 +855,7 @@ NW.Dom = function(global) {
 
         // MULTI TAG optimization
         if (!Optimize.descendants.test(selector) &&
-          (parts = selector.match(/([-_\w]+)|(>)/g)) && NATIVE_GEBTN) {
+          (parts = selector.match(/([-\w]+)|(>)/g)) && NATIVE_GEBTN) {
           if (parts.length > 1) {
             elements = byTags(parts, from);
           } else {
@@ -909,7 +909,7 @@ NW.Dom = function(global) {
 
         elements = from.getElementsByTagName('*');
 
-        if ((parts = lastSlice.match(/\#([-_\w]+)$/)) && selector == '#' + parts[1]) {
+        if ((parts = lastSlice.match(/\#([-\w]+)$/)) && selector == '#' + parts[1]) {
           while ((node = elements[i++])) {
             if (node.id == parts[1]) {
               data.push(node);
@@ -919,7 +919,7 @@ NW.Dom = function(global) {
           return data;
         } else
 
-        if ((parts = lastSlice.match(/\b([-_\w]+)?(?:(\.[-_\w]+)|(\#[-_\w]+))/))) {
+        if ((parts = lastSlice.match(/\b([-\w]+)?(?:(\.[-\w]+)|(\#[-\w]+))/))) {
           while ((node = elements[i++])) {
             if (
               (!parts[1] || node.nodeName == parts[1]) && (
