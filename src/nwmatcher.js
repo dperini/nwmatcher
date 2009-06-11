@@ -1034,25 +1034,21 @@ NW.Dom = function(global) {
       var i, j, k, n, o, p,
         id, e = [f || context],
         r = [ ], s = [ ], t = [ ];
-      h = 0;
       i = 0;
       while ((n = c[i++])) {
         if (n == '>') {
           j = 0;
+          c[i] = new RegExp(c[i], 'i');
           while ((o = e[j++])) {
             k = 0;
             r = o[NATIVE_CHILDREN];
             while ((p = r[k++])) {
-              if (p.nodeName.toLowerCase() == c[i].toLowerCase()) {
+              if (c[i].test(p.nodeName)) {
                 s.push(p);
               }
             }
           }
           i++;
-          h = 0;
-          e = s;
-          s = [ ];
-          t = [ ];
         } else {
           j= 0;
           while ((o = e[j++])) {
@@ -1060,18 +1056,17 @@ NW.Dom = function(global) {
             r = o.getElementsByTagName(n.replace(trim, ''));
             while ((p = r[k++])) {
               id = (p._cssId || (p._cssId = ++cssId));
-              // discard duplicates
+              // discards duplicates
               if (!t[id]) {
                 t[id] = true;
                 s.push(p);
               }
             }
           }
-          h = 0;
-          e = s;
-          s = [ ];
-          t = [ ];
         }
+        e = s;
+        s = [ ];
+        t = [ ];
       }
       return e;
     },
