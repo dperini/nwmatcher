@@ -602,10 +602,11 @@ NW.Dom = function(global) {
           }
 
         }
-        // *** Dynamic pseudo-classes
-        // CSS3 :not, :contains, :enabled, :disabled, :checked, :target
-        // CSS2 :active, :focus, :hover (no way yet)
-        // CSS1 :link, :visited
+        // *** negation, user action and target pseudo-classes
+        // *** UI element states and dynamic pseudo-classes
+        // CSS3 :not, :checked, :enabled, :disabled, :target
+        // CSS3 :active, :hover, :focus
+        // CSS3 :link, :visited
         else if ((match = selector.match(Patterns.dpseudos)) &&
           selector.match(/([-\w]+)/)[0] in CSS3PseudoClasses.Others) {
 
@@ -616,19 +617,15 @@ NW.Dom = function(global) {
           }
 
           switch (match[1]) {
-            // CSS3 part of structural pseudo-classes
+            // CSS3 negation pseudo-class
             case 'not':
               // compile nested selectors, need to escape double quotes characters
               // since the string we are inserting into already uses double quotes
               source = 'if(!this.match(e, "' + match[2].replace(/\x22/g, '\\"') + '")){' + source +'}';
               break;
-            // maybe deprecated in latest proposals
-            case 'contains':
-              match[2] = match[2].replace(/^["']*|['"]*$/g, '');
-              source = 'if(' + CONTAINS_TEXT + '.indexOf("' + match[2] + '")>-1){' + source + '}';
-              break;
-            // CSS3 part of UI element states
+            // CSS3 UI element states
             case 'checked':
+              // only radio buttons and check boxes
               source = 'if("form" in e&&/radio|checkbox/i.test(e.type)&&e.checked===true){' + source + '}';
               break;
             case 'enabled':
@@ -639,28 +636,20 @@ NW.Dom = function(global) {
               // does not consider hidden input fields
               source = 'if((("form" in e&&e.type!=="hidden")||this.isLink(e))&&e.disabled===true){' + source + '}';
               break;
-            case 'selected':
-              // fix Safari selectedIndex property bug
-              n = base.getElementsByTagName('select');
-              for (i = 0; n[i]; i++) {
-                n[i].selectedIndex;
-              }
-              source = 'if("form" in e&&e.selected===true){' + source + '}';
-              break;
-            // CSS3 target element
+            // CSS3 target pseudo-class
             case 'target':
               n = base.location.hash;
               source = 'if(e.id!=""&&e.id=="' + n + '"&&"href" in e){' + source + '}';
               break;
-            // CSS1 & CSS2 link
+            // CSS3 dynamic pseudo-classes
             case 'link':
               source = 'if(this.isLink(e)&&!e.visited){' + source + '}';
               break;
             case 'visited':
               source = 'if(this.isLink(e)&&!!e.visited){' + source + '}';
               break;
-            // CSS1 & CSS2 UI States IE & FF3 have native support
-            // these capabilities may be emulated by event managers
+            // CSS3 user action pseudo-classes IE & FF3 have native support
+            // these capabilities may be emulated by some event managers
             case 'active':
               source = 'if("activeElement" in d&&e===d.activeElement){' + source + '}';
               break;
@@ -669,6 +658,20 @@ NW.Dom = function(global) {
               break;
             case 'focus':
               source = 'if("form" in e&&e===d.activeElement&&typeof d.hasFocus=="function"&&d.hasFocus()===true){' + source + '}';
+              break;
+            // CSS2 :contains and :selected pseudo-classes
+            // not currently part of CSS3 drafts
+            case 'contains':
+              match[2] = match[2].replace(/^["']*|['"]*$/g, '');
+              source = 'if(' + CONTAINS_TEXT + '.indexOf("' + match[2] + '")>-1){' + source + '}';
+              break;
+            case 'selected':
+              // fix Safari selectedIndex property bug
+              n = base.getElementsByTagName('select');
+              for (i = 0; n[i]; i++) {
+                n[i].selectedIndex;
+              }
+              source = 'if("form" in e&&e.selected===true){' + source + '}';
               break;
             default:
               break;
@@ -893,7 +896,6 @@ NW.Dom = function(global) {
                 return data.concat(elements);
               }
             } else {
-              //if (selector.length != (selector.lastIndexOf('#' + token) + token.length + 1)) {
               // optimize narrowing context
               from = elements[0].parentNode;
               elements = null;
@@ -945,7 +947,7 @@ NW.Dom = function(global) {
       if (cachingEnabled) {
         // a cached result set for the requested selector
         snap.Results[selector] = done ?
-		  data.concat(elements) :
+          data.concat(elements) :
           data.concat(compiledSelectors[selector].call(this, elements, snap, base, root));
         snap.Roots[selector] = from;
         return snap.Results[selector];
@@ -1056,7 +1058,7 @@ NW.Dom = function(global) {
             r = o.getElementsByTagName(n.replace(trim, ''));
             while ((p = r[k++])) {
               id = (p._cssId || (p._cssId = ++cssId));
-              // discards duplicates
+              // discard duplicates
               if (!t[id]) {
                 t[id] = true;
                 s.push(p);
