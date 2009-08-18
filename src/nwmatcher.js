@@ -156,7 +156,7 @@ NW.Dom = function(global) {
     // so the bug is in all other browsers code now :-)
     // new specs http://www.whatwg.org/specs/web-apps/current-work/#selectors
     div.innerHTML = '<b class="X"></b>';
-    if (context.compatMode == 'BackCompat' && div.querySelector('.x') !== null) {
+    if (context.compatMode == 'BackCompat' && div.querySelector('.x') === null) {
       return { 'test': function() { return true; } };
     }
 
