@@ -6,13 +6,14 @@
 (function(D){
   
   // TODO: all of this needs tests
-  var match = D.match,
-  nextProperty = document.documentElement.nextElementSibling ? 'nextElementSibling' : 'nextSibling',
-  prevProperty = document.documentElement.previousElementSibling ? 'previousElementSibling' : 'previousSibling';
+  var match = D.match, UNDEF, root = document.documentElement,
+  next = 'nextElementSibling', prev = 'previousElementSibling',
+  nextProperty = root[next] !== UNDEF ? next : 'nextSibling',
+  prevProperty = root[prev] !== UNDEF : prev : 'previousSibling';
 
   function walkElements(property, element, expr) {
     var i = 0, isIndex = typeof expr == 'number';
-    if (typeof expr == "undefined") {
+    if (typeof expr == UNDEF) {
       isIndex = true;
       expr = 0;
     }
