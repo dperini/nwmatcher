@@ -39,16 +39,14 @@ NW.Dom = function(global) {
 
   /* BEGIN FEATURE TESTING */
 
-  // detect native method in object
-  // not same scope of isHostObject
-  isNative = function(object, method) {
-    return object && method in object &&
-      typeof object[method] != 'string' &&
-      // IE/W3C browsers will return [native code]
-      // Safari 2.0.x and older will return [function]
-      (/\{\s*\[native code[^\]]*\]\s*\}|^\[function\]$/).
-      test(object[method]);
-    },
+  // detect native methods
+  isNative = (function() {
+    var s = (Function + '').replace(/Function/g, '');
+    return function isNative(object, method) {
+      var m = object ? object[method] : false, r = new RegExp(method, 'g');
+      return !!(m && typeof m != 'string' && s === (m + '').replace(r, ''));
+    };
+  })(),
 
   // NOTE: NATIVE_XXXXX check for existance of method only
   // so through the code read it as "supported", maybe BUGGY
