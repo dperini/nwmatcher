@@ -212,8 +212,18 @@ NW.Dom = function(global) {
   //
   // Safari 2.0.x always treat attributes as in Quirks mode.
   //
-  insensitiveMap = /^CSS/i.test(context.compatMode) || (view && global !== view) ? {
-    // must be trated case insensitive in both HTML and XHTML (Strict ?)
+  xhtml_table = {
+    // the following attributes must be treated case insensitive in XHTML
+    'accept': 1, 'accept-charset': 1, 'alink': 1, 'axis': 1,
+    'bgcolor': 1, 'charset': 1, 'codetype': 1, 'color': 1,
+    'enctype': 1, 'face': 1, 'hreflang': 1, 'http-equiv': 1,
+    'lang': 1, 'language': 1, 'link': 1, 'media': 1, 'rel': 1,
+    'rev': 1, 'target': 1, 'text': 1, 'type': 1, 'vlink': 1
+  },
+
+  html_table = {
+    // class attribute must be treated case-insensitive in HTML quirks mode
+    'class': context.compatMode.indexOf('CSS') > -1 ? 0 : 1,
     'accept': 1, 'accept-charset': 1, 'align': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'checked': 1, 'clear': 1, 'codetype': 1, 'color': 1,
     'compact': 1, 'declare': 1, 'defer': 1, 'dir': 1, 'direction': 1, 'disabled': 1,
@@ -222,14 +232,11 @@ NW.Dom = function(global) {
     'noresize': 1, 'noshade': 1, 'nowrap': 1, 'readonly': 1, 'rel': 1, 'rev': 1,
     'rules': 1, 'scope': 1, 'scrolling': 1, 'selected': 1, 'shape': 1, 'target': 1,
     'text': 1, 'type': 1, 'valign': 1, 'valuetype': 1, 'vlink': 1
-    } : {
-    // must be treated case insensitive in HTML (Quirks ?)
-    'align': 1, 'checked': 1, 'clear': 1, 'compact': 1, 'declare': 1,
-    'defer': 1, 'dir': 1, 'disabled': 1, 'frame': 1, 'method': 1,
-    'multiple': 1, 'nohref': 1, 'noresize': 1, 'noshade': 1, 'nowrap': 1,
-    'readonly': 1, 'rules': 1, 'scope': 1, 'scrolling': 1, 'selected': 1,
-    'shape': 1, 'valign': 1, 'valuetype': 1
   },
+
+  docType = context.docType,
+  insensitiveMap = docType && docType.systemId.indexOf('xhtml') > -1 ?
+    xhtml_table : html_table,
 
   // attribute referencing URI values need special treatment in IE
   attributesURI = {
