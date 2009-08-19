@@ -41,7 +41,7 @@ NW.Dom = function(global) {
 
   // detect native methods
   isNative = (function() {
-    var s = (Function + '').replace(/Function/g, '');
+    var s = (open + '').replace(/open/g, '');
     return function isNative(object, method) {
       var m = object ? object[method] : false, r = new RegExp(method, 'g');
       return !!(m && typeof m != 'string' && s === (m + '').replace(r, ''));
