@@ -181,36 +181,7 @@ NW.Dom = function(global) {
 
   /* END FEATURE TESTING */
 
-  // map of attribute names (in HTML and DOM namespaces)
-  // many are missing here, or maybe there are too many
-  // first two lines will cover most real cases anyway
-  /*
-  // we do not have to write attributes and
-  // we have a fixed internal getAttribute
-  // maybe we can skip this case juggling
-  Attributes = {
-    'class': 'className', 'for': 'htmlFor',
-    'classname': 'className', 'htmlfor': 'htmlFor',
-    'tabindex': 'tabIndex', 'accesskey': 'accessKey', 'maxlength': 'maxLength',
-    'readonly': 'readOnly', 'longdesc': 'longDesc', 'frameborder': 'frameBorder',
-    'ismap': 'isMap', 'usemap': 'useMap', 'nohref': 'noHref', 'nowrap': 'noWrap',
-    'colspan': 'colSpan', 'rowspan': 'rowSpan',
-    'cellpadding': 'cellPadding', 'cellspacing': 'cellSpacing',
-    'marginwidth': 'marginWidth', 'marginheight': 'marginHeight'
-  },
-  */
-
   // See Niels Leenheer blog http://rakaz.nl/item/css_selector_bugs_case_sensitivity
-  //
-  // Each attribute definition includes information about the case-sensitivity of its values.
-  // http://www.w3.org/TR/html4/types.html#h-6.1
-  //
-  // HTML 4 and XHTML both have some attributes that have pre-defined and limited sets of values.
-  // http://www.w3.org/TR/xhtml1/#h-4.11
-  //
-  // HTML 5 draft specifications http://www.whatwg.org/specs/web-apps/current-work/#selectors
-  //
-  // Safari 2.0.x always treat attributes as in Quirks mode.
   //
   xhtml_table = {
     // the following attributes must be treated case insensitive in XHTML
@@ -221,6 +192,7 @@ NW.Dom = function(global) {
     'rev': 1, 'target': 1, 'text': 1, 'type': 1, 'vlink': 1
   },
 
+  // HTML 5 draft specifications http://www.whatwg.org/specs/web-apps/current-work/#selectors
   html_table = {
     // class attribute must be treated case-insensitive in HTML quirks mode
     'class': context.compatMode.indexOf('CSS') > -1 ? 0 : 1,
