@@ -1094,17 +1094,6 @@ NW.Dom = function(global) {
       return hasAttribute(element,'href') && nodeName == 'a' || nodeName == 'area' || nodeName == 'link';
     },
 
-  // get best children collection available
-  // Safari 2.0.x "children" implementation
-  // differs, taken care by feature testing
-  // @return nodeList (live)
-  getChildren =
-    function(element) {
-      // childNodes is slower to loop through because it contains text nodes
-      // empty text nodes could be removed at startup to compensate this a bit
-      return element[NATIVE_CHILDREN] || element.childNodes;
-    },
-
   // test element to be the only element child in its parent
   // @return boolean
   firstElement =
@@ -1388,9 +1377,6 @@ NW.Dom = function(global) {
 
     // check if element matches the :link pseudo
     isLink: isLink,
-
-    // retrieve all children elements
-    getChildren: getChildren,
 
     // read the value of the attribute
     // as was in the original HTML code
