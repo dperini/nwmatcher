@@ -846,10 +846,9 @@ NW.Dom = function(global) {
               return data.concat(elements);
             }
           }
-        } else
-
+        }
         // MULTI TAG optimization
-        if (!Optimize.descendants.test(selector) &&
+        else if (!Optimize.descendants.test(selector) &&
           (parts = selector.match(/([-\w]+)|(>)/g)) && NATIVE_GEBTN) {
           if (parts.length > 1) {
             elements = byTags(parts, from);
@@ -861,10 +860,9 @@ NW.Dom = function(global) {
           } else {
             return data.concat(elements);
           }
-        } else
-
+        }
         // TAG optimization
-        if ((parts = lastSlice.match(Optimize.TAG)) &&
+        else if ((parts = lastSlice.match(Optimize.TAG)) &&
           (token = parts[parts.length - 1]) && NATIVE_GEBTN) {
           elements = from.getElementsByTagName(token);
           if (selector == token) {
@@ -874,10 +872,9 @@ NW.Dom = function(global) {
               return data.concat(toArray(elements));
             }
           }
-        } else
-
+        }
         // ID optimization
-        if ((parts = lastSlice.match(Optimize.ID)) &&
+        else if ((parts = lastSlice.match(Optimize.ID)) &&
           (token = parts[parts.length - 1]) && from.getElementById) {
           elements = [byId(token, from)];
           if (elements[0]) {
@@ -911,9 +908,7 @@ NW.Dom = function(global) {
             }
           }
           return data;
-        } else
-
-        if ((parts = lastSlice.match(/\b([-\w]+)?(?:(\.[-\w]+)|(\#[-\w]+))/))) {
+        } else if ((parts = lastSlice.match(/\b([-\w]+)?(?:(\.[-\w]+)|(\#[-\w]+))/))) {
           while ((node = elements[i++])) {
             if (
               (!parts[1] || node.nodeName == parts[1]) && (
