@@ -139,9 +139,9 @@ NW.Dom = function(global) {
   // test is taken from the jQuery selector test suite
   BUGGY_GEBCN = NATIVE_GEBCN ?
     (function() {
-      var isBuggy, div = context.createElement('div');
-      div.innerHTML = '<span class="台北abc 台北"></span>';
-      isBuggy = !div.getElementsByClassName('台北')[0];
+      var isBuggy, div = context.createElement('div'), test =/\u53f0\u5317/;
+      div.innerHTML = '<span class="' + test + 'abc ' + test + '"></span>';
+      isBuggy = !div.getElementsByClassName(test)[0];
       div = null;
       return isBuggy;
     })() :
