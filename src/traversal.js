@@ -7,9 +7,9 @@
   
   // TODO: all of this needs tests
   var match = D.match, UNDEF, root = document.documentElement,
-  next = 'nextElementSibling', prev = 'previousElementSibling',
-  nextProperty = root[next] !== UNDEF ? next : 'nextSibling',
-  prevProperty = root[prev] !== UNDEF : prev : 'previousSibling';
+  nextEl = 'nextElementSibling', prevEl = 'previousElementSibling',
+  nextProperty = root[next] !== UNDEF ? nextEl : 'nextSibling',
+  prevProperty = root[prev] !== UNDEF ? prevEl : 'previousSibling';
 
   function walkElements(property, element, expr) {
     var i = 0, isIndex = typeof expr == 'number';
@@ -17,7 +17,7 @@
       isIndex = true;
       expr = 0;
     }
-    while (element = element[property]) {
+    while ((element = element[property])) {
       if (element.nodeType != 1) continue;
       if (isIndex) {
         if (i++ == expr) {
@@ -28,6 +28,7 @@
         return element;
       }
     }
+    return null;
   }
   
   /**
@@ -76,9 +77,11 @@
         }
       }
     }
+    return null;
   }
   D.up = up;
   D.down = down;
   D.next = next;
   D.previous = previous;
 })(NW.Dom);
+
