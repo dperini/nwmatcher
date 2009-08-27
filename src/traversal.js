@@ -8,8 +8,8 @@
   // TODO: all of this needs tests
   var match = D.match, UNDEF, root = document.documentElement,
   nextEl = 'nextElementSibling', prevEl = 'previousElementSibling',
-  nextProperty = root[next] !== UNDEF ? nextEl : 'nextSibling',
-  prevProperty = root[prev] !== UNDEF ? prevEl : 'previousSibling';
+  nextProperty = root[nextEl] !== UNDEF ? nextEl : 'nextSibling',
+  prevProperty = root[prevEl] !== UNDEF ? prevEl : 'previousSibling';
 
   function walkElements(property, element, expr) {
     var i = 0, isIndex = typeof expr == 'number';
