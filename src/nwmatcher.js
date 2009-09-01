@@ -180,9 +180,9 @@ NW.Dom = function(global) {
     div.innerHTML = '<a href="x"></a>';
     div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
 
-    return pattern.length
-      ? new RegExp(pattern.join('|'))
-      : { 'test': function() { return false; } };
+    return pattern.length ?
+      new RegExp(pattern.join('|')) :
+      { 'test': function() { return false; } };
   })() :
   true,
 
@@ -454,6 +454,7 @@ NW.Dom = function(global) {
         if ((match = selector.match(Patterns.all))) {
           // do nothing, handled in the compiler where
           // BUGGY_GEBTN return comment nodes (ex: IE)
+          true;
         }
         // *** ID selector
         // #Foo Id case sensitive
@@ -913,8 +914,7 @@ NW.Dom = function(global) {
             if (
               (!parts[1] || node.nodeName == parts[1]) && (
               (!parts[3] || (parts[2] == '#' && node.id == parts[3])) ||
-              (!parts[3] || (parts[2] == '.' && node.className == parts[3]))
-            )) {
+              (!parts[3] || (parts[2] == '.' && node.className == parts[3])))) {
               data.push(node);
               return data;
             }
@@ -1100,7 +1100,7 @@ NW.Dom = function(global) {
   // @return boolean
   firstElement =
     function(element) {
-      while ((element = element.previousSibling) && element.nodeType != 1) { }
+      while ((element = element.previousSibling) && element.nodeType != 1) { continue; }
       return !element;
     },
 
@@ -1108,7 +1108,7 @@ NW.Dom = function(global) {
   // @return boolean
   lastElement =
     function(element) {
-      while ((element = element.nextSibling) && element.nodeType != 1) { }
+      while ((element = element.nextSibling) && element.nodeType != 1) { continue; }
       return !element;
     },
 
@@ -1124,7 +1124,7 @@ NW.Dom = function(global) {
   firstOfType =
     function(element) {
       var nodeName = element.nodeName.toLowerCase();
-      while ((element = element.previousSibling) && element.nodeName.toLowerCase() != nodeName) { }
+      while ((element = element.previousSibling) && element.nodeName.toLowerCase() != nodeName) { continue; }
       return !element;
     },
 
@@ -1133,7 +1133,7 @@ NW.Dom = function(global) {
   lastOfType =
     function(element) {
       var nodeName = element.nodeName.toLowerCase();
-      while ((element = element.nextSibling) && element.nodeName.toLowerCase() != nodeName) { }
+      while ((element = element.nextSibling) && element.nodeName.toLowerCase() != nodeName) { continue; }
       return !element;
     },
 
