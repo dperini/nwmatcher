@@ -37,12 +37,18 @@ NW.Dom = function(global) {
   // cache access to native slice
   slice = Array.prototype.slice,
 
+  compatMode = context.compatMode ||
+    (function() {
+      var el; (el = document.createElement('div')).style.width = 1;
+      return el.style.width == '1px' ? 'BackCompat' : 'CSS1Compat';
+    })(),
+
   /* BEGIN FEATURE TESTING */
 
   // detect native methods
   isNative = (function() {
     var s = (global.open + '').replace(/open/g, '');
-    return function isNative(object, method) {
+    return function(object, method) {
       var m = object ? object[method] : false, r = new RegExp(method, 'g');
       return !!(m && typeof m != 'string' && s === (m + '').replace(r, ''));
     };
@@ -156,7 +162,7 @@ NW.Dom = function(global) {
     // so the bug is in all other browsers code now :-)
     // new specs http://www.whatwg.org/specs/web-apps/current-work/#selectors
     div.innerHTML = '<b class="X"></b>';
-    if (context.compatMode == 'BackCompat' && div.querySelector('.x') === null) {
+    if (compatMode == 'BackCompat' && div.querySelector('.x') === null) {
       return { 'test': function() { return true; } };
     }
 
@@ -202,7 +208,7 @@ NW.Dom = function(global) {
   // HTML 5 draft specifications http://www.whatwg.org/specs/web-apps/current-work/#selectors
   html_table = {
     // class attribute must be treated case-insensitive in HTML quirks mode
-    'class': context.compatMode.indexOf('CSS') > -1 ? 0 : 1,
+    'class': compatMode.indexOf('CSS') > -1 ? 0 : 1,
     'accept': 1, 'accept-charset': 1, 'align': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'checked': 1, 'clear': 1, 'codetype': 1, 'color': 1,
     'compact': 1, 'declare': 1, 'defer': 1, 'dir': 1, 'direction': 1, 'disabled': 1,
