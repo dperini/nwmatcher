@@ -213,7 +213,7 @@ NW.Dom = function(global) {
     'text': 1, 'type': 1, 'valign': 1, 'valuetype': 1, 'vlink': 1
   },
 
-  docType = context.docType,
+  docType = context.doctype,
   insensitiveMap = docType && docType.systemId.indexOf('xhtml') > -1 ?
     xhtml_table : html_table,
 
@@ -263,7 +263,7 @@ NW.Dom = function(global) {
   encoding = '|[^\\x00-\\xa0]',
 
   // selector validator discard invalid chars
-  validator = new RegExp("([-*\\w]" + encoding + ")"),
+  validator = new RegExp("([.:#*\\w]" + encoding + ")"),
 
   // split comma separated selector groups, exclude commas inside () []
   // example: (#div a, ul > li a) group 1 is (#div a) group 2 is (ul > li a)
@@ -1003,9 +1003,9 @@ NW.Dom = function(global) {
       // context is handled in byTag for non native gEBCN
       var i = 0, j = 0, r = [ ], node,
         nodes = from.getElementsByTagName('*'),
-        name = new RegExp("(^|\\s)" + name + "(\\s|$)");
+        classname = new RegExp("(^|\\s)" + name + "(\\s|$)");
       while ((node = nodes[i++])) {
-        if (name.test(node.className)) {
+        if (classname.test(node.className)) {
           r[j++] = node;
         }
       }
