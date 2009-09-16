@@ -17,7 +17,7 @@
 
 window.NW || (window.NW = {});
 
-NW.Dom = function(global) {
+NW.Dom = (function(global) {
 
   var version = 'nwmatcher-1.2.0',
 
@@ -399,7 +399,7 @@ NW.Dom = function(global) {
       t.style.display = 'none';
       return t.innerText.length > 0 ?
         'e.innerText' :
-        'this.stripTags(e.innerHTML)';
+        's.stripTags(e.innerHTML)';
     })(),
 
   // to check extensions have not yet been registered
@@ -506,8 +506,8 @@ NW.Dom = function(global) {
             match[5] = match[5].toLowerCase();
           }
           source = 'if(' +
-            (Operators[(match[2] || match[3])] || 'this.hasAttribute(e,"' + match[1] + '")').
-              replace(/\%p/g, 'this.getAttribute(e,"' + match[1] + '")' +
+            (Operators[(match[2] || match[3])] || 's.hasAttribute(e,"' + match[1] + '")').
+              replace(/\%p/g, 's.getAttribute(e,"' + match[1] + '")' +
                 (expr ? '' : '.toLowerCase()')).replace(/\%m/g, match[5]) +
           '){' + source + '}';
         }
@@ -590,11 +590,11 @@ NW.Dom = function(global) {
                     '';
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
-                source = 'if(this.' + match[1] + type + '(e)' + test + '){' + source + '}';
+                source = 'if(s.' + match[1] + type + '(e)' + test + '){' + source + '}';
               } else {
                 // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
                 // too much overhead calling functions out of the main loop ?
-                //source = 'if(this.' + match[2] + type + '(e)){' + source + '}';
+                //source = 'if(s.' + match[2] + type + '(e)){' + source + '}';
                 source = (match[4] ? 'T=e.nodeName;' : '') +
                   'n=e;while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'Sibling)&&' +
                     'n.node' + (match[4] ? 'Name!=T' : 'Type!=1') + ');' +
@@ -627,7 +627,7 @@ NW.Dom = function(global) {
             case 'not':
               // compile nested selectors, need to escape double quotes characters
               // since the string we are inserting into already uses double quotes
-              source = 'if(!this.match(e, "' + match[2].replace(/\x22/g, '\\"') + '")){' + source +'}';
+              source = 'if(!s.match(e, "' + match[2].replace(/\x22/g, '\\"') + '")){' + source +'}';
               break;
             // CSS3 UI element states
             case 'checked':
@@ -636,11 +636,11 @@ NW.Dom = function(global) {
               break;
             case 'enabled':
               // does not consider hidden input fields
-              source = 'if((("form" in e&&e.type!=="hidden")||this.isLink(e))&&e.disabled===false){' + source + '}';
+              source = 'if((("form" in e&&e.type!=="hidden")||s.isLink(e))&&e.disabled===false){' + source + '}';
               break;
             case 'disabled':
               // does not consider hidden input fields
-              source = 'if((("form" in e&&e.type!=="hidden")||this.isLink(e))&&e.disabled===true){' + source + '}';
+              source = 'if((("form" in e&&e.type!=="hidden")||s.isLink(e))&&e.disabled===true){' + source + '}';
               break;
             // CSS3 target pseudo-class
             case 'target':
@@ -649,10 +649,10 @@ NW.Dom = function(global) {
               break;
             // CSS3 dynamic pseudo-classes
             case 'link':
-              source = 'if(this.isLink(e)&&!e.visited){' + source + '}';
+              source = 'if(s.isLink(e)&&!e.visited){' + source + '}';
               break;
             case 'visited':
-              source = 'if(this.isLink(e)&&!!e.visited){' + source + '}';
+              source = 'if(s.isLink(e)&&!!e.visited){' + source + '}';
               break;
             // CSS3 user action pseudo-classes IE & FF3 have native support
             // these capabilities may be emulated by some event managers
@@ -751,7 +751,7 @@ NW.Dom = function(global) {
             compiledMatchers[selector] = compileGroup(selector, '', false);
           }
           // result of compiled matcher
-          return compiledMatchers[selector].call(this, element, snap, base, root);
+          return compiledMatchers[selector](element, snap, base, root);
         }
         else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
@@ -776,7 +776,7 @@ NW.Dom = function(global) {
           } catch(e) { }
         }
         // fall back to NWMatcher select
-        return client_api.call(this, selector, from || context, data);
+        return client_api(selector, from || context, data);
       }
 
       return data;
@@ -948,7 +948,7 @@ NW.Dom = function(global) {
         // a cached result set for the requested selector
         snap.Results[selector] = done ?
           data.concat(elements) :
-          data.concat(compiledSelectors[selector].call(this, elements, snap, base, root));
+          data.concat(compiledSelectors[selector](elements, snap, base, root));
         snap.Roots[selector] = from;
         return snap.Results[selector];
       }
@@ -956,7 +956,7 @@ NW.Dom = function(global) {
       // a fresh result set for the requested selector
       return done ?
         data.concat(elements) :
-        data.concat(compiledSelectors[selector].call(this, elements, snap, base, root));
+        data.concat(compiledSelectors[selector](elements, snap, base, root));
     },
 
   // use the new native Selector API if available,
@@ -986,7 +986,7 @@ NW.Dom = function(global) {
           }
         }
       } else {
-        result = NW.Dom.select('[id="' + id + '"]', from)[0] || null;
+        result = select('[id="' + id + '"]', from)[0] || null;
       }
       return result;
     },
@@ -1002,7 +1002,7 @@ NW.Dom = function(global) {
   // @return array
   byName =
     function(name, from) {
-      return this.select('[name="' + name.replace(/\\/g, '') + '"]', from || context);
+      return select('[name="' + name.replace(/\\/g, '') + '"]', from || context);
     },
 
   // elements by class
@@ -1241,9 +1241,10 @@ NW.Dom = function(global) {
   Snapshot =
     function() {
       return {
-        // validation flag, creating it already expired,
+        // validation flag, creating if already expired,
         // code validation will set it valid first time
         isExpired: false,
+
         // count of siblings by nodeType or nodeName
         ChildCount: [ ],
         TwinsCount: [ ],
@@ -1252,7 +1253,38 @@ NW.Dom = function(global) {
         TwinsIndex: [ ],
         // result sets and related root contexts
         Results: [ ],
-        Roots: [ ]
+        Roots: [ ],
+
+        // must exist for compiled functions
+
+        // element inspection methods
+        getAttribute: getAttribute,
+        hasAttribute: hasAttribute,
+        firstElement: firstElement,
+        lastElement: lastElement,
+        onlyElement: onlyElement,
+        firstOfType: firstOfType,
+        lastOfType: lastOfType,
+        onlyOfType: onlyOfType,
+        nthElement: nthElement,
+        nthOfType: nthOfType,
+
+        // element selection methods
+        byClass: byClass,
+        byName: byName,
+        byTag: byTag,
+        byId: byId,
+
+        // non public fix method
+        stripTags: stripTags,
+
+        // helper/check methods
+        toArray: toArray,
+        isLink: isLink,
+
+        // selection/matching
+        select: select,
+        match: match
       };
     },
 
@@ -1422,4 +1454,4 @@ NW.Dom = function(global) {
 
   };
 
-}(this);
+})(this);
