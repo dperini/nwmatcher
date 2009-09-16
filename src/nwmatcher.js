@@ -37,11 +37,19 @@ NW.Dom = function(global) {
   // cache access to native slice
   slice = Array.prototype.slice,
 
+  // Safari 2 missing document.compatMode property
+  // makes it harder to detect Quirks vs. Strict
   compatMode = context.compatMode ||
     (function() {
       var el; (el = document.createElement('div')).style.width = 1;
       return el.style.width == '1px' ? 'BackCompat' : 'CSS1Compat';
     })(),
+
+  // Safari 2 bug with innerText (gasp!)
+  // used to strip tags from innerHTML
+  stripTags = function(s) {
+    return s.replace(/<\/?("[^\"]*"|'[^\']*'|[^>])+>/gi, '');
+  },
 
   /* BEGIN FEATURE TESTING */
 
@@ -1342,14 +1350,6 @@ NW.Dom = function(global) {
 
     // elements matching selector, starting from element
     select: select,
-
-    // Safari 2 bug with innerText (gasp!)
-    // used to strip tags from innerHTML
-    // shouldn't be public, but needed
-    stripTags:
-      function(s) {
-        return s.replace(/<\/?("[^\"]*"|'[^\']*'|[^>])+>/gi, '');
-      },
 
     // add selector patterns for user defined callbacks
     registerSelector:
