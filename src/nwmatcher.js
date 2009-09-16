@@ -1016,9 +1016,9 @@ NW.Dom = (function(global) {
       // context is handled in byTag for non native gEBCN
       var i = 0, j = 0, r = [ ], node,
         nodes = from.getElementsByTagName('*'),
-        classname = new RegExp("(^|\\s)" + name + "(\\s|$)");
+        className = new RegExp("(^|\\s)" + name + "(\\s|$)");
       while ((node = nodes[i++])) {
-        if (classname.test(node.className)) {
+        if (className.test(node.className)) {
           r[j++] = node;
         }
       }
@@ -1074,7 +1074,7 @@ NW.Dom = (function(global) {
     },
 
   // attribute value
-  // @type string
+  // @return string
   getAttribute = NATIVE_HAS_ATTRIBUTE ?
     function(element, attribute) {
       return element.getAttribute(attribute) + '';
@@ -1103,13 +1103,14 @@ NW.Dom = (function(global) {
     },
 
   // check if element matches the :link pseudo
+  // @return boolean
   isLink =
     function(element) {
       var nodeName = element.nodeName.toLowerCase();
       return hasAttribute(element,'href') && nodeName == 'a' || nodeName == 'area' || nodeName == 'link';
     },
 
-  // test element to be the only element child in its parent
+  // test element to be the first element child in its parent
   // @return boolean
   firstElement =
     function(element) {
@@ -1117,7 +1118,7 @@ NW.Dom = (function(global) {
       return !element;
     },
 
-  // test element to be the only element child in its parent
+  // test element to be the last element child in its parent
   // @return boolean
   lastElement =
     function(element) {
