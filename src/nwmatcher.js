@@ -333,7 +333,7 @@ NW.Dom = (function(global) {
     // id
     id: new RegExp("^#((?:[-\\w]" + encoding + "|\\\\.)+)(.*)"),
     // tag
-    tagName: new RegExp("^((?:[-\\w]" + encoding + "]\\\\.)+)(.*)"),
+    tagName: new RegExp("^((?:[-\\w]" + encoding + "|\\\\.)+)(.*)"),
     // class
     className: new RegExp("^\\.((?:[-\\w]" + encoding + "|\\\\.)+)(.*)")
   },
