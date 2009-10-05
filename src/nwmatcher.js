@@ -269,19 +269,20 @@ NW.Dom = (function(global) {
 
   // http://www.w3.org/TR/css3-syntax/#characters
   // unicode/ISO 10646 characters 161 and higher
-  // encoding = '|[\\u00a1-\\uffff]',// correct
   // NOTE: Safari 2.0.x crashes with escaped (\\)
   // Unicode ranges in regular expressions so we
   // use a negated character range class instead
-  // NOTE: [^\\w\\W] tested as good replacement
-  encoding = '|[^\\x00-\\xa0]',
+  encoding = '((?:[-\\w]|[^\\x00-\\xa0]|\\\\.)+)',
+
+  // used to skip [ ] or ( ) groups in token tails
+  skipgroup = '(?:\\[.*\\]|\\(.*\\))',
 
   // selector validator discard invalid chars
-  validator = new RegExp("([.:#*\\w]" + encoding + ")"),
+  validator = new RegExp("([.:#*\\w]|[^\\x00-\\xa0])"),
 
   // split comma separated selector groups, exclude commas inside () []
   // example: (#div a, ul > li a) group 1 is (#div a) group 2 is (ul > li a)
-  group = /(([^,\(\)\[\]]+|\([^\(\)]+\)|\(.*\)|\[[^\[\]]+\]|\[.*\]|\\.|\*)+)/g,
+  group = /([^,()[\]]+|\([^()]+\)|\(.*\)|\[(?:\[[^[\]]*\]|["'][^'"]*["']|[^'"[\]]+)+\]|\[.*\]|\\.)+/g,
 
   // attribute operators
   Operators = {
@@ -304,9 +305,9 @@ NW.Dom = (function(global) {
 
   // optimization expressions
   Optimize = {
-    ID: new RegExp("#((?:[-\\w]" + encoding + "|\\\\.)+)*"),
-    TAG: new RegExp("((?:[-\\w]" + encoding + "|\\\\.)+)*"),
-    CLASS: new RegExp("\\.((?:[-\\w]" + encoding + "|\\\\.)+)*"),
+    ID: new RegExp("#" + encoding + "|" + skipgroup + "*"),
+    TAG: new RegExp(encoding + "|" + skipgroup + "*"),
+    CLASS:  new RegExp("\\." + encoding + "|" + skipgroup + "*"),
     // split last, right most, selector group token
     TOKEN: /([^\ \>\+\~\,\(\)\[\]]+|\([^\(\)]+\)|\(.*\)|\[[^\[\]]+\]|\[.*\])+/g,
     descendants: /[^> \w]/,
@@ -332,11 +333,11 @@ NW.Dom = (function(global) {
     // all
     all: /^\*(.*)/,
     // id
-    id: new RegExp("^#((?:[-\\w]" + encoding + "|\\\\.)+)(.*)"),
+    id: new RegExp("^#" + encoding + "(.*)"),
     // tag
-    tagName: new RegExp("^((?:[-\\w]" + encoding + "|\\\\.)+)(.*)"),
+    tagName: new RegExp("^" + encoding + "(.*)"),
     // class
-    className: new RegExp("^\\.((?:[-\\w]" + encoding + "|\\\\.)+)(.*)")
+    className: new RegExp("^\\." + encoding + "(.*)")
   },
 
   // current CSS3 grouping of Pseudo-Classes
