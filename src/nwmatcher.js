@@ -130,6 +130,7 @@ NW.Dom = (function(global) {
       div.innerHTML = '<a name="Z"></a>';
       root.insertBefore(div, root.firstChild);
       isBuggy = !!div.ownerDocument.getElementById('Z');
+      div.innerHTML = '';
       root.removeChild(div);
       div = null;
       return isBuggy;
@@ -141,8 +142,8 @@ NW.Dom = (function(global) {
     (function() {
       var isBuggy, div = context.createElement('div');
       div.appendChild(context.createComment(''));
-      div = div.getElementsByTagName('*')[0];
-      isBuggy = !!(div && div.nodeType == 8);
+      isBuggy = div.getElementsByTagName('*')[0];
+      div.innerHTML = '';
       div = null;
       return isBuggy;
     })() :
@@ -155,6 +156,7 @@ NW.Dom = (function(global) {
       var isBuggy, div = context.createElement('div'), test =/\u53f0\u5317/;
       div.innerHTML = '<span class="' + test + 'abc ' + test + '"></span>';
       isBuggy = !div.getElementsByClassName(test)[0];
+      div.innerHTML = '';
       div = null;
       return isBuggy;
     })() :
@@ -162,7 +164,7 @@ NW.Dom = (function(global) {
 
   // check Seletor API implementations
   BUGGY_QSAPI = NATIVE_QSAPI ? (function() {
-    var isBuggy, pattern = [], div = context.createElement('div');
+    var pattern = [], div = context.createElement('div');
 
     // WebKit treats case insensitivity correctly with classNames (when no DOCTYPE)
     // obsolete bug https://bugs.webkit.org/show_bug.cgi?id=19047
@@ -175,23 +177,24 @@ NW.Dom = (function(global) {
 
     // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
     // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
-    div.innerHTML = '<input type="hidden">';
     // IE8 throws error with these pseudos
+    div.innerHTML = '<input type="hidden">';
     try {
-      isBuggy = div.querySelectorAll(':enabled').length === 1;
+      div.querySelectorAll(':enabled').length === 1 && pattern.push(':enabled', ':disabled');
     } catch(e) { }
-    isBuggy && pattern.push(':enabled', ':disabled');
 
     // :checked bugs whith checkbox fields (Opera 10beta3 bug)
     div.innerHTML = '<input type="checkbox" checked>';
     try {
-      isBuggy = div.querySelectorAll(':checked').length !== 1;
+      div.querySelectorAll(':checked').length !== 1 && pattern.push(':checked');
     } catch(e) { }
-    isBuggy && pattern.push(':checked');
 
     // :link bugs with hyperlinks matching (Firefox/Safari)
     div.innerHTML = '<a href="x"></a>';
     div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
+
+    div.innerHTML = '';
+    div = null;
 
     return pattern.length ?
       new RegExp(pattern.join('|')) :
@@ -261,11 +264,8 @@ NW.Dom = (function(global) {
   // trim leading/trailing whitespaces
   trim = /^\s+|\s+$/g,
 
-  // nth pseudo selectors
+  // nth or -of-type pseudo selectors
   position = /:(nth|of-type)/,
-
-  // ascii extended
-  ascii = /\x00-\xff/,
 
   // http://www.w3.org/TR/css3-syntax/#characters
   // unicode/ISO 10646 characters 161 and higher
@@ -280,7 +280,7 @@ NW.Dom = (function(global) {
   // selector validator discard invalid chars
   validator = new RegExp("([.:#*\\w]|[^\\x00-\\xa0])"),
 
-  // split comma separated selector groups, exclude commas inside () []
+  // split comma separated selector groups, exclude commas inside '' "" () []
   // example: (#div a, ul > li a) group 1 is (#div a) group 2 is (ul > li a)
   group = /([^,()[\]]+|\([^()]+\)|\(.*\)|\[(?:\[[^[\]]*\]|["'][^'"]*["']|[^'"[\]]+)+\]|\[.*\]|\\.)+/g,
 
