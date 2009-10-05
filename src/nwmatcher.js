@@ -227,7 +227,8 @@ NW.Dom = (function(global) {
   },
 
   docType = context.doctype,
-  insensitiveMap = docType && docType.systemId.indexOf('xhtml') > -1 ?
+
+  insensitiveMap = docType && docType.systemId && docType.systemId.indexOf('xhtml') > -1 ?
     xhtml_table : html_table,
 
   // attribute referencing URI values need special treatment in IE
