@@ -27,6 +27,9 @@ NW.Dom = (function(global) {
   // script loading context
   context = global.document,
 
+  // document type node (+DTD)
+  docType = context.doctype,
+
   // context root element (HTML)
   root = context.documentElement,
 
@@ -231,8 +234,6 @@ NW.Dom = (function(global) {
     'rules': 1, 'scope': 1, 'scrolling': 1, 'selected': 1, 'shape': 1, 'target': 1,
     'text': 1, 'type': 1, 'valign': 1, 'valuetype': 1, 'vlink': 1
   },
-
-  docType = context.doctype,
 
   insensitiveMap = docType && docType.systemId && docType.systemId.indexOf('xhtml') > -1 ?
     xhtml_table : html_table,
@@ -993,7 +994,7 @@ NW.Dom = (function(global) {
   // @return nodeList (live)
   byTag =
     function(tag, from) {
-      return (from || context).getElementsByTagName(tag || '*');
+      return (from || context).getElementsByTagName(tag);
     },
 
   // elements by name
@@ -1012,15 +1013,15 @@ NW.Dom = (function(global) {
     } :
     function(name, from) {
       // context is handled in byTag for non native gEBCN
-      var i = 0, j = 0, r = [ ], node,
-        nodes = from.getElementsByTagName('*'),
+      var i = 0, results = [ ], element,
+        elements = from.getElementsByTagName('*'),
         className = new RegExp("(^|\\s)" + name + "(\\s|$)");
-      while ((node = nodes[i++])) {
-        if (className.test(node.className)) {
-          r[j++] = node;
+      while ((element = elements[i++])) {
+        if (className.test(element.className)) {
+          results[results.length] = element;
         }
       }
-      return r;
+      return results;
     },
 
   // recursively get nested tagNames
