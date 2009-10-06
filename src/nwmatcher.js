@@ -288,40 +288,40 @@ NW.Dom = (function(global) {
   Operators = {
     // ! is not really in the specs
     // still unit tests have to pass
-    '!': "%p!=='%m'",
-    '=': "%p==='%m'",
-    '^': "%p.indexOf('%m')==0",
-    '*': "%p.indexOf('%m')>-1",
+     '=': "%p==='%m'",
+    '!=': "%p!=='%m'",
+    '^=': "%p.indexOf('%m')==0",
+    '*=': "%p.indexOf('%m')>-1",
     // sensitivity handled by compiler
     // NOTE: working alternative
-    // '|': "/%m-/i.test(%p+'-')",
-    '|': "(%p+'-').indexOf('%m-')==0",
-    '~': "(' '+%p+' ').indexOf(' %m ')>-1",
+    // '|=': "/%m-/i.test(%p+'-')",
+    '|=': "(%p+'-').indexOf('%m-')==0",
+    '~=': "(' '+%p+' ').indexOf(' %m ')>-1",
     // precompile in '%m' string length to optimize
     // NOTE: working alternative
-    // '$': "%p.lastIndexOf('%m')==%p.length-'%m'.length"
-    '$': "%p.substr(%p.length - '%m'.length) === '%m'"
+    // '$=': "%p.lastIndexOf('%m')==%p.length-'%m'.length"
+    '$=': "%p.substr(%p.length - '%m'.length) === '%m'"
   },
 
   // optimization expressions
   Optimize = {
     ID: new RegExp("#" + encoding + "|" + skipgroup + "*"),
     TAG: new RegExp(encoding + "|" + skipgroup + "*"),
-    CLASS:  new RegExp("\\." + encoding + "|" + skipgroup + "*"),
+    CLASS: new RegExp("\\." + encoding + "|" + skipgroup + "*"),
     // split last, right most, selector group token
-    TOKEN: /([^\ \>\+\~\,\(\)\[\]]+|\([^\(\)]+\)|\(.*\)|\[[^\[\]]+\]|\[.*\])+/g,
+    TOKEN: /([^ >+~,\\()[\]]+|\([^()]+\)|\(.*\)|\[[^[\]]+\]|\[.*\]|\\.)+/g,
     descendants: /[^> \w]/,
     siblings: /[^+~\w]/
   },
 
   // precompiled Regular Expressions
   Patterns = {
-    // element attribute matcher
-    attribute: /^\[\s*([-\w]*:?(?:[-\w])+)\s*(?:([!^$*~|]*)?(\=)?\s*(["']*)?([^'"]*?)\4)\s*\](.*)/,
     // structural pseudo-classes
     spseudos: /^\:(root|empty|nth)?-?(first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
     // uistates + dynamic + negation pseudo-classes
-    dpseudos: /^\:((?:[-\w]|\\.)+)(\(([\x22\x27]*)?(.*?(\(.*?\))?[^(]*?)\3\))?(.*)/,
+    dpseudos: /^\:([\w]+|[^\x00-\xa0]+)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
+    // element attribute matcher
+    attribute: /^\[\s*([-\w]*:?(?:[-\w])+)\s*(?:(\S?=)\s*(["']*)([^'"()]*?)\3)?\s*\](.*)/,
     // E > F
     children: /^\s*\>\s*(.*)/,
     // E + F
@@ -329,7 +329,7 @@ NW.Dom = (function(global) {
     // E ~ F
     relative: /^\s*\~\s*(.*)/,
     // E F
-    ancestor: /^(\s+)(.*)/,
+    ancestor: /^\s+(.*)/,
     // all
     all: /^\*(.*)/,
     // id
@@ -504,14 +504,14 @@ NW.Dom = (function(global) {
           expr = match[1].split(':');
           expr = expr.length == 2 ? expr[1] : expr[0] + '';
           // check case treatment from insensitiveMap
-          if (insensitiveMap[expr.toLowerCase()]) {
-            match[5] = match[5].toLowerCase();
+          if (match[4] && insensitiveMap[expr.toLowerCase()]) {
+            match[4] = match[4].toLowerCase();
           }
-          source = 'if(' +
-            (Operators[(match[2] || match[3])] || 's.hasAttribute(e,"' + match[1] + '")').
-              replace(/\%p/g, 's.getAttribute(e,"' + match[1] + '")' +
-                (expr ? '' : '.toLowerCase()')).replace(/\%m/g, match[5]) +
-          '){' + source + '}';
+          source = (match[2] ? 'T=s.getAttribute(e,"' + match[1] + '");' : '') +
+            'if(' + (match[2] ? Operators[match[2]].replace(/\%p/g, 'T' +
+              (expr ? '' : '.toLowerCase()')).replace(/\%m/g, match[4]) :
+              's.hasAttribute(e,"' + match[1] + '")') +
+            '){' + source + '}';
         }
         // *** Adjacent sibling combinator
         // E + F (F adiacent sibling of E)
@@ -558,7 +558,7 @@ NW.Dom = (function(global) {
             default:
               type = match[4] == 'of-type' ? 'OfType' : 'Element';
 
-              if (match[5]) {
+              if (match[1] && match[5]) {
                 // remove the ( ) grabbed above
                 match[5] = match[5].replace(/\(|\)/g, '');
                 if (match[5] == 'even') {
@@ -618,18 +618,12 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.dpseudos)) &&
           selector.match(/([-\w]+)/)[0] in CSS3PseudoClasses.Others) {
 
-          if (match[2]) {
-            // if the pseudo-class is one with a parameter
-            // remove round brackets grabbed by expression
-            match[2] = match[2].replace(/^\((.*)\)$/, '$1');
-          }
-
           switch (match[1]) {
             // CSS3 negation pseudo-class
             case 'not':
               // compile nested selectors, need to escape double quotes characters
               // since the string we are inserting into already uses double quotes
-              source = 'if(!s.match(e, "' + match[2].replace(/\x22/g, '\\"') + '")){' + source +'}';
+              source = 'if(!s.match(e, "' + match[3].replace(/\x22/g, '\\"') + '")){' + source +'}';
               break;
             // CSS3 UI element states
             case 'checked':
@@ -670,8 +664,7 @@ NW.Dom = (function(global) {
             // CSS2 :contains and :selected pseudo-classes
             // not currently part of CSS3 drafts
             case 'contains':
-              match[2] = match[2].replace(/^["']*|['"]*$/g, '');
-              source = 'if(' + CONTAINS_TEXT + '.indexOf("' + match[2] + '")>-1){' + source + '}';
+              source = 'if(' + CONTAINS_TEXT + '.indexOf("' + match[3] + '")>-1){' + source + '}';
               break;
             case 'selected':
               // fix Safari selectedIndex property bug

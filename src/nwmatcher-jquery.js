@@ -22,16 +22,12 @@ var jquery_ChildSelectors = function(match, source) {
   // do not change this, it is searched & replaced
   ACCEPT_NODE = 'r.push(N);continue main;';
 
-  if (match[2]) {
-    match[2] = match[2].replace(/^\((.*)\)$/, '$1');
-  }
-
   switch (match[1]) {
     case 'even':
-      source = source.replace(ACCEPT_NODE, 'x=1-x;if(x==1){' + ACCEPT_NODE + '}');
+      source = source.replace(ACCEPT_NODE, 'if((x=x^1)==1){' + ACCEPT_NODE + '}');
       break;
     case 'odd':
-      source = source.replace(ACCEPT_NODE, 'x=1-x;if(x==0){' + ACCEPT_NODE + '}');
+      source = source.replace(ACCEPT_NODE, 'if((x=x^1)==0){' + ACCEPT_NODE + '}');
       break;
     case 'eq':
       source = source.replace(ACCEPT_NODE, 'if(x++==' + match[2] + '){' + ACCEPT_NODE + '}');
@@ -43,14 +39,13 @@ var jquery_ChildSelectors = function(match, source) {
       source = source.replace(ACCEPT_NODE, 'if(x++>' + match[2] + '){' + ACCEPT_NODE + '}');
       break;
     case 'first':
-      source = 'n=s.byTag(e.nodeName,e.ownerDocument);if(n&&n[0]==e){' + source + '}';
+      source = 'n=s.byTag(e.nodeName,h);if(n.length&&n[0]==e){' + source + '}';
       break;
     case 'last':
-      source = 'n=s.byTag(e.nodeName,e.ownerDocument);if(n&&n[n.length-1]==e){' + source + '}';
+      source = 'n=s.byTag(e.nodeName,h);if(n.length&&n[n.length-1]==e){' + source + '}';
       break;
     case 'nth':
-      match[2] = match[2].replace(/\(["']*|['"]*\)/g, '');
-      source = 'n=s.byTag(e.nodeName,e.ownerDocument);if(n&&n[' + match[2] + ']==e){' + source + '}';
+      source = 'n=s.byTag(e.nodeName,h);if(n.length&&n[' + match[2] + ']==e){' + source + '}';
       break;
     default:
       status = false;
@@ -74,10 +69,7 @@ var jquery_PseudoSelectors = function(match, source) {
 
   switch(match[1]) {
     case 'has':
-      if (match[2]) {
-        match[2] = match[2].replace(/^\((.*)\)$/, '$1');
-      }
-      source = source.replace(ACCEPT_NODE, 'if(s.byTag("' + match[2] + '",e)[0]){' + ACCEPT_NODE + '}');
+      source = source.replace(ACCEPT_NODE, 'if(s.byTag("' + match[3] + '",e)[0]){' + ACCEPT_NODE + '}');
       break;
     case 'checkbox':
     case 'file':
@@ -119,15 +111,23 @@ var jquery_PseudoSelectors = function(match, source) {
 
 };
 
-// the following is taken directly from latest jQuery
+// the following regular expressions are taken from latest jQuery
 // /:(nth|eq|gt|lt|first|last|even|odd)(?:\((\d*)\))?(?=[^-]|$)/;
-var RE1 = /^\:(first|last|even|odd|nth|eq|gt|lt)(\((?:even|odd|[^\)]*)\))?(.*)/;
-var RE2 = /^\:((?:[-\w]|\\.)+)(\(([\x22\x27]*)?(.*?(\(.*?\))?[^(]*?)\3\))?(.*)/;
+// /:((?:[\w\u00c0-\uFFFF_-]|\\.)+)(?:\((['"]*)((?:\([^\)]+\)|[^\2\(\)]*)+)\2\))?/
 
 // must register in this order due to how the selectors
 // are written, the second begins with a grab all rule...
-NW.Dom.registerSelector('jQuery-child', RE1, jquery_ChildSelectors);
-NW.Dom.registerSelector('jQuery-pseudo', RE2, jquery_PseudoSelectors);
+NW.Dom.registerSelector(
+  'jQuery-child',
+  /^\:(first|last|even|odd|nth|eq|gt|lt)(?:\(([^()]*)\))?(.*)/,
+  jquery_ChildSelectors
+);
+
+NW.Dom.registerSelector(
+  'jQuery-pseudo',
+  /^\:(\w+|^\x00-\xa0+)(?:\((["']*)([^'"()]*)\2\))?(.*)/,
+  jquery_PseudoSelectors
+);
 
 (function(global) {
 
