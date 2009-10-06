@@ -445,10 +445,10 @@ NW.Dom = (function(global) {
       }
       if (mode) {
         // for select method
-        return new Function('c,s,d,h', 'var k,e,r,n,C,N,T,x=0;main:for(k=0,r=[];e=N=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
+        return new Function('c,s,d,h,g', 'var k,e,r,n,C,N,T,x=0;main:for(k=0,r=[];e=N=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
       } else {
         // for match method
-        return new Function('e,s,d,h', 'var n,C,N=e,T,x=0;' + source + 'return false;');
+        return new Function('e,s,d,h,g', 'var n,C,N=e,T,x=0;' + source + 'return false;');
       }
     },
 
@@ -526,12 +526,12 @@ NW.Dom = (function(global) {
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'if((e=e.parentNode)&&e.nodeType==1){' + source + '}';
+          source = 'if(e!==g&&(e=e.parentNode)&&e.nodeType==1){' + source + '}';
         }
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'while((e=e.parentNode)&&e.nodeType==1){' + source + '}';
+          source = 'while((e=e.parentNode)&&e.nodeType==1&&e!==g){' + source.replace(/}$/, 'break;}') + '}';
         }
         // *** Structural pseudo-classes
         // :root, :empty,
@@ -938,7 +938,7 @@ NW.Dom = (function(global) {
         // a cached result set for the requested selector
         snap.Results[selector] = done ?
           data.concat(elements) :
-          data.concat(compiledSelectors[selector](elements, snap, base, root));
+          data.concat(compiledSelectors[selector](elements, snap, base, root, from));
         snap.Roots[selector] = from;
         return snap.Results[selector];
       }
@@ -946,7 +946,7 @@ NW.Dom = (function(global) {
       // a fresh result set for the requested selector
       return done ?
         data.concat(elements) :
-        data.concat(compiledSelectors[selector](elements, snap, base, root));
+        data.concat(compiledSelectors[selector](elements, snap, base, root, from));
     },
 
   // use the new native Selector API if available,
