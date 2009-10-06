@@ -769,7 +769,7 @@ NW.Dom = (function(global) {
   select_qsa =
     function (selector, from, data) {
 
-      data || (data = new Array());
+      data || (data = [ ]);
 
       if (validator.test(selector)) {
         if ((!from || from.nodeType == 9) && !BUGGY_QSAPI.test(selector)) {
@@ -797,14 +797,16 @@ NW.Dom = (function(global) {
 
       var i = 0, done, elements, node, parts, token;
 
-      data || (data = new Array());
+      // storage setup
+      data || (data = [ ]);
+
+      // ensure context is set
+      from || (from = context);
 
       // extract context if changed
       if (!from || lastContext != from) {
         // save passed context
         lastContext = from;
-        // ensure from context is set
-        from || (from = context);
         // reference context ownerDocument and document root (HTML)
         root = (base = from.ownerDocument || from).documentElement;
       }
