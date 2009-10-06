@@ -475,26 +475,21 @@ NW.Dom = (function(global) {
         // #Foo Id case sensitive
         else if ((match = selector.match(Patterns.id))) {
           // document can contain conflicting elements (id/name)
-          source = 'if((n=e.getAttributeNode("id"))&&n.value=="' + match[1] + '"){' + source + '}';
-          //source = 'if(e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
-          //source = 'if(e.id=="' + match[1] + '"){' + source + '}';
+          source = 'if(e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
         }
         // *** Type selector
         // Foo Tag (case insensitive)
         else if ((match = selector.match(Patterns.tagName))) {
           // both tagName and nodeName properties may be upper or lower case
           // depending on their creation NAMESPACE in createElementNS()
-          source = 'T=e.nodeName;if(T=="' + match[1].toUpperCase() + '"||T=="' + match[1].toLowerCase() + '"){' + source + '}';
-          //source = 'if(e.nodeName=="' + match[1].toUpperCase() + '"){' + source + '}';
-          //source = 'if(/' + match[1] + '/i.test(e.nodeName)){' + source + '}';
+          source = 'if(e.nodeName=="' + match[1].toUpperCase() + '"||e.nodeName=="' + match[1].toLowerCase() + '"){' + source + '}';
         }
         // *** Class selector
         // .Foo Class (case sensitive)
         else if ((match = selector.match(Patterns.className))) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a list of whitespace-separated values
           // see section 6.4 Class selectors and notes at the bottom; explicitly non-normative in this specification.
-          //source = 'if((" "+e.className+" ").replace(/\\s+/g," ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
-          source = 'C=e.className;if(C&&(" "+C+" ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
+          source = 'if(/(^|\\s)' + match[1] + '(\\s|$)/.test(e.className)){' + source + '}';
         }
         // *** Attribute selector
         // [attr] [attr=value] [attr="value"] [attr='value'] and !=, *=, ~=, |=, ^=, $=
