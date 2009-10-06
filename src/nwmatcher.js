@@ -388,7 +388,7 @@ NW.Dom = (function(global) {
   // conditionals optimizers for the compiler
 
   // do not change this, it is searched & replaced
-  ACCEPT_NODE = 'r.push(N);continue main;',
+  ACCEPT_NODE = 'r[r.length]=N;continue main;',
 
   // fix for IE gEBTN('*') returning collection with comment nodes
   SKIP_COMMENTS = BUGGY_GEBTN ? 'if(e.nodeType!=1){continue;}' : '',
