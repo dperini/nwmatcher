@@ -730,7 +730,7 @@ NW.Dom = (function(global) {
   // match element with selector
   // @return boolean
   match =
-    function(element, selector) {
+    function(element, selector, from) {
       // make sure an element node was passed
       if (element && element.nodeType == 1) {
         if (typeof selector == 'string' && selector.length) {
@@ -741,7 +741,7 @@ NW.Dom = (function(global) {
             compiledMatchers[selector] = compileGroup(selector, '', false);
           }
           // result of compiled matcher
-          return compiledMatchers[selector](element, snap, base, root);
+          return compiledMatchers[selector](element, snap, base, root, from || base);
         }
         else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
@@ -812,7 +812,7 @@ NW.Dom = (function(global) {
       }
 
       // caching  enabled ?
-      if (cachingEnabled) {
+      if (cachingEnabled && from.nodeType == 9 || !isDisconnected(from, root)) {
         snap = base.snapshot;
         // valid base context storage
         if (snap && !snap.isExpired) {
@@ -888,10 +888,6 @@ NW.Dom = (function(global) {
               } else {
                 return data.concat(elements);
               }
-            } else {
-              // optimize narrowing context
-              from = elements[0].parentNode;
-              elements = null;
             }
           } else {
             return data;
@@ -1198,6 +1194,14 @@ NW.Dom = (function(global) {
       }
       return cache[element._cssId];
     },
+
+  isDisconnected = 'compareDocumentPosition' in root ?
+    function(element, container) {
+      return (container.compareDocumentPosition(element) & 1) == 1;
+    } : 'contains' in root ?
+    function(element, container) {
+      return !container.contains(element);
+    } : Function('e', 'return e.nodeType == 11 || !e.parentNode'),
 
   // convert nodeList to array
   // @return array
