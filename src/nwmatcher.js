@@ -64,6 +64,9 @@ NW.Dom = (function(global) {
 
   // NOTE: NATIVE_XXXXX check for existance of method only
   // so through the code read it as "supported", maybe BUGGY
+  NATIVE_ELEMENT_API =
+    'nextElementSibling' in root &&
+    'previousElementSibling' in root,
 
   // detect native getAttribute/hasAttribute methods,
   // frameworks extend these to elements, but it seems
@@ -592,14 +595,23 @@ NW.Dom = (function(global) {
                 // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
                 // too much overhead calling functions out of the main loop ?
                 //source = 'if(s.' + match[2] + type + '(e)){' + source + '}';
-                source = (match[4] ? 'T=e.nodeName;' : '') +
-                  'n=e;while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'Sibling)&&' +
-                    'n.node' + (match[4] ? 'Name!=T' : 'Type!=1') + ');' +
-                  'if(!n){' + (match[2] == 'first' || match[2] == 'last' ? source :
-                  'n=e;while((n=n.' + (match[2] == 'only' ? 'previous' : 'next') + 'Sibling)&&' +
-                    'n.node' + (match[4] ? 'Name!=T' : 'Type!=1') + ');' +
-                  'if(!n){' + source + '}') +
-                  '}';
+                source = NATIVE_ELEMENT_API ?
+                  ((match[4] ? 'T=e.nodeName;' : '') +
+                    'n=e;while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'ElementSibling)){' +
+                      (match[4] ? 'if(n.nodeName==T)' : '') + 'break;}' +
+                    'if(!n){' + (match[2] == 'first' || match[2] == 'last' ? source :
+                    'n=e;while((n=n.' + (match[2] == 'only' ? 'previous' : 'next') + 'ElementSibling)){' +
+                      (match[4] ? 'if(n.nodeName==T)' : '') + 'break;}' +
+                    'if(!n){' + source + '}') +
+                    '}') :
+                  ((match[4] ? 'T=e.nodeName;' : '') +
+                    'n=e;while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'Sibling)&&' +
+                      'n.node' + (match[4] ? 'Name!=T' : 'Type!=1') + ');' +
+                    'if(!n){' + (match[2] == 'first' || match[2] == 'last' ? source :
+                    'n=e;while((n=n.' + (match[2] == 'only' ? 'previous' : 'next') + 'Sibling)&&' +
+                      'n.node' + (match[4] ? 'Name!=T' : 'Type!=1') + ');' +
+                    'if(!n){' + source + '}') +
+                    '}');
               }
               break;
           }
