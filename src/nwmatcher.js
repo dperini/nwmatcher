@@ -787,6 +787,7 @@ NW.Dom = (function(global) {
 
   lastSelector,
   lastContext,
+  lastCalled,
   lastSlice,
 
   // select elements matching selector
@@ -795,7 +796,7 @@ NW.Dom = (function(global) {
   client_api =
     function client_api(selector, from, data) {
 
-      var i = 0, done, elements, node, parts, token;
+      var i = 0, done, elements, now, node, parts, token;
 
       // storage setup
       data || (data = [ ]);
@@ -827,7 +828,7 @@ NW.Dom = (function(global) {
       }
 
       // caching  enabled ?
-      if (cachingEnabled && from.nodeType == 9 || !isDisconnected(from, root)) {
+      if (cachingEnabled && !cachingPaused && from.nodeType == 9 || !isDisconnected(from, root)) {
         snap = base.snapshot;
         // valid base context storage
         if (snap && !snap.isExpired) {
@@ -836,8 +837,14 @@ NW.Dom = (function(global) {
             return snap.Results[selector];
           }
         } else {
-          setCache(true, base);
+          // temporarily pause caching while we are getting hammered with dom mutations (jdalton)
+          now = new Date;
+          if ((now - lastCalled) < minCallThreshold) {
+            cachingPaused = (base.snapshot = new Snapshot).isExpired = true;
+            setTimeout(function() { cachingPaused = false; }, 10);
+          } else setCache(true, base);
           snap = base.snapshot;
+          lastCalled = now;
         }
       } else {
         if (position.test(selector)) {
@@ -1228,6 +1235,11 @@ NW.Dom = (function(global) {
   // keep caching states for each context document
   // set manually by using setCache(true, context)
   cachingEnabled = NATIVE_MUTATION_EVENTS,
+
+  cachingPaused = false,
+
+  // call threshold
+  minCallThreshold = 15,
 
   // indexes/count of elements contained in rootElement
   // expired by Mutation Events on DOM tree changes
