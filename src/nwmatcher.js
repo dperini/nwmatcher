@@ -769,22 +769,26 @@ NW.Dom = (function(global) {
   // version using new Selector API
   // @return array
   select_qsa =
-    function (selector, from, data) {
+    function (selector, from, data, callback) {
 
-      data || (data = [ ]);
+      var elements;
 
-      if (validator.test(selector)) {
-        if ((!from || from.nodeType == 9) && !BUGGY_QSAPI.test(selector)) {
-          try {
-            // use available Selectors API
-            return data.concat(toArray((from || context).querySelectorAll(selector)));
-          } catch(e) { }
+      if (!BUGGY_QSAPI.test(selector)) {
+        try {
+          elements = (from || context).querySelectorAll(selector);
+        } catch(e) { }
+
+        if (elements) {
+          if (typeof callback == 'function') {
+            return concatCall(data || [ ], elements, callback);
+          } else {
+            return concatList(data || [ ], elements);
+          }
         }
-        // fall back to NWMatcher select
-        return client_api(selector, from || context, data);
       }
 
-      return data;
+      // fall back to NWMatcher select
+      return client_api(selector, from, data, callback);
     },
 
   lastSelector,
