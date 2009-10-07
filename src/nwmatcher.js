@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.0
  * Created: 20070722
- * Release: 20090901
+ * Release: 20091001
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -1111,54 +1111,6 @@ NW.Dom = (function(global) {
       return hasAttribute(element,'href') && nodeName == 'a' || nodeName == 'area' || nodeName == 'link';
     },
 
-  // test element to be the first element child in its parent
-  // @return boolean
-  firstElement =
-    function(element) {
-      while ((element = element.previousSibling) && element.nodeType != 1) { continue; }
-      return !element;
-    },
-
-  // test element to be the last element child in its parent
-  // @return boolean
-  lastElement =
-    function(element) {
-      while ((element = element.nextSibling) && element.nodeType != 1) { continue; }
-      return !element;
-    },
-
-  // test element to be the only element child in its parent
-  // @return boolean
-  onlyElement =
-    function(element) {
-      return firstElement(element) && lastElement(element);
-    },
-
-  // test element to be the first element of-type in its parent
-  // @return boolean
-  firstOfType =
-    function(element) {
-      var nodeName = element.nodeName.toLowerCase();
-      while ((element = element.previousSibling) && element.nodeName.toLowerCase() != nodeName) { continue; }
-      return !element;
-    },
-
-  // test element to be the last element of-type in its parent
-  // @return boolean
-  lastOfType =
-    function(element) {
-      var nodeName = element.nodeName.toLowerCase();
-      while ((element = element.nextSibling) && element.nodeName.toLowerCase() != nodeName) { continue; }
-      return !element;
-    },
-
-  // test element to be the only element of-type in its parent
-  // @return boolean
-  onlyOfType =
-    function(element) {
-      return firstOfType(element) && lastOfType(element);
-    },
-
   // child position by nodeType
   // @return number
   nthElement =
@@ -1345,12 +1297,6 @@ NW.Dom = (function(global) {
     // element inspection methods
     getAttribute: getAttribute,
     hasAttribute: hasAttribute,
-    firstElement: firstElement,
-    lastElement: lastElement,
-    onlyElement: onlyElement,
-    firstOfType: firstOfType,
-    lastOfType: lastOfType,
-    onlyOfType: onlyOfType,
     nthElement: nthElement,
     nthOfType: nthOfType,
 
@@ -1435,24 +1381,6 @@ NW.Dom = (function(global) {
     // check for the attribute presence
     // as was in the original HTML code
     hasAttribute: hasAttribute,
-
-    // first child element any type
-    firstElement: firstElement,
-
-    // last child element any type
-    lastElement: lastElement,
-
-    // only child element any type
-    onlyElement: onlyElement,
-
-    // first child element of-type
-    firstOfType: firstOfType,
-
-    // last child element of-type
-    lastOfType: lastOfType,
-
-    // only child element of-type
-    onlyOfType: onlyOfType,
 
     // nth child element any type
     nthElement: nthElement,
