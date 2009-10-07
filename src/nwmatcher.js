@@ -479,7 +479,9 @@ NW.Dom = (function(global) {
         // #Foo Id case sensitive
         else if ((match = selector.match(Patterns.id))) {
           // document can contain conflicting elements (id/name)
-          source = 'if(e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
+          //source = 'if(e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
+          // prototype selector unit need this method to recover bad HTML forms
+          source = 'if((n=e.getAttributeNode("id"))&&n.value=="' + match[1] + '"){' + source + '}';
         }
         // *** Type selector
         // Foo Tag (case insensitive)
