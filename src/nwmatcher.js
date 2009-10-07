@@ -1162,6 +1162,37 @@ NW.Dom = (function(global) {
       return cache[element._cssId];
     },
 
+  concatList =
+    function(listout, listin) {
+      var i = 0, element;
+      while ((element = listin[i++])) listout[listout.length] = element;
+      return listout;
+    },
+
+  concatCall =
+    function(listout, listin, fn) {
+      var i = 0, element;
+      while ((element = listin[i++])) fn(listout[listout.length] = element);
+      return listout;
+    },
+
+  getElements =
+    function(tag, from, elements, element) {
+      elements || (elements = [ ]);
+      if (!tag) return elements;
+      tag = tag.toLowerCase();
+      element = from.firstChild;
+      while (element) {
+        if ((element.nodeType == 1 && tag == '*') ||
+            element.nodeName.toLowerCase() == tag) {
+            elements[elements.length] = element;
+        }
+        getElements(tag, element, elements);
+        element = element.nextSibling;
+      }
+      return elements;
+    },
+
   isDisconnected = 'compareDocumentPosition' in root ?
     function(element, container) {
       return (container.compareDocumentPosition(element) & 1) == 1;
