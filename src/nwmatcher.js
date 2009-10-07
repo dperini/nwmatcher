@@ -842,7 +842,7 @@ NW.Dom = (function(global) {
       } else {
         if (position.test(selector)) {
           // need to clear storage
-          snap = new Snapshot();
+          snap = new Snapshot;
         }
       }
 
@@ -1250,57 +1250,22 @@ NW.Dom = (function(global) {
   // expired by Mutation Events on DOM tree changes
   Snapshot =
     function() {
-      return {
-        // validation flag, creating if already expired,
-        // code validation will set it valid first time
-        isExpired: false,
+      // count of siblings by nodeType or nodeName
+      this.ChildCount = [ ];
+      this.TwinsCount = [ ];
 
-        // count of siblings by nodeType or nodeName
-        ChildCount: [ ],
-        TwinsCount: [ ],
-        // ordinal position by nodeType or nodeName
-        ChildIndex: [ ],
-        TwinsIndex: [ ],
-        // result sets and related root contexts
-        Results: [ ],
-        Roots: [ ],
+      // ordinal position by nodeType or nodeName
+      this.ChildIndex = [ ];
+      this.TwinsIndex = [ ];
 
-        // must exist for compiled functions
-
-        // element inspection methods
-        getAttribute: getAttribute,
-        hasAttribute: hasAttribute,
-        firstElement: firstElement,
-        lastElement: lastElement,
-        onlyElement: onlyElement,
-        firstOfType: firstOfType,
-        lastOfType: lastOfType,
-        onlyOfType: onlyOfType,
-        nthElement: nthElement,
-        nthOfType: nthOfType,
-
-        // element selection methods
-        byClass: byClass,
-        byName: byName,
-        byTag: byTag,
-        byId: byId,
-
-        // non public fix method
-        stripTags: stripTags,
-
-        // helper/check methods
-        toArray: toArray,
-        isLink: isLink,
-
-        // selection/matching
-        select: select,
-        match: match
-      };
+      // result sets and related root contexts
+      this.Results = [ ];
+      this.Roots   = [ ];
     },
 
   // local indexes, cleared
   // between selection calls
-  snap = new Snapshot(),
+  snap = new Snapshot,
 
   // enable/disable context caching system
   // @d optional document context (iframe, xml document)
@@ -1309,7 +1274,7 @@ NW.Dom = (function(global) {
     function(enable, d) {
       d || (d = context);
       if (!!enable) {
-        d.snapshot = new Snapshot();
+        d.snapshot = new Snapshot;
         startMutation(d);
       } else {
         stopMutation(d);
@@ -1370,6 +1335,42 @@ NW.Dom = (function(global) {
         d.snapshot.isExpired = true;
       }
     };
+
+  // must exist for compiled functions
+  Snapshot.prototype = {
+    // validation flag, creating if already expired,
+    // code validation will set it valid first time
+    isExpired: false,
+
+    // element inspection methods
+    getAttribute: getAttribute,
+    hasAttribute: hasAttribute,
+    firstElement: firstElement,
+    lastElement: lastElement,
+    onlyElement: onlyElement,
+    firstOfType: firstOfType,
+    lastOfType: lastOfType,
+    onlyOfType: onlyOfType,
+    nthElement: nthElement,
+    nthOfType: nthOfType,
+
+    // element selection methods
+    byClass: byClass,
+    byName: byName,
+    byTag: byTag,
+    byId: byId,
+
+    // non public fix method
+    stripTags: stripTags,
+
+    // helper/check methods
+    toArray: toArray,
+    isLink: isLink,
+
+    // selection/matching
+    select: select,
+    match: match
+  };
 
   // END: local context caching system
 
