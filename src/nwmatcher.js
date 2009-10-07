@@ -1212,7 +1212,13 @@ NW.Dom = (function(global) {
     } : 'contains' in root ?
     function(element, container) {
       return !container.contains(element);
-    } : Function('e', 'return e.nodeType == 11 || !e.parentNode'),
+    } :
+    function(element, container) {
+      var node;
+      while (node = element.parentNode)
+        if (node === container) return false;
+      return true;
+    },
 
   // convert nodeList to array
   // @return array
