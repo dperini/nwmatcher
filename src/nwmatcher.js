@@ -796,7 +796,7 @@ NW.Dom = (function(global) {
   client_api =
     function client_api(selector, from, data) {
 
-      var i = 0, done, elements, now, node, parts, token;
+      var i = 0, done, elements, now, node, parts, token, isCacheable;
 
       // storage setup
       data || (data = [ ]);
@@ -827,8 +827,11 @@ NW.Dom = (function(global) {
         }
       }
 
+      isCacheable = cachingEnabled && !cachingPaused &&
+        (from.nodeType == 9 || !isDisconnected(from, root));
+
       // caching  enabled ?
-      if (cachingEnabled && !cachingPaused && (from.nodeType == 9 || !isDisconnected(from, root))) {
+      if (isCacheable) {
         snap = base.snapshot;
         // valid base context storage
         if (snap && !snap.isExpired) {
@@ -840,7 +843,8 @@ NW.Dom = (function(global) {
           // temporarily pause caching while we are getting hammered with dom mutations (jdalton)
           now = new Date;
           if ((now - lastCalled) < minCallThreshold) {
-            cachingPaused = (base.snapshot = new Snapshot).isExpired = true;
+            cachingPaused =
+              (base.snapshot = new Snapshot).isExpired = true;
             setTimeout(function() { cachingPaused = false; }, 10);
           } else setCache(true, base);
           snap = base.snapshot;
@@ -952,7 +956,7 @@ NW.Dom = (function(global) {
         compiledSelectors[selector] = compileGroup(selector, '', true);
       }
 
-      if (cachingEnabled) {
+      if (isCacheable) {
         // a cached result set for the requested selector
         snap.Results[selector] = done ?
           data.concat(elements) :
@@ -1241,6 +1245,8 @@ NW.Dom = (function(global) {
   // call threshold
   minCallThreshold = 15,
 
+  snap,
+
   // indexes/count of elements contained in rootElement
   // expired by Mutation Events on DOM tree changes
   Snapshot =
@@ -1257,10 +1263,6 @@ NW.Dom = (function(global) {
       this.Results = [ ];
       this.Roots   = [ ];
     },
-
-  // local indexes, cleared
-  // between selection calls
-  snap = new Snapshot,
 
   // enable/disable context caching system
   // @d optional document context (iframe, xml document)
@@ -1360,6 +1362,10 @@ NW.Dom = (function(global) {
     select: select,
     match: match
   };
+
+  // local indexes, cleared
+  // between selection calls
+  snap = new Snapshot;
 
   // END: local context caching system
 
