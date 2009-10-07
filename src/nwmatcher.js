@@ -537,7 +537,7 @@ NW.Dom = (function(global) {
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'while((e=e.parentNode)&&e.nodeType==1&&e!==g){' + source.replace(/}$/, 'break;}') + '}';
+          source = 'while((e=e.parentNode)&&e.nodeType==1&&e!==g){' + source + '}';
         }
         // *** Structural pseudo-classes
         // :root, :empty,
