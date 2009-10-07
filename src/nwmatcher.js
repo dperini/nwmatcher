@@ -1286,19 +1286,7 @@ NW.Dom = (function(global) {
     function(event) {
       var d = event.target.ownerDocument || event.target;
       stopMutation(d);
-      switch (event.type) {
-        case 'DOMAttrModified':
-          expireCache(d);
-          break;
-        case 'DOMNodeInserted':
-          expireCache(d);
-          break;
-        case 'DOMNodeRemoved':
-          expireCache(d);
-          break;
-        default:
-          break;
-      }
+      expireCache(d);
     },
 
   // append mutation events
