@@ -828,7 +828,7 @@ NW.Dom = (function(global) {
       }
 
       // caching  enabled ?
-      if (cachingEnabled && !cachingPaused && from.nodeType == 9 || !isDisconnected(from, root)) {
+      if (cachingEnabled && !cachingPaused && (from.nodeType == 9 || !isDisconnected(from, root))) {
         snap = base.snapshot;
         // valid base context storage
         if (snap && !snap.isExpired) {
