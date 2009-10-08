@@ -37,7 +37,7 @@ NW.Dom = (function(global) {
   // detect Safari 2.0.x [object AbstractView]
   view = base.defaultView || base.parentWindow,
 
-  // cache access to native slice
+  // cache native slice access
   slice = Array.prototype.slice,
 
   // Safari 2 missing document.compatMode property
@@ -1224,50 +1224,31 @@ NW.Dom = (function(global) {
       return true;
     },
 
-  documentOrder =
-    'compareDocumentPosition' in root ?
-      function(nodeList) {
-        return nodeList.sort(
-          function (a, b) {
-            return (a.compareDocumentPosition(b) & 2) ? 1 : a === b ? 0 : -1;
-          }
-        );
+  sortByContextOrder = (function() {
+    var sorter =
+      'compareDocumentPosition' in root ?
+        function (a, b) {
+          return (a.compareDocumentPosition(b) & 2) ? 1 : a === b ? 0 : -1;
+        } :
+      'createRange' in context ?
+        function(a, b) {
+          var start = context.createRange(), end = context.createRange();
+          start.selectNode(a); start.collapse(true);
+          end.selectNode(b); end.collapse(true);
+          return start.compareBoundaryPoints(Range.START_TO_END, end);
       } :
-    'createRange' in document ?
-      function(nodeList) {
-        return nodeList.sort(
-          function(a, b) {
-            var start = context.createRange(), end = context.createRange();
-            start.selectNode(a); start.collapse(true);
-            end.selectNode(b); end.collapse(true);
-            return start.compareBoundaryPoints(Range.START_TO_END, end);
-          }
-        );
-      } :
-    'sourceIndex' in root ?
-      function(nodeList) {
-        return nodeList.sort(
-          function (a, b) {
-            return a.sourceIndex - b.sourceIndex;
-          }
-        );
-      } :
-    'indexOf' in Array ?
-      function(nodeList) {
-        var s = Array.prototype.slice.call(context.getElementsByTagName('*'), 0);
-        return nodeList.sort(
-          function (a, b) {
-            return s.indexOf(a) - s.indexOf(b);
-          }
-        );
-      } :
-      function(nodeList) {
-        return nodeList.sort(
-          function (a, b) {
-            return false;
-          }
-        );
-      },
+      'sourceIndex' in root ?
+        function (a, b) {
+          return a.sourceIndex - b.sourceIndex;
+        } :
+        function (a, b) {
+          return false;
+        };
+ 
+    return function(nodeList) {
+      return nodeList.sort(sorter);
+    };
+  })(),
 
   unique =
     function(elements, data, callback, accepted) {
