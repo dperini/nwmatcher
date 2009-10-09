@@ -773,7 +773,7 @@ NW.Dom = (function(global) {
 
       var elements;
 
-      if (!BUGGY_QSAPI.test(selector)) {
+      if ((!from || from.nodeType == 9) && !BUGGY_QSAPI.test(selector)) {
         try {
           elements = (from || context).querySelectorAll(selector);
         } catch(e) { }
@@ -1261,6 +1261,7 @@ NW.Dom = (function(global) {
           data[data.length] = element;
         }
       }
+      return data;
     },
 
   // convert nodeList to array
@@ -1390,11 +1391,8 @@ NW.Dom = (function(global) {
     byTag: byTag,
     byId: byId,
 
-    // non public fix method
-    stripTags: stripTags,
-
     // helper/check methods
-    toArray: toArray,
+    stripTags: stripTags,
     isLink: isLink,
 
     // selection/matching
@@ -1459,25 +1457,13 @@ NW.Dom = (function(global) {
     // retrieve elements by class name
     byClass: byClass,
 
-    // check if element matches the :link pseudo
-    isLink: isLink,
-
     // read the value of the attribute
     // as was in the original HTML code
     getAttribute: getAttribute,
 
     // check for the attribute presence
     // as was in the original HTML code
-    hasAttribute: hasAttribute,
-
-    // nth child element any type
-    nthElement: nthElement,
-
-    // nth child element of-type
-    nthOfType: nthOfType,
-
-    // convert nodeList to array
-    toArray: toArray
+    hasAttribute: hasAttribute
 
   };
 
