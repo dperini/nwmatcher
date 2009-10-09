@@ -1236,7 +1236,7 @@ NW.Dom = (function(global) {
           start.selectNode(a); start.collapse(true);
           end.selectNode(b); end.collapse(true);
           return start.compareBoundaryPoints(Range.START_TO_END, end);
-      } :
+        } :
       'sourceIndex' in root ?
         function (a, b) {
           return a.sourceIndex - b.sourceIndex;
@@ -1244,7 +1244,7 @@ NW.Dom = (function(global) {
         function (a, b) {
           return false;
         };
- 
+
     return function(nodeList) {
       return nodeList.sort(sorter);
     };
