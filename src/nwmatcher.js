@@ -292,8 +292,14 @@ NW.Dom = (function(global) {
   // used to skip [ ] or ( ) groups in token tails
   skipgroup = '(?:\\[.*\\]|\\(.*\\))',
 
-  // selector validator discard invalid chars
-  validator = new RegExp("([.:#*\\w]|[^\\x00-\\xa0])"),
+  // discard invalid chars found in passed selector
+  validator = /([.:#*\w]|[^\x00-\xa0])/,
+
+  // matches simple id, tagname & classname selectors
+  simpleSelector = /^[.#]?\w+$/,
+
+  // split id, tagname & classname in simple selectors
+  noncomplex = /([-\w]+)?(?:\#([-\w]+))?(?:\.([-\w]+))?/,
 
   // split comma separated selector groups, exclude commas inside '' "" () []
   // example: (#div a, ul > li a) group 1 is (#div a) group 2 is (ul > li a)
@@ -475,8 +481,6 @@ NW.Dom = (function(global) {
 
       var i, a, b, n, k, expr, match, result, status, test, type;
 
-      k = 0;
-
       while (selector) {
 
         // *** Universal selector
@@ -528,22 +532,26 @@ NW.Dom = (function(global) {
         // *** Adjacent sibling combinator
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
-          source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + 'break;}}';
+          if (NATIVE_ELEMENT_API) {
+            source = 'if((e=e.previousElementSibling)){' + source + '}';
+          } else {
+            source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + 'break;}}';
+          }
         }
         // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
           // previousSibling particularly slow on Gecko based browsers prior to FF3.1
-          //source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}';
-          k++;
-          source =
-            'var N' + k + '=e;e=e.parentNode.firstChild;' +
-            'while(e!=N' + k +'){if(e.nodeType==1){' + source + '}e=e.nextSibling;}';
+          if (NATIVE_ELEMENT_API) {
+            source = 'while((e=e.previousElementSibling)){' + source + '}';
+          } else {
+            source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}';
+          }
         }
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'if(e!==g&&(e=e.parentNode)&&e.nodeType==1){' + source + '}';
+          source = 'if((e=e.parentNode)&&e.nodeType==1){' + source + '}';
         }
         // *** Descendant combinator
         // E F (E ancestor of F)
@@ -740,8 +748,9 @@ NW.Dom = (function(global) {
   emit =
     function(message) {
       if (VERBOSE) {
-        if (global.console && global.console.log) {
-          global.console.log(message);
+        var console = global.console;
+        if (console && console.log) {
+          console.log(message);
         } else {
           if (/exception/i.test(message)) {
             global.status = message;
@@ -781,20 +790,23 @@ NW.Dom = (function(global) {
   // @return array
   select_qsa =
     function (selector, from, data, callback) {
-
       var elements;
-
-      if ((!from || from.nodeType == 9) && !BUGGY_QSAPI.test(selector)) {
+      if (!simpleSelector.test(selector) &&
+          (!from || from.nodeType == 9 || from.nodeType == 11) &&
+          !BUGGY_QSAPI.test(selector)) {
         try {
           elements = (from || context).querySelectorAll(selector);
+          if (elements.length == 1) {
+            callback && callback(elements[0]);
+            return [ elements[0] ];
+          }
         } catch(e) { }
 
         if (elements) {
-          if (typeof callback == 'function') {
-            return concatCall(data || [ ], elements, callback);
-          } else {
-            return concatList(data || [ ], elements);
-          }
+          if (callback) return concatCall(data || [ ], elements, callback);
+          return NATIVE_SLICE_PROTO
+            ? slice.call(elements)
+            : concatList(data || [ ], elements);
         }
       }
 
@@ -1205,11 +1217,10 @@ NW.Dom = (function(global) {
     },
 
   getElements =
-    function(tag, from, elements, element) {
-      elements || (elements = [ ]);
+    function(tag, from) {
+      var element = from.firstChild, elements = [ ];
       if (!tag) return elements;
       tag = tag.toLowerCase();
-      element = from.firstChild;
       while (element) {
         if ((element.nodeType == 1 && tag == '*') ||
             element.nodeName.toLowerCase() == tag) {
