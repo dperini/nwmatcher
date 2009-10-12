@@ -405,7 +405,7 @@ NW.Dom = (function(global) {
   // conditionals optimizers for the compiler
 
   // do not change this, it is searched & replaced
-  ACCEPT_NODE = 'r[r.length]=N;continue main;',
+  ACCEPT_NODE = 'f&&f(N);r[r.length]=N;continue main;',
 
   // fix for IE gEBTN('*') returning collection with comment nodes
   SKIP_COMMENTS = BUGGY_GEBTN ? 'if(e.nodeType!=1){continue;}' : '',
@@ -466,10 +466,10 @@ NW.Dom = (function(global) {
       }
       if (mode) {
         // for select method
-        return new Function('c,s,d,h,g', 'var k,e,r,n,C,N,T,x=0;main:for(k=0,r=[];e=N=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
+        return new Function('c,s,d,h,g,f', 'var k,e,r,n,C,N,T,x=0;main:for(k=0,r=[];e=N=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
       } else {
         // for match method
-        return new Function('e,s,d,h,g', 'var n,C,N=e,T,x=0;' + source + 'return false;');
+        return new Function('e,s,d,h,g,f', 'var n,C,N=e,T,x=0;' + source + 'return false;');
       }
     },
 
@@ -823,9 +823,10 @@ NW.Dom = (function(global) {
   // version using cross-browser client API
   // @return array
   client_api =
-    function client_api(selector, from, data) {
+    function client_api(selector, from, data, callback) {
 
-      var i = 0, done, elements, now, node, parts, token, isCacheable;
+      var i = 0, done, elements, now, node, parts, token, isCacheable,
+      concat = typeof callback == 'function' ? concatCall : concatList;
 
       // storage setup
       data || (data = [ ]);
@@ -902,7 +903,7 @@ NW.Dom = (function(global) {
             if (cachingEnabled && elements.length > 0) {
               done = true;
             } else {
-              return data.concat(elements);
+              return concat(data, elements, callback);
             }
           }
         }
@@ -917,7 +918,7 @@ NW.Dom = (function(global) {
           if (cachingEnabled && elements.length > 0) {
             done = true;
           } else {
-            return data.concat(elements);
+            return concat(data, elements, callback);
           }
         }
         // TAG optimization
@@ -928,7 +929,7 @@ NW.Dom = (function(global) {
             if (cachingEnabled && elements.length > 0) {
               done = true;
             } else {
-              return data.concat(toArray(elements));
+              return concat(data, toArray(elements), callback);
             }
           }
         }
@@ -941,7 +942,7 @@ NW.Dom = (function(global) {
               if (cachingEnabled && elements.length > 0) {
                 done = true;
               } else {
-                return data.concat(elements);
+                return concat(data, elements, callback);
               }
             }
           } else {
@@ -958,6 +959,7 @@ NW.Dom = (function(global) {
         if ((parts = lastSlice.match(/\#([-\w]+)$/)) && selector == '#' + parts[1]) {
           while ((node = elements[i++])) {
             if (node.id == parts[1]) {
+              callback && callback(node);
               data.push(node);
               return data;
             }
@@ -969,6 +971,7 @@ NW.Dom = (function(global) {
               (!parts[1] || node.nodeName == parts[1]) && (
               (!parts[3] || (parts[2] == '#' && node.id == parts[3])) ||
               (!parts[3] || (parts[2] == '.' && node.className == parts[3])))) {
+              callback && callback(node);
               data.push(node);
               return data;
             }
@@ -988,16 +991,16 @@ NW.Dom = (function(global) {
       if (isCacheable) {
         // a cached result set for the requested selector
         snap.Results[selector] = done ?
-          data.concat(elements) :
-          data.concat(compiledSelectors[selector](elements, snap, base, root, from));
+          concat(data, elements, callback) :
+          concat(data, compiledSelectors[selector](elements, snap, base, root, from), callback);
         snap.Roots[selector] = from;
         return snap.Results[selector];
       }
 
       // a fresh result set for the requested selector
       return done ?
-        data.concat(elements) :
-        data.concat(compiledSelectors[selector](elements, snap, base, root, from));
+        concat(data, elements, callback) :
+        concat(data, compiledSelectors[selector](elements, snap, base, root, from), callback);
     },
 
   // use the new native Selector API if available,
