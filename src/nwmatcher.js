@@ -166,12 +166,12 @@ NW.Dom = (function(global) {
         test = /\u53f0\u5317/;
 
       // Opera tests
-      div.innerHTML = '<span class="' + test + 'abc ' + test + '"></span>';
+      div.innerHTML = '<span class="' + test + 'abc ' + test + '"></span><span class="x"></span>';
       isBuggy = !div[method](test)[0];
 
       // Safari test
-      div.firstChild.className = 'x';
-      if (!isBuggy) isBuggy = !div[method]('x')[0];
+      div.lastChild.className = test;
+      if (!isBuggy) isBuggy = div[method](test).length !== 2;
 
       div.innerHTML = '';
       div = null;
@@ -481,6 +481,8 @@ NW.Dom = (function(global) {
 
       var i, a, b, n, k, expr, match, result, status, test, type;
 
+      k = 0;
+
       while (selector) {
 
         // *** Universal selector
@@ -541,11 +543,16 @@ NW.Dom = (function(global) {
         // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
-          // previousSibling particularly slow on Gecko based browsers prior to FF3.1
+          k++;
           if (NATIVE_ELEMENT_API) {
-            source = 'while((e=e.previousElementSibling)){' + source + '}';
+            // previousSibling particularly slow on Gecko based browsers prior to FF3.1
+            source =
+              'var N' + k + '=e;e=e.parentNode.firstElementChild;' +
+              'while(e!=N' + k +'){if(e){' + source + '}e=e.nextElementSibling;}';
           } else {
-            source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}';
+            source =
+              'var N' + k + '=e;e=e.parentNode.firstChild;' +
+              'while(e!=N' + k +'){if(e.nodeType==1){' + source + '}e=e.nextSibling;}';
           }
         }
         // *** Child combinator
