@@ -296,7 +296,7 @@ NW.Dom = (function(global) {
   validator = /([.:#*\w]|[^\x00-\xa0])/,
 
   // matches simple id, tagname & classname selectors
-  simpleSelector = /^[.#]?\w+$/,
+  simpleSelector = /^[.#]?[-\w]+$/,
 
   // split id, tagname & classname in simple selectors
   noncomplex = /([-\w]+)?(?:\#([-\w]+))?(?:\.([-\w]+))?/,
