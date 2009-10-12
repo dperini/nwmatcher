@@ -96,35 +96,35 @@ NW.Dom = (function(global) {
   // Opera 9.27 and an id="length" will fold this
   NATIVE_SLICE_PROTO =
     (function() {
-      var isBuggy = false, div = context.createElement('div');
+      var isSupported = false, div = context.createElement('div');
       try {
         div.innerHTML = '<div id="length"></div>';
         root.insertBefore(div, root.firstChild);
-        isBuggy = !!slice.call(div.childNodes, 0)[0];
+        isSupported = !!slice.call(div.childNodes, 0)[0];
       } catch(e) {
       } finally {
         root.removeChild(div).innerHTML = '';
       }
-      return isBuggy;
+      return isSupported;
     })(),
 
   // check for Mutation Events, DOMAttrModified should be
   // enough to ensure DOMNodeInserted/DOMNodeRemoved exist
   NATIVE_MUTATION_EVENTS = root.addEventListener ?
     (function() {
-      var isBuggy, id = root.id,
+      var isSupported, id = root.id,
       handler = function() {
         root.removeEventListener('DOMAttrModified', handler, false);
-        NATIVE_MUTATION_EVENTS = true;
-        root.id = id;
+        isSupported = true;
       };
+
+      // add listener and modify attribute
       root.addEventListener('DOMAttrModified', handler, false);
-      // now modify an attribute
       root.id = 'nw';
-      isBuggy = root.id != 'nw';
+
       root.id = id;
       handler = null;
-      return isBuggy;
+      return !!isSupported;
     })() :
     false,
 
@@ -155,13 +155,24 @@ NW.Dom = (function(global) {
     })() :
     true,
 
-  // detect Opera gEBCN second class and/or UTF8 bugs
-  // test is taken from the jQuery selector test suite
+  // detect Opera gEBCN second class and/or UTF8 bugs as well as Safari 3.2
+  // caching class name results and not detecting when changed,
+  // tests are based on the jQuery selector test suite
   BUGGY_GEBCN = NATIVE_GEBCN ?
     (function() {
-      var isBuggy, div = context.createElement('div'), test =/\u53f0\u5317/;
+      var isBuggy,
+        div = context.createElement('div'),
+        method = 'getElementsByClassName',
+        test = /\u53f0\u5317/;
+
+      // Opera tests
       div.innerHTML = '<span class="' + test + 'abc ' + test + '"></span>';
-      isBuggy = !div.getElementsByClassName(test)[0];
+      isBuggy = !div[method](test)[0];
+
+      // Safari test
+      div.firstChild.className = 'x';
+      if (!isBuggy) isBuggy = !div[method]('x')[0];
+
       div.innerHTML = '';
       div = null;
       return isBuggy;
@@ -170,7 +181,7 @@ NW.Dom = (function(global) {
 
   // check Seletor API implementations
   BUGGY_QSAPI = NATIVE_QSAPI ? (function() {
-    var pattern = [], div = context.createElement('div');
+    var pattern = [ ], div = context.createElement('div');
 
     // WebKit treats case insensitivity correctly with classNames (when no DOCTYPE)
     // obsolete bug https://bugs.webkit.org/show_bug.cgi?id=19047
