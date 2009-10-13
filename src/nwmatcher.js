@@ -1104,12 +1104,12 @@ NW.Dom = (function(global) {
       while ((n = c[i++])) {
         if (n == '>') {
           j = 0;
-          c[i] = new RegExp(c[i], 'i');
           while ((o = e[j++])) {
             k = 0;
             r = o[NATIVE_CHILDREN];
             while ((p = r[k++])) {
-              if (c[i].test(p.nodeName)) {
+              if (p.nodeName == c[i].toUpperCase() ||
+                p.nodeName == c[i].toLowerCase()) {
                 s.push(p);
               }
             }
