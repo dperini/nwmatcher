@@ -277,11 +277,13 @@ NW.Dom = (function(global) {
   },
 
   // Only five characters can occur in whitespace, they are:
-  // \t \n \f \r \x20, checks now uniformed through the code
+  // \x20 \t \n \r \f, checks now uniformed through the code
   // http://www.w3.org/TR/css3-selectors/#selector-syntax
 
   // trim leading/trailing whitespaces
-  trim = /^[\t\n\f\r\x20]+|[\t\n\f\r\x20]+$/g,
+  trim = String.prototype.trim || function() {
+    return this.replace(/^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g, '');
+  },
 
   // http://www.w3.org/TR/css3-syntax/#characters
   // unicode/ISO 10646 characters 161 and higher
@@ -341,19 +343,19 @@ NW.Dom = (function(global) {
   // precompiled Regular Expressions
   Patterns = {
     // element attribute matcher
-    attribute: /^\[[\t\n\f\r\x20]*([-\w]*:?(?:[-\w])+)[\t\n\f\r\x20]*(?:([~*^$|!]?=)[\t\n\f\r\x20]*(["']*)([^'"()]*?)\3)?[\t\n\f\r\x20]*\](.*)/,
+    attribute: /^\[[\x20\t\n\r\f]*([-\w]*:?(?:[-\w])+)[\x20\t\n\r\f]*(?:([~*^$|!]?=)[\x20\t\n\r\f]*(["']*)([^'"()]*?)\3)?[\x20\t\n\r\f]*\](.*)/,
     // structural pseudo-classes
     spseudos: /^\:(root|empty|nth)?-?(first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
     // uistates + dynamic + negation pseudo-classes
     dpseudos: /^\:([\w]+|[^\x00-\xa0]+)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
     // E > F
-    children: /^[\t\n\f\r\x20]*\>[\t\n\f\r\x20]*(.*)/,
+    children: /^[\x20\t\n\r\f]*\>[\x20\t\n\r\f]*(.*)/,
     // E + F
-    adjacent: /^[\t\n\f\r\x20]*\+[\t\n\f\r\x20]*(.*)/,
+    adjacent: /^[\x20\t\n\r\f]*\+[\x20\t\n\r\f]*(.*)/,
     // E ~ F
-    relative: /^[\t\n\f\r\x20]*\~[\t\n\f\r\x20]*(.*)/,
+    relative: /^[\x20\t\n\r\f]*\~[\x20\t\n\r\f]*(.*)/,
     // E F
-    ancestor: /^[\t\n\f\r\x20]+(.*)/,
+    ancestor: /^[\x20\t\n\r\f]+(.*)/,
     // all
     all: /^\*(.*)/,
     // id
@@ -448,7 +450,7 @@ NW.Dom = (function(global) {
       if ((parts = selector.match(group))) {
         // for each selector in the group
         for ( ; i < parts.length; ++i) {
-          token = parts[i].replace(trim, '');
+          token = trim.call(parts[i]);
           // avoid repeating the same token
           // in comma separated group (p, p)
           if (!seen[token]) {
@@ -516,7 +518,7 @@ NW.Dom = (function(global) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a list of whitespace-separated values
           // see section 6.4 Class selectors and notes at the bottom; explicitly non-normative in this specification.
           //source = 'if(/(^|\\s)' + match[1] + '(\\s|$)/.test(e.className)){' + source + '}';
-          source = 'if(((" "+e.className+" ").replace(/[\\t\\n\\f\\r\\x20]/g," ").indexOf(" ' + match[1] + ' ")>=0)){' + source + '}';
+          source = 'if(((" "+e.className+" ").replace(/[\\t\\n\\r\\f]/g," ").indexOf(" ' + match[1] + ' ")>=0)){' + source + '}';
         }
         // *** Attribute selector
         // [attr] [attr=value] [attr="value"] [attr='value'] and !=, *=, ~=, |=, ^=, $=
@@ -836,8 +838,9 @@ NW.Dom = (function(global) {
   client_api =
     function client_api(selector, from, data, callback) {
 
-      var i = 0, done, elements, now, node, parts, token, isCacheable,
-      concat = typeof callback == 'function' ? concatCall : concatList;
+      var i = 0, done, now,
+        element, elements, parts, token, isCacheable,
+        concat = callback ? concatCall : concatList;
 
       // storage setup
       data || (data = [ ]);
@@ -981,7 +984,7 @@ NW.Dom = (function(global) {
         elements = from.getElementsByTagName('*');
 
         if ((parts = lastSlice.match(/\#([-\w]+)$/)) && selector == '#' + parts[1]) {
-          while ((node = elements[i++])) {
+          while ((element = elements[i++])) {
             if (node.id == parts[1]) {
               callback && callback(node);
               data.push(node);
@@ -990,7 +993,7 @@ NW.Dom = (function(global) {
           }
           return data;
         } else if ((parts = lastSlice.match(/\b([-\w]+)?(?:(\.[-\w]+)|(\#[-\w]+))/))) {
-          while ((node = elements[i++])) {
+          while ((element = elements[i++])) {
             if (
               (!parts[1] || node.nodeName == parts[1]) && (
               (!parts[3] || (parts[2] == '#' && node.id == parts[3])) ||
@@ -1084,7 +1087,7 @@ NW.Dom = (function(global) {
       // context is handled in byTag for non native gEBCN
       var i = 0, j = 0, results = [ ], element,
         elements = from.getElementsByTagName('*');
-        className = ' ' + className.replace(/[\t\n\f\r\x20]/g, ' ').replace(/\\/g, '') + ' ';
+        className = ' ' + className.replace(/[\t\n\r\f]/g, ' ').replace(/\\/g, '') + ' ';
       while ((element = elements[i++])) {
         if (element.className.length && (' ' + element.className + ' ').indexOf(className) > -1) {
           results[j++] = element;
@@ -1123,7 +1126,7 @@ NW.Dom = (function(global) {
           j= 0;
           while ((o = e[j++])) {
             k = 0;
-            r = o.getElementsByTagName(n.replace(trim, ''));
+            r = o.getElementsByTagName(trim.call(n));
             while ((p = r[k++])) {
               id = (p._cssId || (p._cssId = ++cssId));
               // discard duplicates
