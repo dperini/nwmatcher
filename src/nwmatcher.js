@@ -874,7 +874,9 @@ NW.Dom = (function(global) {
         if (snap && !snap.isExpired) {
           if (snap.Results[selector] &&
             snap.Roots[selector] == from) {
-            return snap.Results[selector];
+            return callback ?
+              concat(data, snap.Results[selector], callback) :
+              snap.Results[selector];
           }
         } else {
           // temporarily pause caching while we are getting hammered with dom mutations (jdalton)
@@ -897,6 +899,17 @@ NW.Dom = (function(global) {
       // pre-filtering pass allow to scale proportionally with big DOM trees;
       // this block can be safely removed, it is a speed booster on big pages
       // and still maintain the mandatory "document ordered" result set
+
+      if (simpleSelector.test(selector)) {
+        switch (selector.charAt(0)) {
+          case '.': data = concat(data, byClass(selector.slice(1), from), callback);
+          case '#': data = concat(data, [ byId(selector.slice(1), from) ], callback);
+          default: data = concat(data, byTag(selector, from), callback);
+        }
+        snap.Roots[selector] = from;
+        snap.Results[selector] = data;
+        return data;
+      }
 
       // commas separators are treated
       // sequentially to maintain order
