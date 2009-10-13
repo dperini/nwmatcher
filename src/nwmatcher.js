@@ -367,42 +367,43 @@ NW.Dom = (function(global) {
   },
 
   // current CSS3 grouping of Pseudo-Classes
-  // they allowed implementing extensions
-  // and improve error notifications
+  // they allow implementing extensions
+  // and improve error notifications;
+  // the assigned value represent current spec status:
+  // 3 = CSS3, 2 = CSS2, '?' = maybe implemented
   CSS3PseudoClasses = {
     Structural: {
-      'root': 0, 'empty': 0,
-      'first-child': 0, 'last-child': 0, 'only-child': 0,
-      'first-of-type': 0, 'last-of-type': 0, 'only-of-type': 0,
-      'first-child-of-type': 0, 'last-child-of-type': 0, 'only-child-of-type': 0,
-      'nth-child': 0, 'nth-last-child': 0, 'nth-of-type': 0, 'nth-last-of-type': 0
+      'root': 3, 'empty': 3,
+      'first-child': 3, 'last-child': 3, 'only-child': 3,
+      'first-of-type': 3, 'last-of-type': 3, 'only-of-type': 3,
+      'first-child-of-type': 3, 'last-child-of-type': 3, 'only-child-of-type': 3,
+      'nth-child': 3, 'nth-last-child': 3, 'nth-of-type': 3, 'nth-last-of-type': 3
       // (the 4rd line is not in W3C CSS specs but is an accepted alias of 3nd line)
     },
+
     // originally separated in different pseudo-classes
     // we have grouped them to optimize a bit size+speed
     // all are going through the same code path (switch)
-    // the assigned value represent current spec status:
-    // 0 = CSS3, 1 = CSS2, 2 = maybe implemented
     Others: {
     //UIElementStates: {
     // we group them to optimize
-      'checked': 0, 'disabled': 0, 'enabled': 0, 'selected': 1, 'indeterminate': 2,
+      'checked': 3, 'disabled': 3, 'enabled': 3, 'selected': 2, 'indeterminate': '?',
     //},
     //Dynamic: {
-      'active': 0, 'focus': 0, 'hover': 0, 'link': 0, 'visited': 0,
+      'active': 3, 'focus': 3, 'hover': 3, 'link': 3, 'visited': 3,
     //},
     // Target: {
-      'target': 0,
+      'target': 3,
     //},
     // Language: {
-      'lang': 0,
+      'lang': 3,
     //},
     // Negation: {
-      'not': 0,
+      'not': 3,
     //},
     // Content: {
     // http://www.w3.org/TR/2001/CR-css3-selectors-20011113/#content-selectors
-      'contains': 2
+      'contains': '?'
     //}
     }
   },
@@ -577,7 +578,7 @@ NW.Dom = (function(global) {
         // :first-of-type, :last-of-type, :only-of-type,
         // :nth-child(), :nth-last-child(), :nth-of-type(), :nth-last-of-type()
         else if ((match = selector.match(Patterns.spseudos)) &&
-          selector.match(/([-\w]+)/)[0] in CSS3PseudoClasses.Structural) {
+          CSS3PseudoClasses.Structural[selector.match(/([-\w]+)/)[0]]) {
 
           switch (match[1]) {
             case 'root':
@@ -658,7 +659,7 @@ NW.Dom = (function(global) {
         // CSS3 :active, :hover, :focus
         // CSS3 :link, :visited
         else if ((match = selector.match(Patterns.dpseudos)) &&
-          selector.match(/([-\w]+)/)[0] in CSS3PseudoClasses.Others) {
+          CSS3PseudoClasses.Others[selector.match(/([-\w]+)/)[0]]) {
 
           switch (match[1]) {
             // CSS3 negation pseudo-class
