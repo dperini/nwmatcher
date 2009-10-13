@@ -276,11 +276,12 @@ NW.Dom = (function(global) {
     // checks and only if none of them worked
   },
 
-  // trim leading/trailing whitespaces
-  trim = /^\s+|\s+$/g,
+  // Only five characters can occur in whitespace, they are:
+  // \t \n \f \r \x20, checks now uniformed through the code
+  // http://www.w3.org/TR/css3-selectors/#selector-syntax
 
-  // nth or -of-type pseudo selectors
-  position = /:(nth|of-type)/,
+  // trim leading/trailing whitespaces
+  trim = /^[\t\n\f\r\x20]+|[\t\n\f\r\x20]+$/g,
 
   // http://www.w3.org/TR/css3-syntax/#characters
   // unicode/ISO 10646 characters 161 and higher
@@ -330,27 +331,29 @@ NW.Dom = (function(global) {
     TAG: new RegExp(encoding + "|" + skipgroup + "*"),
     CLASS: new RegExp("\\." + encoding + "|" + skipgroup + "*"),
     // split last, right most, selector group token
-    TOKEN: /([^ >+~,\\()[\]]+|\([^()]+\)|\(.*\)|\[[^[\]]+\]|\[.*\]|\\.)+/g,
-    descendants: /[^> \w]/,
-    siblings: /[^+~\w]/
+    TOKEN: /([^ >+~,\\()[\]]+|\([^()]+\)|\(.*\)|\[[^[\]]+\]|\[.*\]|\\.)+/g
   },
+
+  rePositionals = /:(nth|of-type)/,
+  reDescendants = /[^> \w]/,
+  reSiblings = /[^+~\w]/,
 
   // precompiled Regular Expressions
   Patterns = {
+    // element attribute matcher
+    attribute: /^\[[\t\n\f\r\x20]*([-\w]*:?(?:[-\w])+)[\t\n\f\r\x20]*(?:([~*^$|!]?=)[\t\n\f\r\x20]*(["']*)([^'"()]*?)\3)?[\t\n\f\r\x20]*\](.*)/,
     // structural pseudo-classes
     spseudos: /^\:(root|empty|nth)?-?(first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
     // uistates + dynamic + negation pseudo-classes
     dpseudos: /^\:([\w]+|[^\x00-\xa0]+)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
-    // element attribute matcher
-    attribute: /^\[\s*([-\w]*:?(?:[-\w])+)\s*(?:(\S?=)\s*(["']*)([^'"()]*?)\3)?\s*\](.*)/,
     // E > F
-    children: /^\s*\>\s*(.*)/,
+    children: /^[\t\n\f\r\x20]*\>[\t\n\f\r\x20]*(.*)/,
     // E + F
-    adjacent: /^\s*\+\s*(.*)/,
+    adjacent: /^[\t\n\f\r\x20]*\+[\t\n\f\r\x20]*(.*)/,
     // E ~ F
-    relative: /^\s*\~\s*(.*)/,
+    relative: /^[\t\n\f\r\x20]*\~[\t\n\f\r\x20]*(.*)/,
     // E F
-    ancestor: /^\s+(.*)/,
+    ancestor: /^[\t\n\f\r\x20]+(.*)/,
     // all
     all: /^\*(.*)/,
     // id
@@ -512,7 +515,8 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.className))) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a list of whitespace-separated values
           // see section 6.4 Class selectors and notes at the bottom; explicitly non-normative in this specification.
-          source = 'if(/(^|\\s)' + match[1] + '(\\s|$)/.test(e.className)){' + source + '}';
+          //source = 'if(/(^|\\s)' + match[1] + '(\\s|$)/.test(e.className)){' + source + '}';
+          source = 'if(((" "+e.className+" ").replace(/[\\t\\n\\f\\r\\x20]/g," ").indexOf(" ' + match[1] + ' ")>=0)){' + source + '}';
         }
         // *** Attribute selector
         // [attr] [attr=value] [attr="value"] [attr='value'] and !=, *=, ~=, |=, ^=, $=
@@ -718,9 +722,9 @@ NW.Dom = (function(global) {
           // this is where external extensions are
           // invoked if expressions match selectors
           status = true;
-          for (name in Selectors) {
-            if ((match = selector.match(Selectors[name].Expression))) {
-              result = Selectors[name].Callback(match, source);
+          for (expr in Selectors) {
+            if ((match = selector.match(Selectors[expr].Expression))) {
+              result = Selectors[expr].Callback(match, source);
               source = result.source;
               status |= result.status;
             }
@@ -890,7 +894,7 @@ NW.Dom = (function(global) {
           lastCalled = now;
         }
       } else {
-        if (position.test(selector)) {
+        if (rePositionals.test(selector)) {
           // need to clear storage
           snap = new Snapshot;
         }
@@ -928,7 +932,7 @@ NW.Dom = (function(global) {
           }
         }
         // MULTI TAG optimization
-        else if (!Optimize.descendants.test(selector) &&
+        else if (!reDescendants.test(selector) &&
           (parts = selector.match(/([-\w]+)|(>)/g)) && NATIVE_GEBTN) {
           if (parts.length > 1) {
             elements = byTags(parts, from);
@@ -972,7 +976,7 @@ NW.Dom = (function(global) {
 
       }
 
-      if (!elements || elements.length === 0) {
+      if (!done && !elements || elements.length === 0) {
 
         elements = from.getElementsByTagName('*');
 
@@ -1073,17 +1077,17 @@ NW.Dom = (function(global) {
   // @return nodeList (native GEBCN)
   // @return array (non native GEBCN)
   byClass = !BUGGY_GEBCN ?
-    function(name, from) {
-      return slice.call(from.getElementsByClassName(name.replace(/\\/g, '')), 0);
+    function(className, from) {
+      return from.getElementsByClassName(className.replace(/\\/g, ''));
     } :
-    function(name, from) {
+    function(className, from) {
       // context is handled in byTag for non native gEBCN
-      var i = 0, results = [ ], element,
-        elements = from.getElementsByTagName('*'),
-        className = new RegExp("(^|\\s)" + name + "(\\s|$)");
+      var i = 0, j = 0, results = [ ], element,
+        elements = from.getElementsByTagName('*');
+        className = ' ' + className.replace(/[\t\n\f\r\x20]/g, ' ').replace(/\\/g, '') + ' ';
       while ((element = elements[i++])) {
-        if (className.test(element.className)) {
-          results[results.length] = element;
+        if (element.className.length && (' ' + element.className + ' ').indexOf(className) > -1) {
+          results[j++] = element;
         }
       }
       return results;
