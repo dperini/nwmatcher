@@ -923,59 +923,39 @@ NW.Dom = (function(global) {
       // sequentially to maintain order
       if (selector.indexOf(',') < 0) {
 
-        // CLASS optimization
-        if ((parts = lastSlice.match(Optimize.CLASS)) &&
-          (token = parts[parts.length - 1])) {
+        // reduce selection context
+        if ((parts = selector.match(Optimize.ID))) {
+          if ((element = context.getElementById(parts[1]))) {
+            from = element.parentNode;
+          }
+        }
+
+        // ID optimization RTL
+        if ((parts = lastSlice.match(Optimize.ID)) &&
+          (token = parts[parts.length - 1]) && NATIVE_GEBID) {
+          if ((element = byId(token, context))) {
+            if (match(element, selector)) {
+              snap.Results[selector] = [ element ];
+              snap.Roots[selector] = from;
+              callback && callback(element);
+              data[data.length] = element;
+              return data;
+            } else return data;
+          } else return data;
+        }
+
+        // CLASS optimization RTL
+        else if ((parts = lastSlice.match(Optimize.CLASS)) &&
+          (token = parts[parts.length - 1]) && NATIVE_GEBCN) {
           elements = byClass(token, from);
-          if (selector == '.' + token) {
-            if (cachingEnabled && elements.length > 0) {
-              done = true;
-            } else {
-              return concat(data, elements, callback);
-            }
-          }
+          if (selector == '.' + token) done = true;
         }
-        // MULTI TAG optimization
-        else if (!reDescendants.test(selector) &&
-          (parts = selector.match(/([-\w]+)|(>)/g)) && NATIVE_GEBTN) {
-          if (parts.length > 1) {
-            elements = byTags(parts, from);
-          } else {
-            elements = toArray(from.getElementsByTagName(parts[0]));
-          }
-          if (cachingEnabled && elements.length > 0) {
-            done = true;
-          } else {
-            return concat(data, elements, callback);
-          }
-        }
-        // TAG optimization
+
+        // TAG optimization RTL
         else if ((parts = lastSlice.match(Optimize.TAG)) &&
           (token = parts[parts.length - 1]) && NATIVE_GEBTN) {
-          elements = from.getElementsByTagName(token);
-          if (selector == token) {
-            if (cachingEnabled && elements.length > 0) {
-              done = true;
-            } else {
-              return concat(data, toArray(elements), callback);
-            }
-          }
-        }
-        // ID optimization
-        else if ((parts = lastSlice.match(Optimize.ID)) &&
-          (token = parts[parts.length - 1]) && from.getElementById) {
-          elements = [byId(token, from)];
-          if (elements[0]) {
-            if (selector == '#' + token) {
-              if (cachingEnabled && elements.length > 0) {
-                done = true;
-              } else {
-                return concat(data, elements, callback);
-              }
-            }
-          } else {
-            return data;
-          }
+          elements = byTag(token, from);
+          if (selector == token) done = true;
         }
 
       }
@@ -1095,54 +1075,6 @@ NW.Dom = (function(global) {
         }
       }
       return results;
-    },
-
-  // recursively get nested tagNames
-  // example: for "div" pass ["div"]
-  // "ul li a" pass ["ul", "li", "a"]
-  // @c array of tag names combinators
-  // @f from context or default
-  // @return array
-  byTags =
-    function(c, f) {
-      var i, j, k, n, o, p,
-        id, e = [f || context],
-        r = [ ], s = [ ], t = [ ];
-      i = 0;
-      while ((n = c[i++])) {
-        if (n == '>') {
-          j = 0;
-          while ((o = e[j++])) {
-            k = 0;
-            r = o[NATIVE_CHILDREN];
-            while ((p = r[k++])) {
-              if (p.nodeName == c[i].toUpperCase() ||
-                p.nodeName == c[i].toLowerCase()) {
-                s.push(p);
-              }
-            }
-          }
-          i++;
-        } else {
-          j= 0;
-          while ((o = e[j++])) {
-            k = 0;
-            r = o.getElementsByTagName(trim.call(n));
-            while ((p = r[k++])) {
-              id = (p._cssId || (p._cssId = ++cssId));
-              // discard duplicates
-              if (!t[id]) {
-                t[id] = true;
-                s.push(p);
-              }
-            }
-          }
-        }
-        e = s;
-        s = [ ];
-        t = [ ];
-      }
-      return e;
     },
 
   // attribute value
