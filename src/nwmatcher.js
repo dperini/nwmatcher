@@ -818,9 +818,9 @@ NW.Dom = (function(global) {
 
         if (elements) {
           if (callback) return concatCall(data || [ ], elements, callback);
-          return NATIVE_SLICE_PROTO
-            ? slice.call(elements)
-            : concatList(data || [ ], elements);
+          return NATIVE_SLICE_PROTO ?
+            slice.call(elements) :
+            concatList(data || [ ], elements);
         }
       }
 
@@ -910,9 +910,9 @@ NW.Dom = (function(global) {
 
       if (simpleSelector.test(selector)) {
         switch (selector.charAt(0)) {
-          case '.': data = concat(data, byClass(selector.slice(1), from), callback);
-          case '#': data = concat(data, [ byId(selector.slice(1), from) ], callback);
-          default: data = concat(data, byTag(selector, from), callback);
+          case '.': data = concat(data, byClass(selector.slice(1), from), callback); break;
+          case '#': data = concat(data, [ byId(selector.slice(1), from) ], callback); break;
+          default: data = concat(data, byTag(selector, from), callback); break;
         }
         snap.Roots[selector] = from;
         snap.Results[selector] = data;
@@ -1177,10 +1177,12 @@ NW.Dom = (function(global) {
   // check if element matches the :link pseudo
   // @return boolean
   isLink =
-    function(element) {
-      var nodeName = element.nodeName.toLowerCase();
-      return hasAttribute(element,'href') && nodeName == 'a' || nodeName == 'area' || nodeName == 'link';
-    },
+    (function() {
+      var LINK_NODES = { 'a': 1, 'area': 1, 'link': 1 };
+      return function(element) {
+        return hasAttribute(element,'href') && LINK_NODES[element.nodeName.toLowerCase()];
+      };
+    })(),
 
   // child position by nodeType
   // @return number
@@ -1271,9 +1273,8 @@ NW.Dom = (function(global) {
       return !container.contains(element);
     } :
     function(element, container) {
-      var node;
-      while (node = element.parentNode)
-        if (node === container) return false;
+      while ((element = element.parentNode))
+        if ((element === container)) return false;
       return true;
     },
 
