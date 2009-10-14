@@ -525,7 +525,7 @@ NW.Dom = (function(global) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a list of whitespace-separated values
           // see section 6.4 Class selectors and notes at the bottom; explicitly non-normative in this specification.
           //source = 'if(/(^|\\s)' + match[1] + '(\\s|$)/.test(e.className)){' + source + '}';
-          source = 'if(((" "+e.className+" ").replace(/[\\t\\n\\r\\f]/g," ").indexOf(" ' + match[1] + ' ")>-1)){' + source + '}';
+          source = 'if((" "+e.className+" ").replace(/[\\t\\n\\r\\f]/g," ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
         }
         // *** Attribute selector
         // [attr] [attr=value] [attr="value"] [attr='value'] and !=, *=, ~=, |=, ^=, $=
@@ -845,7 +845,7 @@ NW.Dom = (function(global) {
   client_api =
     function client_api(selector, from, data, callback) {
 
-      var i = 0, done, now, disconnected,
+      var i = 0, done, now, disconnected, className,
         element, elements, parts, token, isCacheable,
         concat = callback ? concatCall : concatList;
 
@@ -943,13 +943,10 @@ NW.Dom = (function(global) {
           (token = parts[parts.length - 1]) && NATIVE_GEBID) {
           if ((element = byId(token, context))) {
             if (match(element, selector)) {
-              snap.Results[selector] = [ element ];
-              snap.Roots[selector] = from;
-              callback && callback(element);
-              data[data.length] = element;
-              return data;
-            } else return data;
-          } else return data;
+              elements = [ element ];
+              done = true;
+            }
+          } else return data || [ ];
         }
 
         // CLASS optimization RTL
@@ -1005,8 +1002,6 @@ NW.Dom = (function(global) {
               }
             }
           }
-        } else {
-          elements = toArray(elements);
         }
 
         // save compiled selectors
