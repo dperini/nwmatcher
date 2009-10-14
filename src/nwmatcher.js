@@ -519,7 +519,7 @@ NW.Dom = (function(global) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a list of whitespace-separated values
           // see section 6.4 Class selectors and notes at the bottom; explicitly non-normative in this specification.
           //source = 'if(/(^|\\s)' + match[1] + '(\\s|$)/.test(e.className)){' + source + '}';
-          source = 'if(((" "+e.className+" ").replace(/[\\t\\n\\r\\f]/g," ").indexOf(" ' + match[1] + ' ")>=0)){' + source + '}';
+          source = 'if(((" "+e.className+" ").replace(/[\\t\\n\\r\\f]/g," ").indexOf(" ' + match[1] + ' ")>-1)){' + source + '}';
         }
         // *** Attribute selector
         // [attr] [attr=value] [attr="value"] [attr='value'] and !=, *=, ~=, |=, ^=, $=
@@ -1068,12 +1068,21 @@ NW.Dom = (function(global) {
     } :
     function(className, from) {
       // context is handled in byTag for non native gEBCN
-      var i = 0, j = 0, results = [ ], element,
+      var cn, element, original, i = 0, j = 0, results = [ ],
         elements = from.getElementsByTagName('*');
-        className = ' ' + className.replace(/[\t\n\r\f]/g, ' ').replace(/\\/g, '') + ' ';
+
+      className = className.replace(/\\/g, '');
+      if (isClassNameLowered) className = className.toLowerCase();
+
       while ((element = elements[i++])) {
-        if (element.className.length && (' ' + element.className + ' ').indexOf(className) > -1) {
-          results[j++] = element;
+        if ((original = element.className).length) {
+          cn = original.replace(/[\t\n\r\f]/g, ' ');
+          if ((' ' + (isClassNameLowered ? cn.toLowerCase() : cn) + ' ')
+            .indexOf(' ' + className + ' ') > -1) {
+            // normalize to optimize future checks
+            // if (cn !== original) element.className = cn;
+            results[j++] = element;
+          }
         }
       }
       return results;
