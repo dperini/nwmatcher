@@ -839,7 +839,7 @@ NW.Dom = (function(global) {
   client_api =
     function client_api(selector, from, data, callback) {
 
-      var i = 0, done, now,
+      var i = 0, done, now, disconnected,
         element, elements, parts, token, isCacheable,
         concat = callback ? concatCall : concatList;
 
@@ -872,10 +872,12 @@ NW.Dom = (function(global) {
         }
       }
 
-      isCacheable = cachingEnabled && !cachingPaused &&
-        (from.nodeType == 9 || !isDisconnected(from, root));
+      // nodes not in the document
+      disconnected = from != base && isDisconnected(from, root);
 
-      // caching  enabled ?
+      isCacheable = cachingEnabled && !cachingPaused && !disconnected;
+
+      // avoid caching disconnected nodes
       if (isCacheable) {
         snap = base.snapshot;
         // valid base context storage
@@ -906,7 +908,7 @@ NW.Dom = (function(global) {
 
       // pre-filtering pass allow to scale proportionally with big DOM trees;
       // this block can be safely removed, it is a speed booster on big pages
-      // and still maintain the mandatory "document ordered" result set
+      // and will still maintain the mandatory "document ordered" result set
 
       if (simpleSelector.test(selector)) {
         switch (selector.charAt(0)) {
@@ -966,9 +968,9 @@ NW.Dom = (function(global) {
 
         if ((parts = lastSlice.match(/\#([-\w]+)$/)) && selector == '#' + parts[1]) {
           while ((element = elements[i++])) {
-            if (node.id == parts[1]) {
-              callback && callback(node);
-              data.push(node);
+            if (element.id == parts[1]) {
+              callback && callback(element);
+              data.push(element);
               return data;
             }
           }
@@ -976,11 +978,11 @@ NW.Dom = (function(global) {
         } else if ((parts = lastSlice.match(/\b([-\w]+)?(?:(\.[-\w]+)|(\#[-\w]+))/))) {
           while ((element = elements[i++])) {
             if (
-              (!parts[1] || node.nodeName == parts[1]) && (
-              (!parts[3] || (parts[2] == '#' && node.id == parts[3])) ||
-              (!parts[3] || (parts[2] == '.' && node.className == parts[3])))) {
-              callback && callback(node);
-              data.push(node);
+              (!parts[1] || element.nodeName == parts[1]) && (
+              (!parts[3] || (parts[2] == '#' && element.id == parts[3])) ||
+              (!parts[3] || (parts[2] == '.' && element.className == parts[3])))) {
+              callback && callback(element);
+              data.push(element);
               return data;
             }
           }
@@ -1205,8 +1207,9 @@ NW.Dom = (function(global) {
       return !container.contains(element);
     } :
     function(element, container) {
-      while ((element = element.parentNode))
-        if ((element === container)) return false;
+      while ((element = element.parentNode)) {
+        if (element === container) return false;
+      }
       return true;
     },
 
