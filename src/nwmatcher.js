@@ -797,8 +797,7 @@ NW.Dom = (function(global) {
           }
           // result of compiled matcher
           return compiledMatchers[selector](element, snap, base, root, from || base);
-        }
-        else {
+        } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
         }
       }
@@ -1306,7 +1305,7 @@ NW.Dom = (function(global) {
 
   cachingPaused = false,
 
-  // minimum time allowed, in milliseconds, between calls to the cache initialization
+  // minimum time allowed, in milliseconds, between calls to the cache initialization
   minCallThreshold = 15,
 
   snap,
