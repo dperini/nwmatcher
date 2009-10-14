@@ -273,21 +273,6 @@ NW.Dom = (function(global) {
   // shortcut for the frequently checked case sensitivity of the class attribute
   isClassNameLowered = insensitiveMap['class'],
 
-  // place to add exotic functionalities
-  Selectors = {
-    // as a simple example this will check
-    // for chars not in standard ascii table
-    //
-    // 'mySpecialSelector': {
-    //  'Expression': /\u0080-\uffff/,
-    //  'Callback': mySelectorCallback
-    //}
-    //
-    // 'mySelectorCallback' will be invoked
-    // only after passing all other standard
-    // checks and only if none of them worked
-  },
-
   // http://www.w3.org/TR/css3-syntax/#characters
   // unicode/ISO 10646 characters 161 and higher
   // NOTE: Safari 2.0.x crashes with escaped (\\)
@@ -310,6 +295,21 @@ NW.Dom = (function(global) {
   // split comma separated selector groups, exclude commas inside '' "" () []
   // example: (#div a, ul > li a) group 1 is (#div a) group 2 is (ul > li a)
   group = /([^,()[\]]+|\([^()]+\)|\(.*\)|\[(?:\[[^[\]]*\]|["'][^'"]*["']|[^'"[\]]+)+\]|\[.*\]|\\.)+/g,
+
+  // place to add exotic functionalities
+  Selectors = {
+    // as a simple example this will check
+    // for chars not in standard ascii table
+    //
+    // 'mySpecialSelector': {
+    //  'Expression': /\u0080-\uffff/,
+    //  'Callback': mySelectorCallback
+    //}
+    //
+    // 'mySelectorCallback' will be invoked
+    // only after passing all other standard
+    // checks and only if none of them worked
+  },
 
   // attribute operators
   Operators = {
