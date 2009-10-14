@@ -261,6 +261,9 @@ NW.Dom = (function(global) {
   // matching functions returning booleans
   compiledMatchers = { },
 
+  // shortcut for the frequently checked case sensitivity of the class attribute
+  isClassNameLowered = insensitiveMap['class'],
+
   // place to add exotic functionalities
   Selectors = {
     // as a simple example this will check
@@ -338,7 +341,10 @@ NW.Dom = (function(global) {
 
   rePositionals = /:(nth|of-type)/,
   reDescendants = /[^> \w]/,
+  reClassValue = /([-\w]+)/,
   reSiblings = /[^+~\w]/,
+
+  reIdSelector  = /\#([-\w]+)$/,
 
   // precompiled Regular Expressions
   Patterns = {
@@ -578,7 +584,7 @@ NW.Dom = (function(global) {
         // :first-of-type, :last-of-type, :only-of-type,
         // :nth-child(), :nth-last-child(), :nth-of-type(), :nth-last-of-type()
         else if ((match = selector.match(Patterns.spseudos)) &&
-          CSS3PseudoClasses.Structural[selector.match(/([-\w]+)/)[0]]) {
+          CSS3PseudoClasses.Structural[selector.match(reClassValue)[0]]) {
 
           switch (match[1]) {
             case 'root':
@@ -659,7 +665,7 @@ NW.Dom = (function(global) {
         // CSS3 :active, :hover, :focus
         // CSS3 :link, :visited
         else if ((match = selector.match(Patterns.dpseudos)) &&
-          CSS3PseudoClasses.Others[selector.match(/([-\w]+)/)[0]]) {
+          CSS3PseudoClasses.Others[selector.match(reClassValue)[0]]) {
 
           switch (match[1]) {
             // CSS3 negation pseudo-class
@@ -962,41 +968,54 @@ NW.Dom = (function(global) {
 
       }
 
-      if (!done && !elements || elements.length === 0) {
+      if (!done) {
 
-        elements = from.getElementsByTagName('*');
+        if (!elements || elements.length === 0) {
 
-        if ((parts = lastSlice.match(/\#([-\w]+)$/)) && selector == '#' + parts[1]) {
-          while ((element = elements[i++])) {
-            if (element.id == parts[1]) {
-              callback && callback(element);
-              data.push(element);
-              return data;
+          elements = from.getElementsByTagName('*');
+
+          if ((parts = lastSlice.match(reIdSelector)) && selector == '#' + parts[1]) {
+            while ((element = elements[i++])) {
+              if (element.id == parts[1]) {
+                callback && callback(element);
+                data.push(element);
+                return data;
+              }
             }
+            return data;
           }
-          return data;
-        } else if ((parts = lastSlice.match(/\b([-\w]+)?(?:(\.[-\w]+)|(\#[-\w]+))/))) {
-          while ((element = elements[i++])) {
-            if (
-              (!parts[1] || element.nodeName == parts[1]) && (
-              (!parts[3] || (parts[2] == '#' && element.id == parts[3])) ||
-              (!parts[3] || (parts[2] == '.' && element.className == parts[3])))) {
-              callback && callback(element);
-              data.push(element);
-              return data;
+          else if ((parts = lastSlice.match(/\b([-\w]+)?(\.|#)([-\w]+)/))) {
+            // normalize tagName
+            parts[1] = parts[1].toUpperCase();
+
+            // normalize className
+            if (parts[2] == '.' && isClassNameLowered)
+              parts[3] = parts[3].toLowerCase();
+
+            while ((element = elements[i++])) {
+              if (
+                  (!parts[1] || element.nodeName.toUpperCase() == parts[1]) && (
+                  ( parts[2] == '#' && element.id == parts[3]) ||
+                  ( parts[2] == '.' && (className = element.className) &&
+                  (isClassNameLowered ? className.length && className.toLowerCase() :
+                   className) == parts[3]))) {
+                callback && callback(element);
+                data.push(element);
+                return data;
+              }
             }
           }
         } else {
           elements = toArray(elements);
         }
 
+        // save compiled selectors
+        if (!compiledSelectors[selector]) {
+          compiledSelectors[selector] = compileGroup(selector, '', true);
+        }
+
       }
       // end of prefiltering pass
-
-      // save compiled selectors
-      if (!done && !compiledSelectors[selector]) {
-        compiledSelectors[selector] = compileGroup(selector, '', true);
-      }
 
       if (isCacheable) {
         // a cached result set for the requested selector
