@@ -54,6 +54,15 @@ NW.Dom = (function(global) {
     return s.replace(/<\/?("[^\"]*"|'[^\']*'|[^>])+>/gi, '');
   },
 
+  // Only five characters can occur in whitespace, they are:
+  // \x20 \t \n \r \f, checks now uniformed through the code
+  // http://www.w3.org/TR/css3-selectors/#selector-syntax
+
+  // trim leading/trailing whitespaces
+  trim = String.prototype.trim && !' \t\n\r\f'.trim() ?
+    String.prototype.trim :
+    function() { return this.replace(/^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g, ''); },
+
   /* BEGIN FEATURE TESTING */
 
   // detect native methods
@@ -277,15 +286,6 @@ NW.Dom = (function(global) {
     // 'mySelectorCallback' will be invoked
     // only after passing all other standard
     // checks and only if none of them worked
-  },
-
-  // Only five characters can occur in whitespace, they are:
-  // \x20 \t \n \r \f, checks now uniformed through the code
-  // http://www.w3.org/TR/css3-selectors/#selector-syntax
-
-  // trim leading/trailing whitespaces
-  trim = String.prototype.trim || function() {
-    return this.replace(/^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g, '');
   },
 
   // http://www.w3.org/TR/css3-syntax/#characters
@@ -946,7 +946,7 @@ NW.Dom = (function(global) {
               elements = [ element ];
               done = true;
             }
-          } else return data || [ ];
+          } else return data;
         }
 
         // CLASS optimization RTL
@@ -1003,6 +1003,7 @@ NW.Dom = (function(global) {
             }
           }
         }
+        // end of prefiltering pass
 
         // save compiled selectors
         if (!compiledSelectors[selector]) {
@@ -1010,7 +1011,6 @@ NW.Dom = (function(global) {
         }
 
       }
-      // end of prefiltering pass
 
       if (isCacheable) {
         // a cached result set for the requested selector
@@ -1306,7 +1306,7 @@ NW.Dom = (function(global) {
 
   cachingPaused = false,
 
-  // call threshold
+  // minimum time allowed, in milliseconds, between calls to the cache initialization
   minCallThreshold = 15,
 
   snap,
