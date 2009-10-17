@@ -343,6 +343,7 @@ NW.Dom = (function(global) {
   reDescendants = /[^> \w]/,
   reClassValue = /([-\w]+)/,
   reSiblings = /[^+~\w]/,
+  reTrim = /^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g,
 
   reIdSelector  = /\#([-\w]+)$/,
 
@@ -456,23 +457,17 @@ NW.Dom = (function(global) {
       var i = 0, seen = { }, parts, token;
       if ((parts = selector.match(group))) {
         // for each selector in the group
-        for ( ; i < parts.length; ++i) {
-          token = trim.call(parts[i]);
+        while ((token = parts[i++])) {
+          token = token.replace(reTrim, '');
           // avoid repeating the same token
           // in comma separated group (p, p)
           if (!seen[token]) {
             seen[token] = true;
             // reset element reference after the
             // first comma if using select() mode
-            if (i > 0) {
-              source += 'e=N;';
-            }
+            if (i > 0) source += 'e=N;';
             // insert corresponding mode function
-            if (mode) {
-              source += compileSelector(token, ACCEPT_NODE);
-            } else {
-              source += compileSelector(token, 'return true;');
-            }
+            source += compileSelector(token, mode ? ACCEPT_NODE : 'return true;');
           }
         }
       }
@@ -510,7 +505,7 @@ NW.Dom = (function(global) {
           // document can contain conflicting elements (id/name)
           //source = 'if(e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
           // prototype selector unit need this method to recover bad HTML forms
-          source = 'if((n=e.getAttributeNode("id"))&&n.value=="' + match[1] + '"){' + source + '}';
+          source = 'if((e.submit?s.getAttribute(e,"id"):e.id)=="' + match[1] + '"){' + source + '}';
         }
         // *** Type selector
         // Foo Tag (case insensitive)
@@ -861,6 +856,8 @@ NW.Dom = (function(global) {
         // reference context ownerDocument and document root (HTML)
         root = (base = from.ownerDocument || from).documentElement;
       }
+
+      selector = selector.replace(reTrim, '');
 
       if (lastSelector != selector) {
         // process valid selector strings
