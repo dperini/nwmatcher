@@ -39,13 +39,13 @@ var jquery_ChildSelectors = function(match, source) {
       source = source.replace(ACCEPT_NODE, 'if(x++>' + match[2] + '){' + ACCEPT_NODE + '}');
       break;
     case 'first':
-      source = 'n=s.byTag(e.nodeName,h);if(n.length&&n[0]==e){' + source + '}';
+      source = 'n=h.getElementsByTagName(e.nodeName);if(n.length&&n[0]==e){' + source + '}';
       break;
     case 'last':
-      source = 'n=s.byTag(e.nodeName,h);if(n.length&&n[n.length-1]==e){' + source + '}';
+      source = 'n=h.getElementsByTagName(e.nodeName);if(n.length&&n[n.length-1]==e){' + source + '}';
       break;
     case 'nth':
-      source = 'n=s.byTag(e.nodeName,h);if(n.length&&n[' + match[2] + ']==e){' + source + '}';
+      source = 'n=h.getElementsByTagName(e.nodeName);if(n.length&&n[' + match[2] + ']==e){' + source + '}';
       break;
     default:
       status = false;
@@ -69,7 +69,7 @@ var jquery_PseudoSelectors = function(match, source) {
 
   switch(match[1]) {
     case 'has':
-      source = source.replace(ACCEPT_NODE, 'if(s.byTag("' + match[3] + '",e)[0]){' + ACCEPT_NODE + '}');
+      source = source.replace(ACCEPT_NODE, 'if(e.getElementsByTagName("' + match[3] + '")[0]){' + ACCEPT_NODE + '}');
       break;
     case 'checkbox':
     case 'file':
