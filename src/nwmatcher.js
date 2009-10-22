@@ -438,17 +438,6 @@ NW.Dom = (function(global) {
         's.stripTags(e.innerHTML)';
     })(),
 
-  // to check extensions have not yet been registered
-  // @return boolean
-  IS_EMPTY =
-    function(object) {
-      if (object && typeof object == 'object') {
-        for (var i in object) { return false; }
-        return true;
-      }
-      return false;
-    },
-
   // compile a comma separated group of selector
   // @mode boolean true for select, false for match
   // @return function (compiled)
@@ -738,8 +727,8 @@ NW.Dom = (function(global) {
             default:
               break;
           }
-        }
-        else if (!IS_EMPTY(Selectors)) {
+        } else {
+
           // this is where external extensions are
           // invoked if expressions match selectors
           status = true;
@@ -759,11 +748,13 @@ NW.Dom = (function(global) {
             emit('DOMException: unknown pseudo selector "' + selector + '"');
             return source;
           }
-        }
-        else {
-          // see above, log error but continue execution
-          emit('DOMException: unknown token in selector "' + selector + '"');
-          return source;
+
+          if (!expr) {
+            // see above, log error but continue execution
+            emit('DOMException: unknown token in selector "' + selector + '"');
+            return source;
+          }
+
         }
 
         // ensure "match" is not null or empty since
@@ -1294,22 +1285,6 @@ NW.Dom = (function(global) {
         }
       }
       return data;
-    },
-
-  // convert nodeList to array
-  // @return array
-  toArray = NATIVE_SLICE_PROTO ?
-    function(list) {
-      return slice.call(list);
-    } :
-    function(list) {
-      // avoid using the length property of nodeLists
-      // it may have been overwritten by bad HTML code
-      var i = 0, item, array = [ ];
-      while ((item = list[i++])) {
-        array.push(item);
-      }
-      return array;
     },
 
   // cssId expando on elements,
