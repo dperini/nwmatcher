@@ -76,7 +76,7 @@ NW.Dom = (function(global) {
 
   // NOTE: NATIVE_XXXXX check for existance of method only
   // so through the code read it as "supported", maybe BUGGY
-  NATIVE_ELEMENT_API =
+  NATIVE_TRAVERSAL_API =
     'nextElementSibling' in root &&
     'previousElementSibling' in root,
 
@@ -94,7 +94,7 @@ NW.Dom = (function(global) {
 
   // get name of best children collection property available
   // detect Safari 2.0.x different children implementation
-  NATIVE_CHILDREN =
+  CHILD_NODES =
     'children' in root ?
       (view && global !== view ?
         'childNodes' :
@@ -232,7 +232,7 @@ NW.Dom = (function(global) {
 
   // See Niels Leenheer blog http://rakaz.nl/item/css_selector_bugs_case_sensitivity
   //
-  xhtml_table = {
+  XHTML_TABLE = {
     // the following attributes must be treated case insensitive in XHTML
     'accept': 1, 'accept-charset': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'codetype': 1, 'color': 1,
@@ -242,7 +242,7 @@ NW.Dom = (function(global) {
   },
 
   // HTML 5 draft specifications http://www.whatwg.org/specs/web-apps/current-work/#selectors
-  html_table = {
+  HTML_TABLE = {
     // class attribute must be treated case-insensitive in HTML quirks mode
     'class': compatMode.indexOf('CSS') > -1 ? 0 : 1,
     'accept': 1, 'accept-charset': 1, 'align': 1, 'alink': 1, 'axis': 1,
@@ -255,8 +255,8 @@ NW.Dom = (function(global) {
     'text': 1, 'type': 1, 'valign': 1, 'valuetype': 1, 'vlink': 1
   },
 
-  insensitiveMap = docType && docType.systemId && docType.systemId.indexOf('xhtml') > -1 ?
-    xhtml_table : html_table,
+  INSENSITIVE_TABLE = docType && docType.systemId && docType.systemId.indexOf('xhtml') > -1 ?
+    XHTML_TABLE : HTML_TABLE,
 
   // attribute referencing URI values need special treatment in IE
   attributesURI = {
@@ -271,7 +271,7 @@ NW.Dom = (function(global) {
   compiledMatchers = { },
 
   // shortcut for the frequently checked case sensitivity of the class attribute
-  isClassNameLowered = insensitiveMap['class'],
+  isClassNameLowered = INSENSITIVE_TABLE['class'],
 
   // http://www.w3.org/TR/css3-syntax/#characters
   // unicode/ISO 10646 characters 161 and higher
@@ -364,7 +364,7 @@ NW.Dom = (function(global) {
     // E F
     ancestor: /^[\x20\t\n\r\f]+(.*)/,
     // all
-    all: /^\*(.*)/,
+    universal: /^\*(.*)/,
     // id
     id: new RegExp("^#" + encoding + "(.*)"),
     // tag
@@ -494,11 +494,12 @@ NW.Dom = (function(global) {
 
         // *** Universal selector
         // * match all (empty block, do not remove)
-        if ((match = selector.match(Patterns.all))) {
+        if ((match = selector.match(Patterns.universal))) {
           // do nothing, handled in the compiler where
           // BUGGY_GEBTN return comment nodes (ex: IE)
           true;
         }
+
         // *** ID selector
         // #Foo Id case sensitive
         else if ((match = selector.match(Patterns.id))) {
@@ -507,6 +508,7 @@ NW.Dom = (function(global) {
           // prototype selector unit need this method to recover bad HTML forms
           source = 'if((e.submit?s.getAttribute(e,"id"):e.id)=="' + match[1] + '"){' + source + '}';
         }
+
         // *** Type selector
         // Foo Tag (case insensitive)
         else if ((match = selector.match(Patterns.tagName))) {
@@ -514,14 +516,16 @@ NW.Dom = (function(global) {
           // depending on their creation NAMESPACE in createElementNS()
           source = 'if(e.nodeName=="' + match[1].toUpperCase() + '"||e.nodeName=="' + match[1].toLowerCase() + '"){' + source + '}';
         }
+
         // *** Class selector
         // .Foo Class (case sensitive)
         else if ((match = selector.match(Patterns.className))) {
-          // W3C CSS3 specs: element whose "class" attribute has been assigned a list of whitespace-separated values
-          // see section 6.4 Class selectors and notes at the bottom; explicitly non-normative in this specification.
-          //source = 'if(/(^|\\s)' + match[1] + '(\\s|$)/.test(e.className)){' + source + '}';
+          // W3C CSS3 specs: element whose "class" attribute has been assigned a
+          // list of whitespace-separated values, see section 6.4 Class selectors
+          // and notes at the bottom; explicitly non-normative in this specification.
           source = 'if((" "+e.className+" ").replace(/[\\t\\n\\r\\f]/g," ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
         }
+
         // *** Attribute selector
         // [attr] [attr=value] [attr="value"] [attr='value'] and !=, *=, ~=, |=, ^=, $=
         // case sensitivity is treated differently depending on the document type (see map)
@@ -529,30 +533,34 @@ NW.Dom = (function(global) {
           // xml namespaced attribute ?
           expr = match[1].split(':');
           expr = expr.length == 2 ? expr[1] : expr[0] + '';
-          // check case treatment from insensitiveMap
-          if (match[4] && insensitiveMap[expr.toLowerCase()]) {
+
+          // check case treatment from INSENSITIVE_TABLE
+          if (match[4] && INSENSITIVE_TABLE[expr.toLowerCase()]) {
             match[4] = match[4].toLowerCase();
           }
+
           source = (match[2] ? 'T=s.getAttribute(e,"' + match[1] + '");' : '') +
             'if(' + (match[2] ? Operators[match[2]].replace(/\%p/g, 'T' +
               (expr ? '' : '.toLowerCase()')).replace(/\%m/g, match[4]) :
               's.hasAttribute(e,"' + match[1] + '")') +
             '){' + source + '}';
         }
+
         // *** Adjacent sibling combinator
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
-          if (NATIVE_ELEMENT_API) {
+          if (NATIVE_TRAVERSAL_API) {
             source = 'if((e=e.previousElementSibling)){' + source + '}';
           } else {
             source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + 'break;}}';
           }
         }
+
         // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
           k++;
-          if (NATIVE_ELEMENT_API) {
+          if (NATIVE_TRAVERSAL_API) {
             // previousSibling particularly slow on Gecko based browsers prior to FF3.1
             source =
               'var N' + k + '=e;e=e.parentNode.firstElementChild;' +
@@ -563,16 +571,19 @@ NW.Dom = (function(global) {
               'while(e!=N' + k +'){if(e.nodeType==1){' + source + '}e=e.nextSibling;}';
           }
         }
+
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
           source = 'if((e=e.parentNode)&&e.nodeType==1){' + source + '}';
         }
+
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
           source = 'while((e=e.parentNode)&&e.nodeType==1&&e!==g){' + source + '}';
         }
+
         // *** Structural pseudo-classes
         // :root, :empty,
         // :first-child, :last-child, :only-child,
@@ -632,7 +643,7 @@ NW.Dom = (function(global) {
                 // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
                 // too much overhead calling functions out of the main loop ?
                 //source = 'if(s.' + match[2] + type + '(e)){' + source + '}';
-                source = NATIVE_ELEMENT_API ?
+                source = NATIVE_TRAVERSAL_API ?
                   ((match[4] ? 'T=e.nodeName;' : '') +
                     'n=e;while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'ElementSibling)){' +
                       (match[4] ? 'if(n.nodeName==T)' : '') + 'break;}' +
@@ -654,6 +665,7 @@ NW.Dom = (function(global) {
           }
 
         }
+
         // *** negation, user action and target pseudo-classes
         // *** UI element states and dynamic pseudo-classes
         // CSS3 :not, :checked, :enabled, :disabled, :target
@@ -669,6 +681,7 @@ NW.Dom = (function(global) {
               // since the string we are inserting into already uses double quotes
               source = 'if(!s.match(e, "' + match[3].replace(/\x22/g, '\\"') + '")){' + source +'}';
               break;
+
             // CSS3 UI element states
             case 'checked':
               // only radio buttons and check boxes
@@ -682,11 +695,13 @@ NW.Dom = (function(global) {
               // does not consider hidden input fields
               source = 'if((("form" in e&&e.type!=="hidden")||s.isLink(e))&&e.disabled===true){' + source + '}';
               break;
+
             // CSS3 target pseudo-class
             case 'target':
               n = base.location.hash;
               source = 'if(e.id!=""&&e.id=="' + n + '"&&"href" in e){' + source + '}';
               break;
+
             // CSS3 dynamic pseudo-classes
             case 'link':
               source = 'if(s.isLink(e)&&!e.visited){' + source + '}';
@@ -694,6 +709,7 @@ NW.Dom = (function(global) {
             case 'visited':
               source = 'if(s.isLink(e)&&!!e.visited){' + source + '}';
               break;
+
             // CSS3 user action pseudo-classes IE & FF3 have native support
             // these capabilities may be emulated by some event managers
             case 'active':
@@ -705,6 +721,7 @@ NW.Dom = (function(global) {
             case 'focus':
               source = 'if("form" in e&&e===d.activeElement&&typeof d.hasFocus=="function"&&d.hasFocus()===true){' + source + '}';
               break;
+
             // CSS2 :contains and :selected pseudo-classes
             // not currently part of CSS3 drafts
             case 'contains':
@@ -733,6 +750,7 @@ NW.Dom = (function(global) {
               status |= result.status;
             }
           }
+
           // if an extension fails to parse the selector
           // it must return a false boolean in "status"
           if (!status) {
@@ -804,7 +822,9 @@ NW.Dom = (function(global) {
   // @return array
   select_qsa =
     function (selector, from, data, callback) {
+
       var elements;
+
       if (!simpleSelector.test(selector) &&
           (!from || from.nodeType == 9 || from.nodeType == 11) &&
           !BUGGY_QSAPI.test(selector)) {
@@ -1030,6 +1050,8 @@ NW.Dom = (function(global) {
     select_qsa :
     client_api,
 
+  // ELEMENTS HANDLING
+
   // element by id
   // @return element reference or null
   byId =
@@ -1098,6 +1120,8 @@ NW.Dom = (function(global) {
       return results;
     },
 
+  // ATTRIBUTES HANDLING
+
   // attribute value
   // @return string
   getAttribute = NATIVE_HAS_ATTRIBUTE ?
@@ -1146,7 +1170,7 @@ NW.Dom = (function(global) {
         if ((parent = element.parentNode).nodeType == 1) {
           i = 0;
           j = 0;
-          nodes = parent[NATIVE_CHILDREN];
+          nodes = parent[CHILD_NODES];
           while ((node = nodes[i++])) {
             if (node.nodeType == 1) {
               cache[node._cssId || (node._cssId = ++cssId)] = ++j;
@@ -1170,7 +1194,7 @@ NW.Dom = (function(global) {
         if ((parent = element.parentNode).nodeType == 1) {
           i = 0;
           j = 0;
-          nodes = parent[NATIVE_CHILDREN];
+          nodes = parent[CHILD_NODES];
           name = element.nodeName.toLowerCase();
           while ((node = nodes[i++])) {
             if (node.nodeName.toLowerCase() == name) {
