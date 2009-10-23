@@ -448,16 +448,9 @@ NW.Dom = (function(global) {
         // for each selector in the group
         while ((token = parts[i++])) {
           token = token.replace(reTrim, '');
-          // avoid repeating the same token
-          // in comma separated group (p, p)
-          if (!seen[token]) {
-            seen[token] = true;
-            // reset element reference after the
-            // first comma if using select() mode
-            if (i > 0) source += 'e=N;';
-            // insert corresponding mode function
-            source += compileSelector(token, mode ? ACCEPT_NODE : 'return true;');
-          }
+          // avoid repeating the same token in comma separated group (p, p)
+          if (!seen[token]) source += 'e=N;' + compileSelector(token, mode ? ACCEPT_NODE : 'return true;');
+          seen[token] = true;
         }
       }
       if (mode) {
@@ -493,9 +486,12 @@ NW.Dom = (function(global) {
         // #Foo Id case sensitive
         else if ((match = selector.match(Patterns.id))) {
           // document can contain conflicting elements (id/name)
-          //source = 'if(e.getAttribute("id")=="' + match[1] + '"){' + source + '}';
           // prototype selector unit need this method to recover bad HTML forms
-          source = 'if((e.submit?s.getAttribute(e,"id"):e.id)=="' + match[1] + '"){' + source + '}';
+          if (base.getElementsByName('id')[0] || base.getElementById('id')) {
+            source = 'if((e.submit?s.getAttribute(e,"id"):e.id)=="' + match[1] + '"){' + source + '}';
+          } else {
+            source = 'if(e.id=="' + match[1] + '"){' + source + '}';
+          }
         }
 
         // *** Type selector
