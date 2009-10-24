@@ -892,7 +892,7 @@ NW.Dom = (function(global) {
         // valid base context storage
         if (snap && !snap.isExpired) {
           if (snap.Results[selector] &&
-            snap.Roots[selector] == from) {
+            snap.Contexts[selector] == from) {
             return callback ?
               concat(data, snap.Results[selector], callback) :
               snap.Results[selector];
@@ -925,7 +925,7 @@ NW.Dom = (function(global) {
           case '#': data = concat(data, [ byId(selector.slice(1), from) ], callback); break;
           default: data = concat(data, byTag(selector, from), callback); break;
         }
-        snap.Roots[selector] = from;
+        snap.Contexts[selector] = from;
         snap.Results[selector] = data;
         return data;
       }
@@ -1020,7 +1020,7 @@ NW.Dom = (function(global) {
         snap.Results[selector] = done ?
           concat(data, elements, callback) :
           concat(data, compiledSelectors[selector](elements, snap, base, root, from), callback);
-        snap.Roots[selector] = from;
+        snap.Contexts[selector] = from;
         return snap.Results[selector];
       }
 
@@ -1314,9 +1314,9 @@ NW.Dom = (function(global) {
       this.ChildIndex = [ ];
       this.TwinsIndex = [ ];
 
-      // result sets and related root contexts
+      // result sets and related contexts
       this.Results = [ ];
-      this.Roots   = [ ];
+      this.Contexts = [ ];
     },
 
   // enable/disable context caching system
