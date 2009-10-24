@@ -727,6 +727,7 @@ NW.Dom = (function(global) {
 
           // this is where external extensions are
           // invoked if expressions match selectors
+          expr = false;
           status = true;
           for (expr in Selectors) {
             if ((match = selector.match(Selectors[expr].Expression))) {
