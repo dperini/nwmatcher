@@ -1294,7 +1294,7 @@ NW.Dom = (function(global) {
   // ****************** CACHING ******************
   // keep caching states for each context document
   // set manually by using setCache(true, context)
-  cachingEnabled = NATIVE_MUTATION_EVENTS,
+  cachingEnabled = false,//NATIVE_MUTATION_EVENTS,
 
   cachingPaused = false,
 
