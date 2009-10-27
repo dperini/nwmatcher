@@ -922,8 +922,13 @@ NW.Dom = (function(global) {
 
       if (simpleSelector.test(selector)) {
         switch (selector.charAt(0)) {
+          case '#':
+            if ((element = byId(selector.slice(1), from))) {
+              data[data.length] = element;
+              callback && callback(element);
+            }
+            break;
           case '.': data = concat(data, byClass(selector.slice(1), from), callback); break;
-          case '#': data = concat(data, [ byId(selector.slice(1), from) ], callback); break;
           default: data = concat(data, byTag(selector, from), callback); break;
         }
         snap.Contexts[selector] = from;
