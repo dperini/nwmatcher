@@ -588,6 +588,11 @@ NW.Dom = (function(global) {
               break;
             default:
 
+              // used for nth-child/of-type
+              type = NATIVE_TRAVERSAL_API ?
+                (match[4] ? 'n.nodeName==e.nodeName' : 'true') :
+                (match[4] ? 'n.nodeName==e.nodeName' : 'n.nodeType==1');
+
               if (match[1] && match[5]) {
                 // remove the ( ) grabbed above
                 match[5] = match[5].replace(/\(|\)/g, '');
@@ -627,24 +632,17 @@ NW.Dom = (function(global) {
               } else {
                 // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
                 // too much overhead calling functions out of the main loop ?
-                //source = 'if(s.' + match[2] + type + '(e)){' + source + '}';
-                source = NATIVE_TRAVERSAL_API ?
-                  ((match[4] ? 'T=e.nodeName;' : '') +
-                    'n=e;while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'ElementSibling)){' +
-                      (match[4] ? 'if(n.nodeName==T)' : '') + 'break;}' +
-                    'if(!n){' + (match[2] == 'first' || match[2] == 'last' ? source :
-                    'n=e;while((n=n.' + (match[2] == 'only' ? 'previous' : 'next') + 'ElementSibling)){' +
-                      (match[4] ? 'if(n.nodeName==T)' : '') + 'break;}' +
-                    'if(!n){' + source + '}') +
-                    '}') :
-                  ((match[4] ? 'T=e.nodeName;' : '') +
-                    'n=e;while((n=n.' + (match[2] == 'first' ? 'previous' : 'next') + 'Sibling)&&' +
-                      'n.node' + (match[4] ? 'Name!=T' : 'Type!=1') + ');' +
-                    'if(!n){' + (match[2] == 'first' || match[2] == 'last' ? source :
-                    'n=e;while((n=n.' + (match[2] == 'only' ? 'previous' : 'next') + 'Sibling)&&' +
-                      'n.node' + (match[4] ? 'Name!=T' : 'Type!=1') + ');' +
-                    'if(!n){' + source + '}') +
-                    '}');
+                a = match[2] == 'first' ? 'previous' : 'next';
+                n = match[2] == 'only' ? 'previous' : 'next';
+                b = match[2] == 'first' || match[2] == 'last';
+
+                source = NATIVE_TRAVERSAL_API ? (
+                  'n=e.' + a + 'ElementSibling;if(!(n&&' + type + ')){' + (b ? source :
+                  'n=e.' + n + 'ElementSibling;if(!(n&&' + type + ')){' + source + '}') + '}'
+                ) : (
+                  'n=e;while((n=n.' + a + 'Sibling)&&!(' + type + '));if(!n){' + (b ? source :
+                  'n=e;while((n=n.' + n + 'Sibling)&&!(' + type + '));if(!n){' + source + '}') + '}'
+                );
               }
               break;
           }
