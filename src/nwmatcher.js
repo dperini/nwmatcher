@@ -1079,7 +1079,7 @@ NW.Dom = (function(global) {
     } :
     function(className, from) {
       // context is handled in byTag for non native gEBCN
-      var i = j = -1, results = [ ], element,
+      var i = -1, j = i, results = [ ], element,
         elements = from.getElementsByTagName('*'),
         cn = isClassNameLowered ? className.toLowerCase() : className;
       className = ' ' + cn.replace(/\\/g, '') + ' ';
