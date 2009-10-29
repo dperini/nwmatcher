@@ -190,7 +190,7 @@ NW.Dom = (function(global) {
 
   // check Seletor API implementations
   BUGGY_QSAPI = NATIVE_QSAPI ? (function() {
-    var pattern = [ ], div = context.createElement('div');
+    var pattern = [ '!=', ':contains', ':selected' ], div = context.createElement('div');
 
     // WebKit treats case insensitivity correctly with classNames (when no DOCTYPE)
     // obsolete bug https://bugs.webkit.org/show_bug.cgi?id=19047
