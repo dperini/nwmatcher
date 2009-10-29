@@ -848,7 +848,7 @@ NW.Dom = (function(global) {
     function client_api(selector, from, data, callback) {
 
       var i = 0, done, now, disconnected, className,
-        element, elements, parts, token, isCacheable,
+        element, elements, parts, token, isCacheable, isSingle,
         concat = callback ? concatCall : concatList;
 
       // storage setup
@@ -872,10 +872,6 @@ NW.Dom = (function(global) {
         if (validator.test(selector)) {
           // save passed selector
           lastSelector = selector;
-          // get right most selector token
-          parts = selector.match(Optimize.TOKEN);
-          // only last slice before :not rules
-          lastSlice = parts[parts.length - 1].split(':not')[0];
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
           return data;
@@ -938,7 +934,12 @@ NW.Dom = (function(global) {
 
       // commas separators are treated
       // sequentially to maintain order
-      if (selector.indexOf(',') < 0) {
+      if ((isSingle = selector.match(group).length < 2)) {
+
+        // get right most selector token
+        parts = selector.match(Optimize.TOKEN);
+        // only last slice before :not rules
+        lastSlice = parts[parts.length - 1].split(':not')[0];
 
         // reduce selection context
         if ((parts = selector.match(Optimize.ID))) {
