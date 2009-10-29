@@ -1049,7 +1049,7 @@ NW.Dom = (function(global) {
   // @return element reference or null
   byId =
     function(id, from) {
-      var i = 0, element, names, result;
+      var i = 0, element, names, node, result;
       from || (from = context);
       id = id.replace(/\\/g, '');
       if (from.getElementById) {
@@ -1058,7 +1058,7 @@ NW.Dom = (function(global) {
           names = from.getElementsByName(id);
           result = null;
           while ((element = names[i++])) {
-            if (element.getAttributeNode('id').value == id) {
+            if ((node = element.getAttributeNode('id')) && node.value == id) {
               result = element;
               break;
             }
