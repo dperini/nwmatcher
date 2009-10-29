@@ -587,7 +587,6 @@ NW.Dom = (function(global) {
               source = 'if(!e.firstChild){' + source + '}';
               break;
             default:
-              type = match[4] == 'of-type' ? 'OfType' : 'Element';
 
               if (match[1] && match[5]) {
                 // remove the ( ) grabbed above
@@ -606,9 +605,7 @@ NW.Dom = (function(global) {
                 }
 
                 // executed after the count is computed
-                expr = match[2] == 'last' ? (match[4] ?
-                    '(e==h?1:s.TwinsCount[e.parentNode._cssId][e.nodeName.toLowerCase()])' :
-                    '(e==h?1:s.ChildCount[e.parentNode._cssId])') + '-' + (b - 1) : b;
+                expr = match[2] == 'last' ? 'n.length-' + (b - 1) : b;
 
                 test =
                   b < 0 ?
@@ -623,7 +620,10 @@ NW.Dom = (function(global) {
                     '';
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
-                source = 'if(s.' + match[1] + type + '(e)' + test + '){' + source + '}';
+                source = 'n=s.getChildrenIndex' + (match[4] ? 'ByTag' : '') +
+                  '(e.parentNode' + (match[4] ? ',e.nodeName.toLowerCase()' : '') + ');' +
+                  'if(n[e.' + CSS_INDEX + ']' + test + '){' + source + '}';
+
               } else {
                 // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
                 // too much overhead calling functions out of the main loop ?
@@ -1135,55 +1135,46 @@ NW.Dom = (function(global) {
       };
     })(),
 
-  // child position by nodeType
+  // children position by nodeType
   // @return number
-  nthElement =
+  getChildrenIndex =
     function(element) {
-      var i, j, node, nodes, parent, cache = snap.ChildIndex;
-      if (!element._cssId || !cache[element._cssId]) {
-        if ((parent = element.parentNode).nodeType == 1) {
-          i = 0;
-          j = 0;
-          nodes = parent[CHILD_NODES];
-          while ((node = nodes[i++])) {
-            if (node.nodeType == 1) {
-              cache[node._cssId || (node._cssId = ++cssId)] = ++j;
-            }
+      var i = 0, indexes, node, cache = snap.ChildIndex,
+        id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
+      if (!cache[id]) {
+        indexes = { };
+        node = element.firstChild;
+        while (node) {
+          if (node.nodeType == 1) {
+            indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
           }
-          snap.ChildCount[parent._cssId || (parent._cssId = ++cssId)] = j;
-        } else {
-          // does not have a parent (ex.: document)
-          return 0;
+          node = node.nextSibling;
         }
+        indexes.length = i;
+        cache[id] = indexes;
       }
-      return cache[element._cssId];
+      return cache[id];
     },
 
-  // child position by nodeName
+  // children position by nodeName
   // @return number
-  nthOfType =
-    function(element) {
-      var i, j, name, node, nodes, pid, parent, cache = snap.TwinsIndex;
-      if (!element._cssId || !cache[element._cssId]) {
-        if ((parent = element.parentNode).nodeType == 1) {
-          i = 0;
-          j = 0;
-          nodes = parent[CHILD_NODES];
-          name = element.nodeName.toLowerCase();
-          while ((node = nodes[i++])) {
-            if (node.nodeName.toLowerCase() == name) {
-              cache[node._cssId || (node._cssId = ++cssId)] = ++j;
-            }
+  getChildrenIndexByTag =
+    function(element, name) {
+      var i = 0, indexes, node, cache = snap.TwinsIndex,
+        id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
+      if (!cache[id]) {
+        indexes = { };
+        node = element.firstChild;
+        while (node) {
+          if (node.nodeName.toLowerCase() == name) {
+            indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
           }
-          pid = (parent._cssId || (parent._cssId = ++cssId));
-          snap.TwinsCount[pid] || (snap.TwinsCount[pid] = { });
-          snap.TwinsCount[pid][name] = j;
-        } else {
-          // does not have a parent (ex.: document)
-          return 0;
+          node = node.nextSibling;
         }
+        indexes.length = i;
+        cache[id] = indexes;
       }
-      return cache[element._cssId];
+      return cache[id];
     },
 
   concatList =
@@ -1283,7 +1274,7 @@ NW.Dom = (function(global) {
     function(elements, data, callback, accepted) {
       var i = 0, id, element;
       while ((element = elements[i++])) {
-        id = (element._cssId || (element._cssId = ++cssId));
+        id = (element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID));
         if (!accepted[id]) {
           accepted[id] = true;
           callback && callback(element);
@@ -1293,10 +1284,12 @@ NW.Dom = (function(global) {
       return data;
     },
 
-  // cssId expando on elements,
+  // CSS_ID expando on elements,
   // used to keep child indexes
   // during a selection session
-  cssId = 1,
+  CSS_ID = 1,
+
+  CSS_INDEX = 'sourceIndex' in root ? 'sourceIndex' : 'CSS_ID',
 
   // BEGIN: local context caching system
 
@@ -1316,10 +1309,6 @@ NW.Dom = (function(global) {
   // expired by Mutation Events on DOM tree changes
   Snapshot =
     function() {
-      // count of siblings by nodeType or nodeName
-      this.ChildCount = [ ];
-      this.TwinsCount = [ ];
-
       // ordinal position by nodeType or nodeName
       this.ChildIndex = [ ];
       this.TwinsIndex = [ ];
@@ -1395,8 +1384,10 @@ NW.Dom = (function(global) {
     // element inspection methods
     getAttribute: getAttribute,
     hasAttribute: hasAttribute,
-    nthElement: nthElement,
-    nthOfType: nthOfType,
+
+    // element indexing methods
+    getChildrenIndex: getChildrenIndex,
+    getChildrenIndexByTag: getChildrenIndexByTag,
 
     // element selection methods
     byClass: byClass,
