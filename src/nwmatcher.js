@@ -845,7 +845,7 @@ NW.Dom = (function(global) {
   client_api =
     function client_api(selector, from, data, callback) {
 
-      var i = 0, done, now, disconnected, className,
+      var i = 0, done, now, disconnected, className, hasChanged,
         element, elements, parts, token, isCacheable, isSingle,
         concat = callback ? concatCall : concatList;
 
@@ -865,7 +865,7 @@ NW.Dom = (function(global) {
 
       selector = selector.replace(reTrim, '');
 
-      if (lastSelector != selector) {
+      if (hasChanged = lastSelector != selector) {
         // process valid selector strings
         if (validator.test(selector)) {
           // save passed selector
@@ -930,14 +930,16 @@ NW.Dom = (function(global) {
         return data;
       }
 
-      // commas separators are treated
-      // sequentially to maintain order
+      // commas separators are treated sequentially to maintain order
       if ((isSingle = selector.match(group).length < 2)) {
 
-        // get right most selector token
-        parts = selector.match(Optimize.TOKEN);
-        // only last slice before :not rules
-        lastSlice = parts[parts.length - 1].split(':not')[0];
+        if (hasChanged) {
+          // get right most selector token
+          parts = selector.match(Optimize.TOKEN);
+
+          // only last slice before :not rules
+          lastSlice = parts[parts.length - 1].split(':not')[0];
+        }
 
         // reduce selection context
         if ((parts = selector.match(Optimize.ID))) {
