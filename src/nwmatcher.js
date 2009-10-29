@@ -961,7 +961,7 @@ NW.Dom = (function(global) {
 
         // CLASS optimization RTL
         else if ((parts = lastSlice.match(Optimize.CLASS)) &&
-          (token = parts[parts.length - 1]) && NATIVE_GEBCN) {
+          (token = parts[parts.length - 1])) {
           elements = byClass(token, from);
           if (selector == '.' + token) done = true;
         }
@@ -1079,20 +1079,15 @@ NW.Dom = (function(global) {
     } :
     function(className, from) {
       // context is handled in byTag for non native gEBCN
-      var cn, element, original, i = 0, j = 0, results = [ ],
-        elements = from.getElementsByTagName('*');
-
-      className = className.replace(/\\/g, '');
-      if (isClassNameLowered) className = className.toLowerCase();
-
-      while ((element = elements[i++])) {
-        if ((original = element.className).length) {
-          cn = original.replace(/[\t\n\r\f]/g, ' ');
-          if ((' ' + (isClassNameLowered ? cn.toLowerCase() : cn) + ' ')
-            .indexOf(' ' + className + ' ') > -1) {
-            // normalize to optimize future checks
-            // if (cn !== original) element.className = cn;
-            results[j++] = element;
+      var i = j = -1, results = [ ], element,
+        elements = from.getElementsByTagName('*'),
+        cn = isClassNameLowered ? className.toLowerCase() : className;
+      className = ' ' + cn.replace(/\\/g, '') + ' ';
+      while ((element = elements[++i])) {
+        if ((cn = element.className)) {
+          if ((' ' + (isClassNameLowered ? cn.toLowerCase() : cn).
+            replace(/[\t\n\r\f]/g, ' ') + ' ').indexOf(className) > -1) {
+            results[++j] = element;
           }
         }
       }
