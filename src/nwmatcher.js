@@ -977,41 +977,26 @@ NW.Dom = (function(global) {
 
       if (!done) {
 
-        if (!elements || elements.length === 0) {
-
-          elements = from.getElementsByTagName('*');
-
-          if ((parts = lastSlice.match(reIdSelector)) && selector == '#' + parts[1]) {
-            while ((element = elements[i++])) {
-              if (element.id == parts[1]) {
-                callback && callback(element);
-                data.push(element);
-                return data;
+        if (!elements || !elements.length) {
+          if (isSingle && (parts = selector.match(/\#([-\w]+)(.*)/))) {
+            if ((element = byId(parts[1]))) {
+              parts[2] = parts[2].replace(/[\x20\t\n\r\f]([ >+~])[\x20\t\n\r\f]/g, '$1');
+              switch (parts[2].charAt(0)) {
+                case ' ':
+                case '.':
+                case ':': elements = concatList([ ], element.getElementsByTagName('*')); break;
+                case '~': elements = getChildren(element.parentNode); break;
+                case '>': elements = getChildren(element); break;
+                case  '': elements = [ element ]; break;
+                case '+':
+                  element = getNextSibling(element);
+                  elements = element ? [ element ] : [ ];
+                  break;
+                default: break;
               }
-            }
-            return data;
+            } else return data;
           }
-          else if ((parts = lastSlice.match(/\b([-\w]+)?(\.|#)([-\w]+)/))) {
-            // normalize tagName
-            parts[1] = parts[1].toUpperCase();
-
-            // normalize className
-            if (parts[2] == '.' && isClassNameLowered)
-              parts[3] = parts[3].toLowerCase();
-
-            while ((element = elements[i++])) {
-              if (
-                  (!parts[1] || element.nodeName.toUpperCase() == parts[1]) && (
-                  ( parts[2] == '#' && element.id == parts[3]) ||
-                  ( parts[2] == '.' && (className = element.className) &&
-                  (isClassNameLowered ? className.length && className.toLowerCase() :
-                   className) == parts[3]))) {
-                callback && callback(element);
-                data.push(element);
-                return data;
-              }
-            }
-          }
+          elements || (elements = concatList([ ], from.getElementsByTagName('*')));
         }
         // end of prefiltering pass
 
@@ -1220,6 +1205,18 @@ NW.Dom = (function(global) {
       return listout;
     },
 
+  getChildren =
+    function(from) {
+      var i = -1, element = from.firstChild, elements = [ ];
+      while (element) {
+        if ((element.nodeType == 1)) {
+            elements[++i] = element;
+        }
+        element = element.nextSibling;
+      }
+      return elements;
+    },
+
   getElements =
     function(tag, from) {
       var element = from.firstChild, elements = [ ];
@@ -1234,6 +1231,17 @@ NW.Dom = (function(global) {
         element = element.nextSibling;
       }
       return elements;
+    },
+
+  getNextSibling = NATIVE_TRAVERSAL_API ?
+    function (element) {
+      return element.nextElementSibling;
+    } :
+    function (element) {
+      element = element.nextSibling;
+      while (element && element.nodeType !== 1)
+        element = element.nextSibling;
+      return element;
     },
 
   isDisconnected = 'compareDocumentPosition' in root ?
