@@ -15,7 +15,7 @@
  *  http://javascript.nwbox.com/NWMatcher/nwmatcher.js
  */
 
-window.NW || (window.NW = {});
+window.NW || (window.NW = { });
 
 NW.Dom = (function(global) {
 
@@ -37,9 +37,6 @@ NW.Dom = (function(global) {
   // detect Safari 2.0.x [object AbstractView]
   view = base.defaultView || base.parentWindow,
 
-  // cache native slice access
-  slice = Array.prototype.slice,
-
   // Safari 2 missing document.compatMode property
   // makes it harder to detect Quirks vs. Strict
   compatMode = context.compatMode ||
@@ -47,6 +44,10 @@ NW.Dom = (function(global) {
       var el; (el = document.createElement('div')).style.width = 1;
       return el.style.width == '1px' ? 'BackCompat' : 'CSS1Compat';
     })(),
+
+  /*----------------------------- UTILITY METHODS ----------------------------*/
+
+  slice = Array.prototype.slice,
 
   // Safari 2 bug with innerText (gasp!)
   // used to strip tags from innerHTML
@@ -63,7 +64,30 @@ NW.Dom = (function(global) {
     String.prototype.trim :
     function() { return this.replace(/^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g, ''); },
 
-  /* BEGIN FEATURE TESTING */
+  /*------------------------------- DEBUGGING --------------------------------*/
+
+  // enable/disable notifications
+  VERBOSE = false,
+
+  // a way to control user notification
+  emit =
+    function(message) {
+      if (VERBOSE) {
+        var console = global.console;
+        if (console && console.log) {
+          console.log(message);
+        } else {
+          if (/exception/i.test(message)) {
+            global.status = message;
+            global.defaultStatus = message;
+          } else {
+            global.status += message;
+          }
+        }
+      }
+    },
+
+  /*----------------------------- FEATURE TESTING ----------------------------*/
 
   // detect native methods
   isNative = (function() {
@@ -91,15 +115,6 @@ NW.Dom = (function(global) {
   NATIVE_GEBID = isNative(context, 'getElementById'),
   NATIVE_GEBTN = isNative(root, 'getElementsByTagName'),
   NATIVE_GEBCN = isNative(root, 'getElementsByClassName'),
-
-  // get name of best children collection property available
-  // detect Safari 2.0.x different children implementation
-  CHILD_NODES =
-    'children' in root ?
-      (view && global !== view ?
-        'childNodes' :
-        'children') :
-      'childNodes',
 
   // nodeList can be converted by native .slice()
   // Opera 9.27 and an id="length" will fold this
@@ -228,20 +243,20 @@ NW.Dom = (function(global) {
   })() :
   true,
 
-  /* END FEATURE TESTING */
+  /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
-  // See Niels Leenheer blog http://rakaz.nl/item/css_selector_bugs_case_sensitivity
-  //
-  XHTML_TABLE = {
-    // the following attributes must be treated case insensitive in XHTML
-    'accept': 1, 'accept-charset': 1, 'alink': 1, 'axis': 1,
-    'bgcolor': 1, 'charset': 1, 'codetype': 1, 'color': 1,
-    'enctype': 1, 'face': 1, 'hreflang': 1, 'http-equiv': 1,
-    'lang': 1, 'language': 1, 'link': 1, 'media': 1, 'rel': 1,
-    'rev': 1, 'target': 1, 'text': 1, 'type': 1, 'vlink': 1
+  LINK_NODES = { 'a': 1, 'A': 1, 'area': 1, 'AREA': 1, 'link': 1, 'LINK': 1 },
+
+  QSA_NODE_TYPES = { '9': 1, '11': 1 },
+
+  // attribute referencing URI values need special treatment in IE
+  ATTRIBUTES_URI = {
+    'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
+    'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2
   },
 
-  // HTML 5 draft specifications http://www.whatwg.org/specs/web-apps/current-work/#selectors
+  // HTML 5 draft specifications
+  // http://www.whatwg.org/specs/web-apps/current-work/#selectors
   HTML_TABLE = {
     // class attribute must be treated case-insensitive in HTML quirks mode
     'class': compatMode.indexOf('CSS') > -1 ? 0 : 1,
@@ -255,20 +270,19 @@ NW.Dom = (function(global) {
     'text': 1, 'type': 1, 'valign': 1, 'valuetype': 1, 'vlink': 1
   },
 
-  INSENSITIVE_TABLE = docType && docType.systemId && docType.systemId.indexOf('xhtml') > -1 ?
-    XHTML_TABLE : HTML_TABLE,
-
-  // attribute referencing URI values need special treatment in IE
-  attributesURI = {
-    'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
-    'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2
+  // the following attributes must be treated case insensitive in XHTML
+  // See Niels Leenheer blog
+  // http://rakaz.nl/item/css_selector_bugs_case_sensitivity
+  XHTML_TABLE = {
+    'accept': 1, 'accept-charset': 1, 'alink': 1, 'axis': 1,
+    'bgcolor': 1, 'charset': 1, 'codetype': 1, 'color': 1,
+    'enctype': 1, 'face': 1, 'hreflang': 1, 'http-equiv': 1,
+    'lang': 1, 'language': 1, 'link': 1, 'media': 1, 'rel': 1,
+    'rev': 1, 'target': 1, 'text': 1, 'type': 1, 'vlink': 1
   },
 
-  // selection functions returning collections
-  compiledSelectors = { },
-
-  // matching functions returning booleans
-  compiledMatchers = { },
+  INSENSITIVE_TABLE = docType && docType.systemId && docType.systemId.indexOf('xhtml') > -1 ?
+    XHTML_TABLE : HTML_TABLE,
 
   // shortcut for the frequently checked case sensitivity of the class attribute
   isClassNameLowered = INSENSITIVE_TABLE['class'],
@@ -415,6 +429,221 @@ NW.Dom = (function(global) {
     }
   },
 
+  /*------------------------------ DOM METHODS -------------------------------*/
+
+  concatList =
+    function(listout, listin) {
+      var i = 0, element;
+      while ((element = listin[i++])) listout[listout.length] = element;
+      return listout;
+    },
+
+  concatCall =
+    function(listout, listin, fn) {
+      var i = 0, element;
+      while ((element = listin[i++])) fn(listout[listout.length] = element);
+      return listout;
+    },
+
+  // element by id
+  // @return element reference or null
+  byId =
+    function(id, from) {
+      var i = 0, element, names, node, result;
+      from || (from = context);
+      id = id.replace(/\\/g, '');
+      if (from.getElementById) {
+        result = from.getElementById(id);
+        if (result && id != getAttribute(result, 'id') && from.getElementsByName) {
+          names = from.getElementsByName(id);
+          result = null;
+          while ((element = names[i++])) {
+            if ((node = element.getAttributeNode('id')) && node.value == id) {
+              result = element;
+              break;
+            }
+          }
+        }
+      } else {
+        result = select('[id="' + id + '"]', from)[0] || null;
+      }
+      return result;
+    },
+
+  // elements by tag
+  // @return nodeList (live)
+  byTag =
+    function(tag, from) {
+      return (from || context).getElementsByTagName(tag);
+    },
+
+  // elements by name
+  // @return array
+  byName =
+    function(name, from) {
+      return select('[name="' + name.replace(/\\/g, '') + '"]', from || context);
+    },
+
+  // elements by class
+  // @return nodeList (native GEBCN)
+  // @return array (non native GEBCN)
+  byClass = !BUGGY_GEBCN ?
+    function(className, from) {
+      return from.getElementsByClassName(className.replace(/\\/g, ''));
+    } :
+    function(className, from) {
+      // context is handled in byTag for non native gEBCN
+      var i = -1, j = i, results = [ ], element,
+        elements = from.getElementsByTagName('*'),
+        cn = isClassNameLowered ? className.toLowerCase() : className;
+      className = ' ' + cn.replace(/\\/g, '') + ' ';
+      while ((element = elements[++i])) {
+        if ((cn = element.className)) {
+          if ((' ' + (isClassNameLowered ? cn.toLowerCase() : cn).
+            replace(/[\t\n\r\f]/g, ' ') + ' ').indexOf(className) > -1) {
+            results[++j] = element;
+          }
+        }
+      }
+      return results;
+    },
+
+  getChildren =
+    function(from) {
+      var i = -1, element = from.firstChild, elements = [ ];
+      while (element) {
+        if ((element.nodeType == 1)) {
+            elements[++i] = element;
+        }
+        element = element.nextSibling;
+      }
+      return elements;
+    },
+
+  // children position by nodeType
+  // @return number
+  getChildrenIndex =
+    function(element) {
+      var i = 0, indexes, node, cache = snap.ChildIndex,
+        id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
+      if (!cache[id]) {
+        indexes = { };
+        node = element.firstChild;
+        while (node) {
+          if (node.nodeType == 1) {
+            indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
+          }
+          node = node.nextSibling;
+        }
+        indexes.length = i;
+        cache[id] = indexes;
+      }
+      return cache[id];
+    },
+
+  // children position by nodeName
+  // @return number
+  getChildrenIndexByTag =
+    function(element, name) {
+      var i = 0, indexes, node, cache = snap.TwinsIndex,
+        id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
+      if (!cache[id]) {
+        indexes = { };
+        node = element.firstChild;
+        while (node) {
+          if (node.nodeName.toLowerCase() == name) {
+            indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
+          }
+          node = node.nextSibling;
+        }
+        indexes.length = i;
+        cache[id] = indexes;
+      }
+      return cache[id];
+    },
+
+  getElements =
+    function(tag, from) {
+      var element = from.firstChild, elements = [ ];
+      if (!tag) return elements;
+      tag = tag.toLowerCase();
+      while (element) {
+        if ((element.nodeType == 1 && tag == '*') ||
+            element.nodeName.toLowerCase() == tag) {
+            elements[elements.length] = element;
+        }
+        getElements(tag, element, elements);
+        element = element.nextSibling;
+      }
+      return elements;
+    },
+
+  getNextSibling = NATIVE_TRAVERSAL_API ?
+    function (element) {
+      return element.nextElementSibling;
+    } :
+    function (element) {
+      element = element.nextSibling;
+      while (element && element.nodeType !== 1)
+        element = element.nextSibling;
+      return element;
+    },
+
+  // attribute value
+  // @return string
+  getAttribute = NATIVE_HAS_ATTRIBUTE ?
+    function(element, attribute) {
+      return element.getAttribute(attribute) + '';
+    } :
+    function(element, attribute) {
+      var node;
+      // specific URI attributes (parameter 2 to fix IE bug)
+      if (ATTRIBUTES_URI[attribute.toLowerCase()]) {
+        return element.getAttribute(attribute, 2) + '';
+      }
+      node = element.getAttributeNode(attribute);
+      return (node && node.value) + '';
+    },
+
+  // attribute presence
+  // @return boolean
+  hasAttribute = NATIVE_HAS_ATTRIBUTE ?
+    function(element, attribute) {
+      return element.hasAttribute(attribute);
+    } :
+    function(element, attribute) {
+      // need to get at AttributeNode first on IE
+      var node = element.getAttributeNode(attribute);
+      // use both "specified" & "nodeValue" properties
+      return !!(node && (node.specified || node.nodeValue));
+    },
+
+  // check if element matches the :link pseudo
+  // @return boolean
+  isLink =
+    (function() {
+      var LINK_NODES = { 'a': 1, 'area': 1, 'link': 1 };
+      return function(element) {
+        return hasAttribute(element,'href') && LINK_NODES[element.nodeName.toLowerCase()];
+      };
+    })(),
+
+  isDisconnected = 'compareDocumentPosition' in root ?
+    function(element, container) {
+      return (container.compareDocumentPosition(element) & 1) == 1;
+    } : 'contains' in root ?
+    function(element, container) {
+      return !container.contains(element);
+    } :
+    function(element, container) {
+      while ((element = element.parentNode)) {
+        if (element === container) return false;
+      }
+      return true;
+    },
+
+  /*---------------------------- COMPILER METHODS ----------------------------*/
+
   // conditionals optimizers for the compiler
 
   // do not change this, it is searched & replaced
@@ -455,15 +684,17 @@ NW.Dom = (function(global) {
       }
       if (mode) {
         // for select method
-        return new Function('c,s,d,h,g,f', 'var k,e,r,n,C,N,T,x=0;main:for(k=0,r=[];e=N=c[k];k++){' + SKIP_COMMENTS + source + '}return r;');
+        return new Function('c,s,d,h,g,f',
+          'var k,e,r,n,C,N,T,x=0;main:for(k=0,r=[];e=N=c[k];k++){' +
+          SKIP_COMMENTS + source + '}return r;');
       } else {
         // for match method
-        return new Function('e,s,d,h,g,f', 'var n,C,N=e,T,x=0;' + source + 'return false;');
+        return new Function('e,s,d,h,g,f',
+          'var n,C,N=e,T,x=0;' + source + 'return false;');
       }
     },
 
-  // compile a CSS3 string selector into
-  // ad-hoc javascript matching function
+  // compile a CSS3 string selector into ad-hoc javascript matching function
   // @return string (to be compiled)
   compileSelector =
     function(selector, source) {
@@ -488,7 +719,8 @@ NW.Dom = (function(global) {
           // document can contain conflicting elements (id/name)
           // prototype selector unit need this method to recover bad HTML forms
           if (base.getElementsByName('id')[0] || base.getElementById('id')) {
-            source = 'if((e.submit?s.getAttribute(e,"id"):e.id)=="' + match[1] + '"){' + source + '}';
+            source = 'if((e.submit?s.getAttribute(e,"id"):e.id)=="' +
+              match[1] + '"){' + source + '}';
           } else {
             source = 'if(e.id=="' + match[1] + '"){' + source + '}';
           }
@@ -499,7 +731,8 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.tagName))) {
           // both tagName and nodeName properties may be upper or lower case
           // depending on their creation NAMESPACE in createElementNS()
-          source = 'if(e.nodeName=="' + match[1].toUpperCase() + '"||e.nodeName=="' + match[1].toLowerCase() + '"){' + source + '}';
+          source = 'if(e.nodeName=="' + match[1].toUpperCase() +
+            '"||e.nodeName=="' + match[1].toLowerCase() + '"){' + source + '}';
         }
 
         // *** Class selector
@@ -508,7 +741,8 @@ NW.Dom = (function(global) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a
           // list of whitespace-separated values, see section 6.4 Class selectors
           // and notes at the bottom; explicitly non-normative in this specification.
-          source = 'if((" "+e.className+" ").replace(/[\\t\\n\\r\\f]/g," ").indexOf(" ' + match[1] + ' ")>-1){' + source + '}';
+          source = 'if((" "+e.className+" ").replace(/[\\t\\n\\r\\f]/g," ").indexOf(" ' +
+            match[1] + ' ")>-1){' + source + '}';
         }
 
         // *** Attribute selector
@@ -537,7 +771,8 @@ NW.Dom = (function(global) {
           if (NATIVE_TRAVERSAL_API) {
             source = 'if((e=e.previousElementSibling)){' + source + '}';
           } else {
-            source = 'while((e=e.previousSibling)){if(e.nodeType==1){' + source + 'break;}}';
+            source = 'while((e=e.previousSibling)){if(e.nodeType==1){' +
+              source + 'break;}}';
           }
         }
 
@@ -582,12 +817,13 @@ NW.Dom = (function(global) {
               // element root of the document
               source = 'if(e===h){' + source + '}';
               break;
+
             case 'empty':
               // element that has no children
               source = 'if(!e.firstChild){' + source + '}';
               break;
-            default:
 
+            default:
               // used for nth-child/of-type
               type = NATIVE_TRAVERSAL_API ?
                 (match[4] ? 'n.nodeName==e.nodeName' : 'true') :
@@ -636,17 +872,14 @@ NW.Dom = (function(global) {
                 n = match[2] == 'only' ? 'previous' : 'next';
                 b = match[2] == 'first' || match[2] == 'last';
 
-                source = NATIVE_TRAVERSAL_API ? (
-                  'n=e.' + a + 'ElementSibling;if(!(n&&' + type + ')){' + (b ? source :
-                  'n=e.' + n + 'ElementSibling;if(!(n&&' + type + ')){' + source + '}') + '}'
-                ) : (
-                  'n=e;while((n=n.' + a + 'Sibling)&&!(' + type + '));if(!n){' + (b ? source :
-                  'n=e;while((n=n.' + n + 'Sibling)&&!(' + type + '));if(!n){' + source + '}') + '}'
-                );
+                source = NATIVE_TRAVERSAL_API ?
+                  ( 'n=e.' + a + 'ElementSibling;if(!(n&&' + type + ')){' + (b ? source :
+                    'n=e.' + n + 'ElementSibling;if(!(n&&' + type + ')){' + source + '}') + '}' ) :
+                  ( 'n=e;while((n=n.' + a + 'Sibling)&&!(' + type + '));if(!n){' + (b ? source :
+                    'n=e;while((n=n.' + n + 'Sibling)&&!(' + type + '));if(!n){' + source + '}') + '}' );
               }
               break;
           }
-
         }
 
         // *** negation, user action and target pseudo-classes
@@ -718,6 +951,7 @@ NW.Dom = (function(global) {
               }
               source = 'if("form" in e&&e.selected===true){' + source + '}';
               break;
+
             default:
               break;
           }
@@ -727,6 +961,7 @@ NW.Dom = (function(global) {
           // invoked if expressions match selectors
           expr = false;
           status = true;
+
           for (expr in Selectors) {
             if ((match = selector.match(Selectors[expr].Expression))) {
               result = Selectors[expr].Callback(match, source);
@@ -760,26 +995,7 @@ NW.Dom = (function(global) {
       return source;
     },
 
-  // enable/disable notifications
-  VERBOSE = false,
-
-  // a way to control user notification
-  emit =
-    function(message) {
-      if (VERBOSE) {
-        var console = global.console;
-        if (console && console.log) {
-          console.log(message);
-        } else {
-          if (/exception/i.test(message)) {
-            global.status = message;
-            global.defaultStatus = message;
-          } else {
-            global.status += message;
-          }
-        }
-      }
-    },
+  /*----------------------------- QUERY METHODS ------------------------------*/
 
   // match element with selector
   // @return boolean
@@ -922,8 +1138,14 @@ NW.Dom = (function(global) {
               callback && callback(element);
             }
             break;
-          case '.': data = concat(data, byClass(selector.slice(1), from), callback); break;
-          default: data = concat(data, byTag(selector, from), callback); break;
+
+          case '.':
+            data = concat(data, byClass(selector.slice(1), from), callback);
+            break;
+
+          default:
+            data = concat(data, byTag(selector, from), callback);
+            break;
         }
         snap.Contexts[selector] = from;
         snap.Results[selector] = data;
@@ -984,15 +1206,24 @@ NW.Dom = (function(global) {
               switch (parts[2].charAt(0)) {
                 case ' ':
                 case '.':
-                case ':': elements = concatList([ ], element.getElementsByTagName('*')); break;
-                case '~': elements = getChildren(element.parentNode); break;
-                case '>': elements = getChildren(element); break;
-                case  '': elements = [ element ]; break;
+                case ':':
+                  elements = concatList([ ], element.getElementsByTagName('*'));
+                  break;
+                case '~':
+                  elements = getChildren(element.parentNode);
+                  break;
+                case '>':
+                  elements = getChildren(element);
+                  break;
+                case  '':
+                  elements = [ element ];
+                  break;
                 case '+':
                   element = getNextSibling(element);
                   elements = element ? [ element ] : [ ];
                   break;
-                default: break;
+                default:
+                  break;
               }
             } else return data;
           }
@@ -1029,260 +1260,7 @@ NW.Dom = (function(global) {
     select_qsa :
     client_api,
 
-  // ELEMENTS HANDLING
-
-  // element by id
-  // @return element reference or null
-  byId =
-    function(id, from) {
-      var i = 0, element, names, node, result;
-      from || (from = context);
-      id = id.replace(/\\/g, '');
-      if (from.getElementById) {
-        result = from.getElementById(id);
-        if (result && id != getAttribute(result, 'id') && from.getElementsByName) {
-          names = from.getElementsByName(id);
-          result = null;
-          while ((element = names[i++])) {
-            if ((node = element.getAttributeNode('id')) && node.value == id) {
-              result = element;
-              break;
-            }
-          }
-        }
-      } else {
-        result = select('[id="' + id + '"]', from)[0] || null;
-      }
-      return result;
-    },
-
-  // elements by tag
-  // @return nodeList (live)
-  byTag =
-    function(tag, from) {
-      return (from || context).getElementsByTagName(tag);
-    },
-
-  // elements by name
-  // @return array
-  byName =
-    function(name, from) {
-      return select('[name="' + name.replace(/\\/g, '') + '"]', from || context);
-    },
-
-  // elements by class
-  // @return nodeList (native GEBCN)
-  // @return array (non native GEBCN)
-  byClass = !BUGGY_GEBCN ?
-    function(className, from) {
-      return from.getElementsByClassName(className.replace(/\\/g, ''));
-    } :
-    function(className, from) {
-      // context is handled in byTag for non native gEBCN
-      var i = -1, j = i, results = [ ], element,
-        elements = from.getElementsByTagName('*'),
-        cn = isClassNameLowered ? className.toLowerCase() : className;
-      className = ' ' + cn.replace(/\\/g, '') + ' ';
-      while ((element = elements[++i])) {
-        if ((cn = element.className)) {
-          if ((' ' + (isClassNameLowered ? cn.toLowerCase() : cn).
-            replace(/[\t\n\r\f]/g, ' ') + ' ').indexOf(className) > -1) {
-            results[++j] = element;
-          }
-        }
-      }
-      return results;
-    },
-
-  // ATTRIBUTES HANDLING
-
-  // attribute value
-  // @return string
-  getAttribute = NATIVE_HAS_ATTRIBUTE ?
-    function(element, attribute) {
-      return element.getAttribute(attribute) + '';
-    } :
-    function(element, attribute) {
-      var node;
-      // specific URI attributes (parameter 2 to fix IE bug)
-      if (attributesURI[attribute.toLowerCase()]) {
-        return element.getAttribute(attribute, 2) + '';
-      }
-      node = element.getAttributeNode(attribute);
-      return (node && node.value) + '';
-    },
-
-  // attribute presence
-  // @return boolean
-  hasAttribute = NATIVE_HAS_ATTRIBUTE ?
-    function(element, attribute) {
-      return element.hasAttribute(attribute);
-    } :
-    function(element, attribute) {
-      // need to get at AttributeNode first on IE
-      var node = element.getAttributeNode(attribute);
-      // use both "specified" & "nodeValue" properties
-      return !!(node && (node.specified || node.nodeValue));
-    },
-
-  // check if element matches the :link pseudo
-  // @return boolean
-  isLink =
-    (function() {
-      var LINK_NODES = { 'a': 1, 'area': 1, 'link': 1 };
-      return function(element) {
-        return hasAttribute(element,'href') && LINK_NODES[element.nodeName.toLowerCase()];
-      };
-    })(),
-
-  // children position by nodeType
-  // @return number
-  getChildrenIndex =
-    function(element) {
-      var i = 0, indexes, node, cache = snap.ChildIndex,
-        id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
-      if (!cache[id]) {
-        indexes = { };
-        node = element.firstChild;
-        while (node) {
-          if (node.nodeType == 1) {
-            indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
-          }
-          node = node.nextSibling;
-        }
-        indexes.length = i;
-        cache[id] = indexes;
-      }
-      return cache[id];
-    },
-
-  // children position by nodeName
-  // @return number
-  getChildrenIndexByTag =
-    function(element, name) {
-      var i = 0, indexes, node, cache = snap.TwinsIndex,
-        id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
-      if (!cache[id]) {
-        indexes = { };
-        node = element.firstChild;
-        while (node) {
-          if (node.nodeName.toLowerCase() == name) {
-            indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
-          }
-          node = node.nextSibling;
-        }
-        indexes.length = i;
-        cache[id] = indexes;
-      }
-      return cache[id];
-    },
-
-  concatList =
-    function(listout, listin) {
-      var i = 0, element;
-      while ((element = listin[i++])) listout[listout.length] = element;
-      return listout;
-    },
-
-  concatCall =
-    function(listout, listin, fn) {
-      var i = 0, element;
-      while ((element = listin[i++])) fn(listout[listout.length] = element);
-      return listout;
-    },
-
-  getChildren =
-    function(from) {
-      var i = -1, element = from.firstChild, elements = [ ];
-      while (element) {
-        if ((element.nodeType == 1)) {
-            elements[++i] = element;
-        }
-        element = element.nextSibling;
-      }
-      return elements;
-    },
-
-  getElements =
-    function(tag, from) {
-      var element = from.firstChild, elements = [ ];
-      if (!tag) return elements;
-      tag = tag.toLowerCase();
-      while (element) {
-        if ((element.nodeType == 1 && tag == '*') ||
-            element.nodeName.toLowerCase() == tag) {
-            elements[elements.length] = element;
-        }
-        getElements(tag, element, elements);
-        element = element.nextSibling;
-      }
-      return elements;
-    },
-
-  getNextSibling = NATIVE_TRAVERSAL_API ?
-    function (element) {
-      return element.nextElementSibling;
-    } :
-    function (element) {
-      element = element.nextSibling;
-      while (element && element.nodeType !== 1)
-        element = element.nextSibling;
-      return element;
-    },
-
-  isDisconnected = 'compareDocumentPosition' in root ?
-    function(element, container) {
-      return (container.compareDocumentPosition(element) & 1) == 1;
-    } : 'contains' in root ?
-    function(element, container) {
-      return !container.contains(element);
-    } :
-    function(element, container) {
-      while ((element = element.parentNode)) {
-        if (element === container) return false;
-      }
-      return true;
-    },
-
-  sortByContextOrder = (function() {
-    var sorter =
-      'compareDocumentPosition' in root ?
-        function (a, b) {
-          return (a.compareDocumentPosition(b) & 2) ? 1 : a === b ? 0 : -1;
-        } :
-      'createRange' in context ?
-        function(a, b) {
-          var start = context.createRange(), end = context.createRange();
-          start.selectNode(a); start.collapse(true);
-          end.selectNode(b); end.collapse(true);
-          return start.compareBoundaryPoints(Range.START_TO_END, end);
-        } :
-      'sourceIndex' in root ?
-        function (a, b) {
-          return a.sourceIndex - b.sourceIndex;
-        } :
-        function (a, b) {
-          return false;
-        };
-
-    return function(nodeList) {
-      return nodeList.sort(sorter);
-    };
-  })(),
-
-  unique =
-    function(elements, data, callback, accepted) {
-      var i = 0, id, element;
-      while ((element = elements[i++])) {
-        id = (element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID));
-        if (!accepted[id]) {
-          accepted[id] = true;
-          callback && callback(element);
-          data[data.length] = element;
-        }
-      }
-      return data;
-    },
+  /*-------------------------------- CACHING ---------------------------------*/
 
   // CSS_ID expando on elements,
   // used to keep child indexes
@@ -1291,11 +1269,6 @@ NW.Dom = (function(global) {
 
   CSS_INDEX = 'sourceIndex' in root ? 'sourceIndex' : 'CSS_ID',
 
-  // BEGIN: local context caching system
-
-  // ****************** CACHING ******************
-  // keep caching states for each context document
-  // set manually by using setCache(true, context)
   cachingEnabled = false,//NATIVE_MUTATION_EVENTS,
 
   cachingPaused = false,
@@ -1303,9 +1276,14 @@ NW.Dom = (function(global) {
   // minimum time allowed, in milliseconds, between calls to the cache initialization
   minCallThreshold = 15,
 
-  snap,
+  // compiled select functions returning collections
+  compiledSelectors = { },
 
-  // indexes/count of elements contained in rootElement
+  // compiled match functions returning booleans
+  compiledMatchers = { },
+
+  // keep caching states for each context document
+  // set manually by using setCache(true, context)
   // expired by Mutation Events on DOM tree changes
   Snapshot =
     function() {
@@ -1313,7 +1291,7 @@ NW.Dom = (function(global) {
       this.ChildIndex = [ ];
       this.TwinsIndex = [ ];
 
-      // result sets and related contexts
+      // result sets and related root contexts
       this.Results = [ ];
       this.Contexts = [ ];
     },
@@ -1412,43 +1390,6 @@ NW.Dom = (function(global) {
 
   return {
 
-    // for testing purposes !
-    compile:
-      function(selector, mode) {
-        return compileGroup(selector, '', mode || false).toString();
-      },
-
-    // enable/disable cache
-    setCache: setCache,
-
-    // forced expire of DOM tree cache
-    expireCache: expireCache,
-
-    // element match selector, return boolean true/false
-    match: match,
-
-    // elements matching selector, starting from element
-    select: select,
-
-    // add selector patterns for user defined callbacks
-    registerSelector:
-      function (name, rexp, func) {
-        if (!Selectors[name]) {
-          Selectors[name] = { };
-          Selectors[name].Expression = rexp;
-          Selectors[name].Callback = func;
-        }
-      },
-
-    // add or overwrite user defined operators
-    // TODO: check when overwriting standard operators
-    registerOperator:
-      function (symbol, resolver) {
-        if (!Operators[symbol]) {
-          Operators[symbol] = resolver;
-        }
-      },
-
     // retrieve element by id attr
     byId: byId,
 
@@ -1467,7 +1408,43 @@ NW.Dom = (function(global) {
 
     // check for the attribute presence
     // as was in the original HTML code
-    hasAttribute: hasAttribute
+    hasAttribute: hasAttribute,
+
+    // element match selector, return boolean true/false
+    match: match,
+
+    // elements matching selector, starting from element
+    select: select,
+
+    // for testing purposes !
+    compile:
+      function(selector, mode) {
+        return compileGroup(selector, '', mode || false).toString();
+      },
+
+    // enable/disable cache
+    setCache: setCache,
+
+    // forced expire of DOM tree cache
+    expireCache: expireCache,
+
+    // add or overwrite user defined operators
+    registerOperator:
+      function (symbol, resolver) {
+        if (!Operators[symbol]) {
+          Operators[symbol] = resolver;
+        }
+      },
+
+    // add selector patterns for user defined callbacks
+    registerSelector:
+      function (name, rexp, func) {
+        if (!Selectors[name]) {
+          Selectors[name] = { };
+          Selectors[name].Expression = rexp;
+          Selectors[name].Callback = func;
+        }
+      }
 
   };
 
