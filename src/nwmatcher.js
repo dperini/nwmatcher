@@ -410,16 +410,16 @@ NW.Dom = (function(global) {
 
   concatList =
     function(listout, listin) {
-      var i = 0, element;
+      var i = -1, element;
       if (listout.length === 0 && Array.slice) return Array.slice(listin);
-      while ((element = listin[i++])) listout[listout.length] = element;
+      while ((element = listin[++i])) listout[listout.length] = element;
       return listout;
     },
 
   concatCall =
-    function(listout, listin, fn) {
-      var i = 0, element;
-      while ((element = listin[i++])) fn(listout[listout.length] = element);
+    function(listout, listin, callback) {
+      var i = -1, element;
+      while ((element = listin[++i])) callback(listout[listout.length] = element);
       return listout;
     },
 
@@ -427,7 +427,7 @@ NW.Dom = (function(global) {
   // @return element reference or null
   byId =
     function(id, from) {
-      var i = 0, element, names, node, result;
+      var i = -1, element, names, node, result;
       from || (from = context);
       id = id.replace(/\\/g, '');
       if (from.getElementById) {
@@ -435,7 +435,7 @@ NW.Dom = (function(global) {
         if (result && id != getAttribute(result, 'id') && from.getElementsByName) {
           names = from.getElementsByName(id);
           result = null;
-          while ((element = names[i++])) {
+          while ((element = names[++i])) {
             if ((node = element.getAttributeNode('id')) && node.value == id) {
               result = element;
               break;
@@ -574,12 +574,11 @@ NW.Dom = (function(global) {
       return element.getAttribute(attribute) + '';
     } :
     function(element, attribute) {
-      var node;
       // specific URI attributes (parameter 2 to fix IE bug)
       if (ATTRIBUTES_URI[attribute.toLowerCase()]) {
         return element.getAttribute(attribute, 2) + '';
       }
-      node = element.getAttributeNode(attribute);
+      var node = element.getAttributeNode(attribute);
       return (node && node.value) + '';
     },
 
@@ -599,11 +598,9 @@ NW.Dom = (function(global) {
   // check if element matches the :link pseudo
   // @return boolean
   isLink =
-    (function() {
-      return function(element) {
+    function(element) {
         return hasAttribute(element,'href') && LINK_NODES[element.nodeName];
-      };
-    })(),
+    },
 
   isDisconnected = 'compareDocumentPosition' in root ?
     function(element, container) {
@@ -649,10 +646,10 @@ NW.Dom = (function(global) {
   // @return function (compiled)
   compileGroup =
     function(selector, source, mode) {
-      var i = 0, seen = { }, parts, token;
+      var i = -1, seen = { }, parts, token;
       if ((parts = selector.match(reSplitGroup))) {
         // for each selector in the group
-        while ((token = parts[i++])) {
+        while ((token = parts[++i])) {
           token = token.replace(reTrimSpaces, '');
           // avoid repeating the same token in comma separated group (p, p)
           if (!seen[token]) source += 'e=N;' + compileSelector(token, mode ? ACCEPT_NODE : 'return true;');
@@ -1038,8 +1035,8 @@ NW.Dom = (function(global) {
   client_api =
     function client_api(selector, from, data, callback) {
 
-      var i = 0, done, now, className, hasChanged,
-        element, elements, parts, token, isCacheable, isSingle,
+      var done, now, className, hasChanged, isSingle,
+        element, elements, parts, token, isCacheable,
         concat = callback ? concatCall : concatList;
 
       // storage setup
