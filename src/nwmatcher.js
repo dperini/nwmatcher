@@ -151,16 +151,25 @@ NW.Dom = (function(global) {
   NATIVE_MUTATION_EVENTS = root.addEventListener ?
     (function() {
       var isSupported, id = root.id,
-      handler = function() {
-        root.removeEventListener('DOMAttrModified', handler, false);
-        isSupported = true;
-      };
+        input = context.createElement('input'),
+        handler = function() { isSupported = true; };
+
+      // add a bogus control element
+      root.insertBefore(input, root.firstChild);
 
       // add listener and modify attribute
       root.addEventListener('DOMAttrModified', handler, false);
       root.id = 'nw';
 
+      // now try to modify the bogus element
+      isSupported && !(isSupported = 0) && (input.disabled = 0);
+
+      // remove event listener and tested element
+      root.removeEventListener('DOMAttrModified', handler, false);
+      root.removeChild(input);
       root.id = id;
+
+      input = null;
       handler = null;
       return !!isSupported;
     })() :
