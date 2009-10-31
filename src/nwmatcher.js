@@ -411,6 +411,7 @@ NW.Dom = (function(global) {
   concatList =
     function(listout, listin) {
       var i = 0, element;
+      if (listout.length === 0 && Array.slice) return Array.slice(listin);
       while ((element = listin[i++])) listout[listout.length] = element;
       return listout;
     },
@@ -1065,7 +1066,7 @@ NW.Dom = (function(global) {
         if (snap && !snap.isExpired) {
           if (snap.Results[selector] &&
             snap.Contexts[selector] == from) {
-            return callback ?
+            return callback || data.length ?
               concat(data, snap.Results[selector], callback) :
               snap.Results[selector];
           }
@@ -1169,45 +1170,47 @@ NW.Dom = (function(global) {
 
       }
 
-      if (!done) {
+      if (!elements || !elements.length) {
 
-        if (!elements || !elements.length) {
-          if (isSingle && (parts = selector.match(/\#([-\w]+)(.*)/))) {
-            if ((element = byId(parts[1]))) {
-              parts[2] = parts[2].replace(/[\x20\t\n\r\f]([ >+~])[\x20\t\n\r\f]/g, '$1');
-              switch (parts[2].charAt(0)) {
-                case ' ':
-                case '.':
-                case ':':
-                  elements = concatList([ ], element.getElementsByTagName('*'));
-                  break;
-                case '~':
-                  elements = getChildren(element.parentNode);
-                  break;
-                case '>':
-                  elements = getChildren(element);
-                  break;
-                case  '':
-                  elements = [ element ];
-                  break;
-                case '+':
-                  element = getNextSibling(element);
-                  elements = element ? [ element ] : [ ];
-                  break;
-                default:
-                  break;
-              }
-            } else return data;
-          }
-          elements || (elements = concatList([ ], from.getElementsByTagName('*')));
-        }
-        // end of prefiltering pass
-
-        // save compiled selectors
-        if (!compiledSelectors[selector]) {
-          compiledSelectors[selector] = compileGroup(selector, '', true);
+        if (isSingle && (parts = selector.match(/\#((?:[-\w]|[^\x00-\xa0]|\\.)+)(.*)/))) {
+          if ((element = byId(parts[1]))) {
+            parts[2] = parts[2].replace(/[\x20\t\n\r\f]([ >+~])[\x20\t\n\r\f]/g, '$1');
+            switch (parts[2].charAt(0)) {
+              case '.':
+              case ':':
+                if (parts[2].match(/[ >+~]/)) {
+                  elements = concat([ element ], element.getElementsByTagName('*'));
+                } else elements = [ element ];
+                break;
+              case ' ':
+                elements = element.getElementsByTagName('*');
+                break;
+              case '~':
+                elements = getChildren(element.parentNode);
+                break;
+              case '>':
+                elements = getChildren(element);
+                break;
+              case  '':
+                elements = [ element ];
+                break;
+              case '+':
+                element = getNextSibling(element);
+                elements = element ? [ element ] : [ ];
+                break;
+              default:
+                break;
+            }
+          } else if (selector.indexOf(':not') < 0) return data;
         }
 
+        elements || (elements = concatList([ ], from.getElementsByTagName('*')));
+      }
+      // end of prefiltering pass
+
+      // save compiled selectors
+      if (!compiledSelectors[selector]) {
+        compiledSelectors[selector] = compileGroup(selector, '', true);
       }
 
       if (isCacheable) {
@@ -1219,10 +1222,15 @@ NW.Dom = (function(global) {
         return snap.Results[selector];
       }
 
+      if (done && elements.length == 1) {
+        data[data.length] = elements[0];
+        return data;
+      }
+
       // a fresh result set for the requested selector
-      return done ?
+      return done || data.length ?
         concat(data, elements, callback) :
-        concat(data, compiledSelectors[selector](elements, snap, base, root, from), callback);
+        compiledSelectors[selector](elements, snap, base, root, from, callback);
     },
 
   // use the new native Selector API if available,
