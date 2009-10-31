@@ -114,9 +114,14 @@ NW.Dom = (function(global) {
 
   // NOTE: NATIVE_XXXXX check for existance of method only
   // so through the code read it as "supported", maybe BUGGY
+
+  // supports lowercase node names
+  NATIVE_TAG_MATCH =
+    typeof context.createElementNS == 'function' ? '.toUpperCase()' : '',
+
+  // supports the new traversal API
   NATIVE_TRAVERSAL_API =
-    'nextElementSibling' in root &&
-    'previousElementSibling' in root,
+    'nextElementSibling' in root && 'previousElementSibling' in root,
 
   // detect native getAttribute/hasAttribute methods,
   // frameworks extend these to elements, but it seems
@@ -701,12 +706,8 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.id))) {
           // document can contain conflicting elements (id/name)
           // prototype selector unit need this method to recover bad HTML forms
-          if (base.getElementsByName('id')[0] || base.getElementById('id')) {
-            source = 'if((e.submit?s.getAttribute(e,"id"):e.id)=="' +
-              match[1] + '"){' + source + '}';
-          } else {
-            source = 'if(e.id=="' + match[1] + '"){' + source + '}';
-          }
+          source = 'if((e.submit?s.getAttribute(e,"id"):e.id)=="' +
+            match[1] + '"){' + source + '}';
         }
 
         // *** Type selector
@@ -714,8 +715,8 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.tagName))) {
           // both tagName and nodeName properties may be upper or lower case
           // depending on their creation NAMESPACE in createElementNS()
-          source = 'if(e.nodeName=="' + match[1].toUpperCase() +
-            '"||e.nodeName=="' + match[1].toLowerCase() + '"){' + source + '}';
+          source = 'if(e.nodeName' + NATIVE_TAG_MATCH + '=="' +
+            match[1].toUpperCase() + '"){' + source + '}';
         }
 
         // *** Class selector
