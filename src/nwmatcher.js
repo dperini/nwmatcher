@@ -25,7 +25,7 @@ NW.Dom = (function(global) {
   base = global.document,
 
   // script loading context
-  context = global.document,
+  context = base,
 
   // document type node (+DTD)
   docType = context.doctype,
@@ -37,13 +37,36 @@ NW.Dom = (function(global) {
   // detect Safari 2.0.x [object AbstractView]
   view = base.defaultView || base.parentWindow,
 
-  // Safari 2 missing document.compatMode property
-  // makes it harder to detect Quirks vs. Strict
-  compatMode = context.compatMode ||
-    (function() {
-      var el; (el = document.createElement('div')).style.width = 1;
-      return el.style.width == '1px' ? 'BackCompat' : 'CSS1Compat';
-    })(),
+  // http://www.w3.org/TR/css3-syntax/#characters
+  // unicode/ISO 10646 characters 161 and higher
+  // NOTE: Safari 2.0.x crashes with escaped (\\)
+  // Unicode ranges in regular expressions so we
+  // use a negated character range class instead
+  encoding = '((?:[-\\w]|[^\\x00-\\xa0]|\\\\.)+)',
+
+  // used to skip [ ] or ( ) groups in token tails
+  skipgroup = '(?:\\[.*\\]|\\(.*\\))',
+
+  // discard invalid chars found in passed selector
+  reValidator = /([.:#*\w]|[^\x00-\xa0])/,
+
+  // matches simple id, tagname & classname selectors
+  reSimpleSelector = /^[.#]?[-\w]+$/,
+
+  // split comma separated selector groups, exclude commas inside '' "" () []
+  // example: (#div a, ul > li a) group 1 is (#div a) group 2 is (ul > li a)
+  reSplitGroup = /([^,()[\]]+|\([^()]+\)|\(.*\)|\[(?:\[[^[\]]*\]|["'][^'"]*["']|[^'"[\]]+)+\]|\[.*\]|\\.)+/g,
+
+  // split last, right most, selector group token
+  reSplitToken = /([^ >+~,\\()[\]]+|\([^()]+\)|\(.*\)|\[[^[\]]+\]|\[.*\]|\\.)+/g,
+
+  // Only five characters can occur in whitespace, they are:
+  // \x20 \t \n \r \f, checks now uniformed through the code
+  // http://www.w3.org/TR/css3-selectors/#selector-syntax
+
+  reClassValue = /([-\w]+)/,
+  reIdSelector = /\#([-\w]+)$/,
+  reTrimSpaces = /^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g,
 
   /*----------------------------- UTILITY METHODS ----------------------------*/
 
@@ -54,15 +77,6 @@ NW.Dom = (function(global) {
   stripTags = function(s) {
     return s.replace(/<\/?("[^\"]*"|'[^\']*'|[^>])+>/gi, '');
   },
-
-  // Only five characters can occur in whitespace, they are:
-  // \x20 \t \n \r \f, checks now uniformed through the code
-  // http://www.w3.org/TR/css3-selectors/#selector-syntax
-
-  // trim leading/trailing whitespaces
-  trim = String.prototype.trim && !' \t\n\r\f'.trim() ?
-    String.prototype.trim :
-    function() { return this.replace(/^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g, ''); },
 
   /*------------------------------- DEBUGGING --------------------------------*/
 
@@ -243,6 +257,14 @@ NW.Dom = (function(global) {
   })() :
   true,
 
+  // Safari 2 missing document.compatMode property
+  // makes it harder to detect Quirks vs. Strict
+  compatMode = context.compatMode ||
+    (function() {
+      var el; (el = document.createElement('div')).style.width = 1;
+      return el.style.width == '1px' ? 'BackCompat' : 'CSS1Compat';
+    })(),
+
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
   LINK_NODES = { 'a': 1, 'A': 1, 'area': 1, 'AREA': 1, 'link': 1, 'LINK': 1 },
@@ -287,30 +309,7 @@ NW.Dom = (function(global) {
   // shortcut for the frequently checked case sensitivity of the class attribute
   isClassNameLowered = INSENSITIVE_TABLE['class'],
 
-  // http://www.w3.org/TR/css3-syntax/#characters
-  // unicode/ISO 10646 characters 161 and higher
-  // NOTE: Safari 2.0.x crashes with escaped (\\)
-  // Unicode ranges in regular expressions so we
-  // use a negated character range class instead
-  encoding = '((?:[-\\w]|[^\\x00-\\xa0]|\\\\.)+)',
-
-  // used to skip [ ] or ( ) groups in token tails
-  skipgroup = '(?:\\[.*\\]|\\(.*\\))',
-
-  // discard invalid chars found in passed selector
-  validator = /([.:#*\w]|[^\x00-\xa0])/,
-
-  // matches simple id, tagname & classname selectors
-  simpleSelector = /^[.#]?[-\w]+$/,
-
-  // split id, tagname & classname in simple selectors
-  noncomplex = /([-\w]+)?(?:\#([-\w]+))?(?:\.([-\w]+))?/,
-
-  // split comma separated selector groups, exclude commas inside '' "" () []
-  // example: (#div a, ul > li a) group 1 is (#div a) group 2 is (ul > li a)
-  group = /([^,()[\]]+|\([^()]+\)|\(.*\)|\[(?:\[[^[\]]*\]|["'][^'"]*["']|[^'"[\]]+)+\]|\[.*\]|\\.)+/g,
-
-  // place to add exotic functionalities
+  // placeholder to add functionalities
   Selectors = {
     // as a simple example this will check
     // for chars not in standard ascii table
@@ -318,7 +317,7 @@ NW.Dom = (function(global) {
     // 'mySpecialSelector': {
     //  'Expression': /\u0080-\uffff/,
     //  'Callback': mySelectorCallback
-    //}
+    // }
     //
     // 'mySelectorCallback' will be invoked
     // only after passing all other standard
@@ -348,18 +347,8 @@ NW.Dom = (function(global) {
   Optimize = {
     ID: new RegExp("#" + encoding + "|" + skipgroup + "*"),
     TAG: new RegExp(encoding + "|" + skipgroup + "*"),
-    CLASS: new RegExp("\\." + encoding + "|" + skipgroup + "*"),
-    // split last, right most, selector group token
-    TOKEN: /([^ >+~,\\()[\]]+|\([^()]+\)|\(.*\)|\[[^[\]]+\]|\[.*\]|\\.)+/g
+    CLASS: new RegExp("\\." + encoding + "|" + skipgroup + "*")
   },
-
-  rePositionals = /:(nth|of-type)/,
-  reDescendants = /[^> \w]/,
-  reClassValue = /([-\w]+)/,
-  reSiblings = /[^+~\w]/,
-  reTrim = /^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g,
-
-  reIdSelector  = /\#([-\w]+)$/,
 
   // precompiled Regular Expressions
   Patterns = {
@@ -406,26 +395,14 @@ NW.Dom = (function(global) {
     // we have grouped them to optimize a bit size+speed
     // all are going through the same code path (switch)
     Others: {
-    //UIElementStates: {
-    // we group them to optimize
+      // UIElementStates (grouped to optimize)
       'checked': 3, 'disabled': 3, 'enabled': 3, 'selected': 2, 'indeterminate': '?',
-    //},
-    //Dynamic: {
+      // Dynamic pseudo classes
       'active': 3, 'focus': 3, 'hover': 3, 'link': 3, 'visited': 3,
-    //},
-    // Target: {
-      'target': 3,
-    //},
-    // Language: {
-      'lang': 3,
-    //},
-    // Negation: {
-      'not': 3,
-    //},
-    // Content: {
-    // http://www.w3.org/TR/2001/CR-css3-selectors-20011113/#content-selectors
+      // Target, Language and Negated pseudo classes
+      'target': 3, 'lang': 3, 'not': 3,
+      // http://www.w3.org/TR/2001/CR-css3-selectors-20011113/#content-selectors
       'contains': '?'
-    //}
     }
   },
 
@@ -524,9 +501,9 @@ NW.Dom = (function(global) {
   // @return number
   getChildrenIndex =
     function(element) {
-      var i = 0, indexes, node, cache = snap.ChildIndex,
+      var i = 0, indexes, node,
         id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
-      if (!cache[id]) {
+      if (!indexesByNodeType[id]) {
         indexes = { };
         node = element.firstChild;
         while (node) {
@@ -536,18 +513,18 @@ NW.Dom = (function(global) {
           node = node.nextSibling;
         }
         indexes.length = i;
-        cache[id] = indexes;
+        indexesByNodeType[id] = indexes;
       }
-      return cache[id];
+      return indexesByNodeType[id];
     },
 
   // children position by nodeName
   // @return number
   getChildrenIndexByTag =
     function(element, name) {
-      var i = 0, indexes, node, cache = snap.TwinsIndex,
+      var i = 0, indexes, node,
         id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
-      if (!cache[id]) {
+      if (!indexesByNodeName[id]) {
         indexes = { };
         node = element.firstChild;
         while (node) {
@@ -557,9 +534,9 @@ NW.Dom = (function(global) {
           node = node.nextSibling;
         }
         indexes.length = i;
-        cache[id] = indexes;
+        indexesByNodeName[id] = indexes;
       }
-      return cache[id];
+      return indexesByNodeName[id];
     },
 
   getElements =
@@ -622,9 +599,8 @@ NW.Dom = (function(global) {
   // @return boolean
   isLink =
     (function() {
-      var LINK_NODES = { 'a': 1, 'area': 1, 'link': 1 };
       return function(element) {
-        return hasAttribute(element,'href') && LINK_NODES[element.nodeName.toLowerCase()];
+        return hasAttribute(element,'href') && LINK_NODES[element.nodeName];
       };
     })(),
 
@@ -673,10 +649,10 @@ NW.Dom = (function(global) {
   compileGroup =
     function(selector, source, mode) {
       var i = 0, seen = { }, parts, token;
-      if ((parts = selector.match(group))) {
+      if ((parts = selector.match(reSplitGroup))) {
         // for each selector in the group
         while ((token = parts[i++])) {
-          token = token.replace(reTrim, '');
+          token = token.replace(reTrimSpaces, '');
           // avoid repeating the same token in comma separated group (p, p)
           if (!seen[token]) source += 'e=N;' + compileSelector(token, mode ? ACCEPT_NODE : 'return true;');
           seen[token] = true;
@@ -1027,8 +1003,8 @@ NW.Dom = (function(global) {
 
       var elements;
 
-      if (!simpleSelector.test(selector) &&
-          (!from || from.nodeType == 9 || from.nodeType == 11) &&
+      if (!reSimpleSelector.test(selector) &&
+          (!from || QSA_NODE_TYPES[from.nodeType]) &&
           !BUGGY_QSAPI.test(selector)) {
         try {
           elements = (from || context).querySelectorAll(selector);
@@ -1061,7 +1037,7 @@ NW.Dom = (function(global) {
   client_api =
     function client_api(selector, from, data, callback) {
 
-      var i = 0, done, now, disconnected, className, hasChanged,
+      var i = 0, done, now, className, hasChanged,
         element, elements, parts, token, isCacheable, isSingle,
         concat = callback ? concatCall : concatList;
 
@@ -1072,30 +1048,15 @@ NW.Dom = (function(global) {
       from || (from = context);
 
       // extract context if changed
-      if (!from || lastContext != from) {
+      if (lastContext != from) {
         // save passed context
         lastContext = from;
         // reference context ownerDocument and document root (HTML)
         root = (base = from.ownerDocument || from).documentElement;
       }
 
-      selector = selector.replace(reTrim, '');
-
-      if (hasChanged = lastSelector != selector) {
-        // process valid selector strings
-        if (validator.test(selector)) {
-          // save passed selector
-          lastSelector = selector;
-        } else {
-          emit('DOMException: "' + selector + '" is not a valid CSS selector.');
-          return data;
-        }
-      }
-
-      // nodes not in the document
-      disconnected = from != base && isDisconnected(from, root);
-
-      isCacheable = cachingEnabled && !cachingPaused && !disconnected;
+      isCacheable = cachingEnabled && !cachingPaused &&
+        !(from != base && isDisconnected(from, root));
 
       // avoid caching disconnected nodes
       if (isCacheable) {
@@ -1119,18 +1080,13 @@ NW.Dom = (function(global) {
           snap = base.snapshot;
           lastCalled = now;
         }
-      } else {
-        if (rePositionals.test(selector)) {
-          // need to clear storage
-          snap = new Snapshot;
-        }
       }
 
       // pre-filtering pass allow to scale proportionally with big DOM trees;
       // this block can be safely removed, it is a speed booster on big pages
       // and will still maintain the mandatory "document ordered" result set
 
-      if (simpleSelector.test(selector)) {
+      if (reSimpleSelector.test(selector)) {
         switch (selector.charAt(0)) {
           case '#':
             if ((element = byId(selector.slice(1), from))) {
@@ -1152,12 +1108,28 @@ NW.Dom = (function(global) {
         return data;
       }
 
+      if (hasChanged = lastSelector != selector) {
+        // process valid selector strings
+        if (reValidator.test(selector)) {
+          // save passed selector
+          lastSelector = selector;
+          selector = selector.replace(reTrimSpaces, '');
+        } else {
+          emit('DOMException: "' + selector + '" is not a valid CSS selector.');
+          return data;
+        }
+      }
+
+      // reinitialize indexes
+      indexesByNodeType = { };
+      indexesByNodeName = { };
+
       // commas separators are treated sequentially to maintain order
-      if ((isSingle = selector.match(group).length < 2)) {
+      if ((isSingle = selector.match(reSplitGroup).length < 2)) {
 
         if (hasChanged) {
           // get right most selector token
-          parts = selector.match(Optimize.TOKEN);
+          parts = selector.match(reSplitToken);
 
           // only last slice before :not rules
           lastSlice = parts[parts.length - 1].split(':not')[0];
@@ -1276,6 +1248,10 @@ NW.Dom = (function(global) {
   // minimum time allowed, in milliseconds, between calls to the cache initialization
   minCallThreshold = 15,
 
+  // ordinal position by nodeType or nodeName
+  indexesByNodeType = { },
+  indexesByNodeName = { }, 
+
   // compiled select functions returning collections
   compiledSelectors = { },
 
@@ -1287,10 +1263,6 @@ NW.Dom = (function(global) {
   // expired by Mutation Events on DOM tree changes
   Snapshot =
     function() {
-      // ordinal position by nodeType or nodeName
-      this.ChildIndex = [ ];
-      this.TwinsIndex = [ ];
-
       // result sets and related root contexts
       this.Results = [ ];
       this.Contexts = [ ];
