@@ -1221,6 +1221,7 @@ NW.Dom = (function(global) {
 
       if (done && elements.length == 1) {
         data[data.length] = elements[0];
+        callback && callback(elements[0]);
         return data;
       }
 
