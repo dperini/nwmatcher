@@ -781,13 +781,13 @@ NW.Dom = (function(global) {
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'if((e=e.parentNode)&&e.nodeType==1){' + source + '}';
+          source = 'if(e!==g&&(e=e.parentNode)){' + source + '}';
         }
 
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'while((e=e.parentNode)&&e.nodeType==1&&e!==g){' + source + '}';
+          source = 'while(e!==g&&(e=e.parentNode)){' + source + '}';
         }
 
         // *** Structural pseudo-classes
@@ -1188,6 +1188,8 @@ NW.Dom = (function(global) {
             parts[2] = parts[2].replace(/[\x20\t\n\r\f]([ >+~])[\x20\t\n\r\f]/g, '$1');
             switch (parts[2].charAt(0)) {
               case '.':
+                elements = byClass(parts[2].slice(1), element);
+                break;
               case ':':
                 if (parts[2].match(/[ >+~]/)) {
                   elements = element.getElementsByTagName('*');
