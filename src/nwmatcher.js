@@ -672,13 +672,13 @@ NW.Dom = (function(global) {
       }
       if (mode) {
         // for select method
-        return new Function('c,s,d,h,g,f',
-          'var k,e,r,n,C,N,T,x=0;main:for(k=0,r=[];e=N=c[k];k++){' +
+        return new Function('c,s,r,d,h,g,f',
+          'var n,N,x=0,k=0,e;main:while(N=e=c[k++]){' +
           SKIP_COMMENTS + source + '}return r;');
       } else {
         // for match method
-        return new Function('e,s,d,h,g,f',
-          'var n,C,N=e,T,x=0;' + source + 'return false;');
+        return new Function('e,s,r,d,h,g,f',
+          'var n,N,x=0;N=e;' + source + 'return false;');
       }
     },
 
@@ -745,8 +745,8 @@ NW.Dom = (function(global) {
             match[4] = match[4].toLowerCase();
           }
 
-          source = (match[2] ? 'T=s.getAttribute(e,"' + match[1] + '");' : '') +
-            'if(' + (match[2] ? Operators[match[2]].replace(/\%p/g, 'T' +
+          source = (match[2] ? 'n=s.getAttribute(e,"' + match[1] + '");' : '') +
+            'if(' + (match[2] ? Operators[match[2]].replace(/\%p/g, 'n' +
               (expr ? '' : '.toLowerCase()')).replace(/\%m/g, match[4]) :
               's.hasAttribute(e,"' + match[1] + '")') +
             '){' + source + '}';
@@ -1223,25 +1223,17 @@ NW.Dom = (function(global) {
         compiledSelectors[selector] = compileGroup(selector, '', true);
       }
 
-      if (isCacheable) {
-        // a cached result set for the requested selector
-        snap.Results[selector] = done ?
-          concat(data, elements, callback) :
-          concat(data, compiledSelectors[selector](elements, snap, base, root, from), callback);
-        snap.Contexts[selector] = from;
-        return snap.Results[selector];
-      }
+      data = done ?
+        concat(data, elements, callback) :
+        compiledSelectors[selector](elements, snap, data, base, root, from, callback);
 
-      if (done && elements.length == 1) {
-        data[data.length] = elements[0];
-        callback && callback(elements[0]);
+      if (isCacheable) {
+        snap.Results[selector] = data;
+        snap.Contexts[selector] = from;
         return data;
       }
 
-      // a fresh result set for the requested selector
-      return done || data.length ?
-        concat(data, elements, callback) :
-        compiledSelectors[selector](elements, snap, base, root, from, callback);
+      return data;
     },
 
   // use the new native Selector API if available,
