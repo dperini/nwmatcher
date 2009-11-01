@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.0
  * Created: 20070722
- * Release: 20091001
+ * Release: 20091101
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -477,11 +477,10 @@ NW.Dom = (function(global) {
     },
 
   // elements by class
-  // @return nodeList (native GEBCN)
-  // @return array (non native GEBCN)
+  // @return array
   byClass = !BUGGY_GEBCN ?
     function(className, from) {
-      return from.getElementsByClassName(className.replace(/\\/g, ''));
+      return slice.call(from.getElementsByClassName(className.replace(/\\/g, '')), 0);
     } :
     function(className, from) {
       // context is handled in byTag for non native gEBCN
@@ -1052,6 +1051,8 @@ NW.Dom = (function(global) {
         element, elements, parts, token, isCacheable,
         concat = callback ? concatCall : concatList;
 
+      elements = [ ];
+
       // storage setup
       data || (data = [ ]);
 
@@ -1180,7 +1181,7 @@ NW.Dom = (function(global) {
 
       }
 
-      if (!elements || !elements.length) {
+      if (elements.length === 0) {
 
         if (isSingle && (parts = selector.match(/\#((?:[-\w]|[^\x00-\xa0]|\\.)+)(.*)/))) {
           if ((element = byId(parts[1]))) {
@@ -1189,7 +1190,7 @@ NW.Dom = (function(global) {
               case '.':
               case ':':
                 if (parts[2].match(/[ >+~]/)) {
-                  elements = concat([ element ], element.getElementsByTagName('*'));
+                  elements = element.getElementsByTagName('*');
                 } else elements = [ element ];
                 break;
               case ' ':
@@ -1214,7 +1215,7 @@ NW.Dom = (function(global) {
           } else if (selector.indexOf(':not') < 0) return data;
         }
 
-        elements || (elements = concatList([ ], from.getElementsByTagName('*')));
+        if (elements.length === 0) elements = from.getElementsByTagName('*');
       }
       // end of prefiltering pass
 
@@ -1261,7 +1262,7 @@ NW.Dom = (function(global) {
 
   // ordinal position by nodeType or nodeName
   indexesByNodeType = { },
-  indexesByNodeName = { }, 
+  indexesByNodeName = { },
 
   // compiled select functions returning collections
   compiledSelectors = { },
