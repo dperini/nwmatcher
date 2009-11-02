@@ -957,7 +957,7 @@ NW.Dom = (function(global) {
   // match element with selector
   // @return boolean
   match =
-    function(element, selector, from) {
+    function(element, selector, from, data, callback) {
       // make sure an element node was passed
       if (element && element.nodeType == 1) {
         if (typeof selector == 'string' && selector.length) {
@@ -968,7 +968,7 @@ NW.Dom = (function(global) {
             compiledMatchers[selector] = compileGroup(selector, '', false);
           }
           // result of compiled matcher
-          return compiledMatchers[selector](element, snap, base, root, from || base);
+          return compiledMatchers[selector](element, snap, data, base, root, from || base, callback);
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
         }
