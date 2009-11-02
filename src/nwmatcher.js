@@ -151,35 +151,6 @@ NW.Dom = (function(global) {
       return isSupported;
     })(),
 
-  // check for Mutation Events, DOMAttrModified should be
-  // enough to ensure DOMNodeInserted/DOMNodeRemoved exist
-  NATIVE_MUTATION_EVENTS = root.addEventListener ?
-    (function() {
-      var isSupported, id = root.id,
-        input = context.createElement('input'),
-        handler = function() { isSupported = true; };
-
-      // add a bogus control element
-      root.insertBefore(input, root.firstChild);
-
-      // add listener and modify attribute
-      root.addEventListener('DOMAttrModified', handler, false);
-      root.id = 'nw';
-
-      // now try to modify the bogus element
-      isSupported && !(isSupported = 0) && (input.disabled = 0);
-
-      // remove event listener and tested element
-      root.removeEventListener('DOMAttrModified', handler, false);
-      root.removeChild(input);
-      root.id = id;
-
-      input = null;
-      handler = null;
-      return !!isSupported;
-    })() :
-    false,
-
   // NOTE: BUGGY_XXXXX check both for existance and no known bugs.
 
   BUGGY_GEBID = NATIVE_GEBID ?
@@ -1038,7 +1009,6 @@ NW.Dom = (function(global) {
 
   lastSelector,
   lastContext,
-  lastCalled,
   lastSlice,
 
   // select elements matching selector
@@ -1047,8 +1017,7 @@ NW.Dom = (function(global) {
   client_api =
     function client_api(selector, from, data, callback) {
 
-      var done, now, className, hasChanged, isSingle,
-        element, elements, parts, token, isCacheable,
+      var done, element, elements, parts, token, hasChanged, isSingle,
         concat = callback ? concatCall : concatList;
 
       elements = [ ];
@@ -1065,33 +1034,6 @@ NW.Dom = (function(global) {
         lastContext = from;
         // reference context ownerDocument and document root (HTML)
         root = (base = from.ownerDocument || from).documentElement;
-      }
-
-      isCacheable = cachingEnabled && !cachingPaused &&
-        !(from != base && isDisconnected(from, root));
-
-      // avoid caching disconnected nodes
-      if (isCacheable) {
-        snap = base.snapshot;
-        // valid base context storage
-        if (snap && !snap.isExpired) {
-          if (snap.Results[selector] &&
-            snap.Contexts[selector] == from) {
-            return callback || data.length ?
-              concat(data, snap.Results[selector], callback) :
-              snap.Results[selector];
-          }
-        } else {
-          // temporarily pause caching while we are getting hammered with dom mutations (jdalton)
-          now = new Date;
-          if ((now - lastCalled) < minCallThreshold) {
-            cachingPaused =
-              (base.snapshot = new Snapshot).isExpired = true;
-            setTimeout(function() { cachingPaused = false; }, 10);
-          } else setCache(true, base);
-          snap = base.snapshot;
-          lastCalled = now;
-        }
       }
 
       // pre-filtering pass allow to scale proportionally with big DOM trees;
@@ -1115,8 +1057,6 @@ NW.Dom = (function(global) {
             data = concat(data, byTag(selector, from), callback);
             break;
         }
-        snap.Contexts[selector] = from;
-        snap.Results[selector] = data;
         return data;
       }
 
@@ -1226,17 +1166,9 @@ NW.Dom = (function(global) {
         compiledSelectors[selector] = compileGroup(selector, '', true);
       }
 
-      data = done ?
+      return done ?
         concat(data, elements, callback) :
         compiledSelectors[selector](elements, snap, data, base, root, from, callback);
-
-      if (isCacheable) {
-        snap.Results[selector] = data;
-        snap.Contexts[selector] = from;
-        return data;
-      }
-
-      return data;
     },
 
   // use the new native Selector API if available,
@@ -1246,7 +1178,7 @@ NW.Dom = (function(global) {
     select_qsa :
     client_api,
 
-  /*-------------------------------- CACHING ---------------------------------*/
+  /*-------------------------------- STORAGE ---------------------------------*/
 
   // CSS_ID expando on elements,
   // used to keep child indexes
@@ -1254,13 +1186,6 @@ NW.Dom = (function(global) {
   CSS_ID = 1,
 
   CSS_INDEX = 'sourceIndex' in root ? 'sourceIndex' : 'CSS_ID',
-
-  cachingEnabled = false,//NATIVE_MUTATION_EVENTS,
-
-  cachingPaused = false,
-
-  // minimum time allowed, in milliseconds, between calls to the cache initialization
-  minCallThreshold = 15,
 
   // ordinal position by nodeType or nodeName
   indexesByNodeType = { },
@@ -1272,78 +1197,8 @@ NW.Dom = (function(global) {
   // compiled match functions returning booleans
   compiledMatchers = { },
 
-  // keep caching states for each context document
-  // set manually by using setCache(true, context)
-  // expired by Mutation Events on DOM tree changes
-  Snapshot =
-    function() {
-      // result sets and related root contexts
-      this.Results = [ ];
-      this.Contexts = [ ];
-    },
-
-  // enable/disable context caching system
-  // @d optional document context (iframe, xml document)
-  // script loading context will be used as default context
-  setCache =
-    function(enable, d) {
-      d || (d = context);
-      if (!!enable) {
-        d.snapshot = new Snapshot;
-        startMutation(d);
-      } else {
-        stopMutation(d);
-      }
-      cachingEnabled = !!enable;
-    },
-
-  // invoked by mutation events to expire cached parts
-  mutationWrapper =
-    function(event) {
-      var d = event.target.ownerDocument || event.target;
-      stopMutation(d);
-      expireCache(d);
-    },
-
-  // append mutation events
-  startMutation =
-    function(d) {
-      if (!d.isCaching) {
-        // FireFox/Opera/Safari/KHTML have support for Mutation Events
-        d.addEventListener('DOMAttrModified', mutationWrapper, false);
-        d.addEventListener('DOMNodeInserted', mutationWrapper, false);
-        d.addEventListener('DOMNodeRemoved', mutationWrapper, false);
-        d.isCaching = true;
-      }
-    },
-
-  // remove mutation events
-  stopMutation =
-    function(d) {
-      if (d.isCaching) {
-        d.removeEventListener('DOMAttrModified', mutationWrapper, false);
-        d.removeEventListener('DOMNodeInserted', mutationWrapper, false);
-        d.removeEventListener('DOMNodeRemoved', mutationWrapper, false);
-        d.isCaching = false;
-      }
-    },
-
-  // expire complete cache
-  // can be invoked by Mutation Events or
-  // programmatically by other code/scripts
-  // document context is mandatory no checks
-  expireCache =
-    function(d) {
-      if (d && d.snapshot) {
-        d.snapshot.isExpired = true;
-      }
-    };
-
-  // must exist for compiled functions
-  Snapshot.prototype = {
-    // validation flag, creating if already expired,
-    // code validation will set it valid first time
-    isExpired: false,
+  // used to pass methods to compiled functions
+  snap = {
 
     // element inspection methods
     getAttribute: getAttribute,
@@ -1368,11 +1223,7 @@ NW.Dom = (function(global) {
     match: match
   };
 
-  // local indexes, cleared
-  // between selection calls
-  snap = new Snapshot;
-
-  // END: local context caching system
+  /*------------------------------- PUBLIC API -------------------------------*/
 
   return {
 
@@ -1407,12 +1258,6 @@ NW.Dom = (function(global) {
       function(selector, mode) {
         return compileGroup(selector, '', mode || false).toString();
       },
-
-    // enable/disable cache
-    setCache: setCache,
-
-    // forced expire of DOM tree cache
-    expireCache: expireCache,
 
     // add or overwrite user defined operators
     registerOperator:
