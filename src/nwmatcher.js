@@ -982,9 +982,7 @@ NW.Dom = (function(global) {
       var element;
       switch (selector.charAt(0)) {
         case '#':
-          if ((element = (from || context).getElementById(selector.slice(1))))
-          //if ((element = byId(selector.slice(1), from)))
-          {
+          if ((element = byId(selector.slice(1), from))) {
             data ? (data[data.length] = element) : (data = [ element ]);
             callback && callback(element);
           }
