@@ -484,7 +484,7 @@ NW.Dom = (function(global) {
 
   // children position by nodeType
   // @return number
-  getChildrenIndex =
+  getIndexesByNodeType =
     function(element) {
       var i = 0, indexes, node,
         id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
@@ -505,7 +505,7 @@ NW.Dom = (function(global) {
 
   // children position by nodeName
   // @return number
-  getChildrenIndexByTag =
+  getIndexesByNodeName =
     function(element, name) {
       var i = 0, indexes, node,
         id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
@@ -818,7 +818,7 @@ NW.Dom = (function(global) {
                     '';
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
-                source = 'n=s.getChildrenIndex' + (match[4] ? 'ByTag' : '') +
+                source = 'n=s.getIndexesBy' + (match[4] ? 'NodeName' : 'NodeType') +
                   '(e.parentNode' + (match[4] ? ',e.nodeName.toLowerCase()' : '') + ');' +
                   'if(n[e.' + CSS_INDEX + ']' + test + '){' + source + '}';
 
@@ -976,6 +976,29 @@ NW.Dom = (function(global) {
       return false;
     },
 
+  native_api =
+    function(selector, from, data, callback) {
+      var element;
+      switch (selector.charAt(0)) {
+        case '#':
+          if ((element = (from || context).getElementById(selector.slice(1))))
+          //if ((element = byId(selector.slice(1), from)))
+          {
+            data ? (data[data.length] = element) : (data = [ element ]);
+            callback && callback(element);
+          }
+          return data || [ ];
+        case '.':
+          return data || callback ?
+            concatCall(data || [ ], byClass(selector.slice(1), from || context), callback) :
+            byClass(selector.slice(1), from || context);
+        default:
+          return data || callback ?
+            concatCall(data || [ ], byTag(selector, from || context), callback) :
+            concatList(data || [ ], byTag(selector, from || context));
+      }
+    },
+
   // select elements matching selector
   // version using new Selector API
   // @return array
@@ -984,8 +1007,10 @@ NW.Dom = (function(global) {
 
       var elements;
 
-      if (!reSimpleSelector.test(selector) &&
-          (!from || QSA_NODE_TYPES[from.nodeType]) &&
+      if (reSimpleSelector.test(selector))
+        return native_api(selector, from, data, callback);
+
+      if ((!from || QSA_NODE_TYPES[from.nodeType]) &&
           !BUGGY_QSAPI.test(selector)) {
         try {
           elements = (from || context).querySelectorAll(selector);
@@ -1017,9 +1042,12 @@ NW.Dom = (function(global) {
   client_api =
     function client_api(selector, from, data, callback) {
 
-      var done, element, elements, parts, token, hasChanged, isSingle,
-        concat = callback ? concatCall : concatList;
+      var done, element, elements, parts, token, hasChanged, isSingle;
 
+      if (reSimpleSelector.test(selector))
+        return native_api(selector, from, data, callback);
+
+      // result set
       elements = [ ];
 
       // storage setup
@@ -1037,28 +1065,6 @@ NW.Dom = (function(global) {
       }
 
       // pre-filtering pass allow to scale proportionally with big DOM trees;
-      // this block can be safely removed, it is a speed booster on big pages
-      // and will still maintain the mandatory "document ordered" result set
-
-      if (reSimpleSelector.test(selector)) {
-        switch (selector.charAt(0)) {
-          case '#':
-            if ((element = byId(selector.slice(1), from))) {
-              data[data.length] = element;
-              callback && callback(element);
-            }
-            break;
-
-          case '.':
-            data = concat(data, byClass(selector.slice(1), from), callback);
-            break;
-
-          default:
-            data = concat(data, byTag(selector, from), callback);
-            break;
-        }
-        return data;
-      }
 
       if (hasChanged = lastSelector != selector) {
         // process valid selector strings
@@ -1167,7 +1173,7 @@ NW.Dom = (function(global) {
       }
 
       return done ?
-        concat(data, elements, callback) :
+        (callback ? concatCall(data, elements, callback) : concatList(data, elements)) : 
         compiledSelectors[selector](elements, snap, data, base, root, from, callback);
     },
 
@@ -1200,13 +1206,13 @@ NW.Dom = (function(global) {
   // used to pass methods to compiled functions
   snap = {
 
+    // element indexing methods (nodeType/nodeName)
+    getIndexesByNodeType: getIndexesByNodeType,
+    getIndexesByNodeName: getIndexesByNodeName,
+
     // element inspection methods
     getAttribute: getAttribute,
     hasAttribute: hasAttribute,
-
-    // element indexing methods
-    getChildrenIndex: getChildrenIndex,
-    getChildrenIndexByTag: getChildrenIndexByTag,
 
     // element selection methods
     byClass: byClass,
