@@ -50,9 +50,6 @@ NW.Dom = (function(global) {
   // discard invalid chars found in passed selector
   reValidator = /([.:#*\w]|[^\x00-\xa0])/,
 
-  // matches simple id, tagname & classname selectors
-  reSimpleSelector = /^[.#]?[-\w]+$/,
-
   // split comma separated selector groups, exclude commas inside '' "" () []
   // example: (#div a, ul > li a) group 1 is (#div a) group 2 is (ul > li a)
   reSplitGroup = /([^,()[\]]+|\([^()]+\)|\(.*\)|\[(?:\[[^[\]]*\]|["'][^'"]*["']|[^'"[\]]+)+\]|\[.*\]|\\.)+/g,
@@ -249,6 +246,10 @@ NW.Dom = (function(global) {
       var el; (el = document.createElement('div')).style.width = 1;
       return el.style.width == '1px' ? 'BackCompat' : 'CSS1Compat';
     })(),
+
+  // matches simple id, tagname & classname selectors
+  reSimpleSelector = BUGGY_GEBCN ?
+    /^[#]?[-\w]+$/ : /^[.#]?[-\w]+$/,
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
