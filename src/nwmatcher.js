@@ -243,9 +243,12 @@ NW.Dom = (function(global) {
   // makes it harder to detect Quirks vs. Strict
   compatMode = context.compatMode ||
     (function() {
-      var isStrict, div; (div = document.createElement('div')).style.width = 1;
-      isStrict = !(div.style.width == '1px'); div = null;
-      return isStrict ? 'CSS1Compat' : 'BackCompat';
+      var div = document.createElement('div'),
+        isStrict = div.style &&
+          (div.style.width = 1) &&
+          div.style.width != '1px';
+      div = null;
+      return !!isStrict ? 'CSS1Compat' : 'BackCompat';
     })(),
 
   // matches simple id, tagname & classname selectors
