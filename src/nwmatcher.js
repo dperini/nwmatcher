@@ -136,16 +136,17 @@ NW.Dom = (function(global) {
   // Opera 9.27 and an id="length" will fold this
   NATIVE_SLICE_PROTO =
     (function() {
-      var isSupported = false, div = context.createElement('div');
+      var isSupported, div = context.createElement('div');
       try {
         div.innerHTML = '<div id="length"></div>';
         root.insertBefore(div, root.firstChild);
-        isSupported = !!slice.call(div.childNodes, 0)[0];
+        isSupported = slice.call(div.childNodes, 0)[0];
       } catch(e) {
       } finally {
         root.removeChild(div).innerHTML = '';
+        div = null;
       }
-      return isSupported;
+      return !!isSupported;
     })(),
 
   // NOTE: BUGGY_XXXXX check both for existance and no known bugs.
@@ -155,11 +156,10 @@ NW.Dom = (function(global) {
       var isBuggy, div = context.createElement('div');
       div.innerHTML = '<a name="Z"></a>';
       root.insertBefore(div, root.firstChild);
-      isBuggy = !!div.ownerDocument.getElementById('Z');
-      div.innerHTML = '';
-      root.removeChild(div);
+      isBuggy = div.ownerDocument.getElementById('Z');
+      root.removeChild(div).innerHTML = '';
       div = null;
-      return isBuggy;
+      return !!isBuggy;
     })() :
     true,
 
@@ -171,7 +171,7 @@ NW.Dom = (function(global) {
       isBuggy = div.getElementsByTagName('*')[0];
       div.innerHTML = '';
       div = null;
-      return isBuggy;
+      return !!isBuggy;
     })() :
     true,
 
@@ -243,8 +243,9 @@ NW.Dom = (function(global) {
   // makes it harder to detect Quirks vs. Strict
   compatMode = context.compatMode ||
     (function() {
-      var el; (el = document.createElement('div')).style.width = 1;
-      return el.style.width == '1px' ? 'BackCompat' : 'CSS1Compat';
+      var isStrict, div; (div = document.createElement('div')).style.width = 1;
+      isStrict = !(div.style.width == '1px'); div = null;
+      return isStrict ? 'CSS1Compat' : 'BackCompat';
     })(),
 
   // matches simple id, tagname & classname selectors
