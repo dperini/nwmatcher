@@ -200,7 +200,7 @@ NW.Dom = (function(global) {
     true,
 
   // check Seletor API implementations
-  BUGGY_QSAPI = NATIVE_QSAPI ? (function() {
+  RE_BUGGY_QSAPI = NATIVE_QSAPI ? (function() {
     var pattern = [ '!=', ':contains', ':selected' ], div = context.createElement('div');
 
     // WebKit treats case insensitivity correctly with classNames (when no DOCTYPE)
@@ -252,7 +252,7 @@ NW.Dom = (function(global) {
     })(),
 
   // matches simple id, tagname & classname selectors
-  reSimpleSelector = BUGGY_GEBCN ?
+  RE_SIMPLE_SELECTOR = BUGGY_GEBCN ?
     /^[#]?[-\w]+$/ : /^[.#]?[-\w]+$/,
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
@@ -1010,11 +1010,11 @@ NW.Dom = (function(global) {
 
       var elements;
 
-      if (reSimpleSelector.test(selector))
+      if (RE_SIMPLE_SELECTOR.test(selector))
         return native_api(selector, from, data, callback);
 
       if ((!from || QSA_NODE_TYPES[from.nodeType]) &&
-          !BUGGY_QSAPI.test(selector)) {
+        !RE_BUGGY_QSAPI.test(selector)) {
         try {
           elements = (from || context).querySelectorAll(selector);
           if (elements.length == 1) {
@@ -1047,7 +1047,7 @@ NW.Dom = (function(global) {
 
       var done, element, elements, parts, token, hasChanged, isSingle;
 
-      if (reSimpleSelector.test(selector))
+      if (RE_SIMPLE_SELECTOR.test(selector))
         return native_api(selector, from, data, callback);
 
       // result set
