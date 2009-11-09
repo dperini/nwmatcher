@@ -1031,24 +1031,6 @@ NW.Dom = (function(global) {
         }
       }
 
-      if ((!from || QSA_NODE_TYPES[from.nodeType]) &&
-        !RE_BUGGY_QSAPI.test(selector)) {
-        try {
-          elements = (from || context).querySelectorAll(selector);
-          if (elements.length == 1) {
-            callback && callback(elements[0]);
-            return [ elements[0] ];
-          }
-        } catch(e) { }
-
-        if (elements) {
-          if (callback) return concatCall(data || [ ], elements, callback);
-          return NATIVE_SLICE_PROTO ?
-            slice.call(elements) :
-            concatList(data || [ ], elements);
-        }
-      }
-
       // fall back to NWMatcher select
       return client_api(selector, from, data, callback);
     },
