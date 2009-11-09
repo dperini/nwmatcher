@@ -975,7 +975,7 @@ NW.Dom = (function(global) {
       var element, elements;
       switch (selector.charAt(0)) {
         case '#':
-          if ((element = byId(selector.slice(1), base))) {
+          if ((element = byId(selector.slice(1), from))) {
             callback && callback(element);
             data[data.length] = element;
           }
