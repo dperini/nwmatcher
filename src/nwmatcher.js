@@ -403,15 +403,18 @@ NW.Dom = (function(global) {
   concatList =
     function(listout, listin) {
       var i = -1, element;
-      if (listout.length === 0 && Array.slice) return Array.slice(listin);
-      while ((element = listin[++i])) listout[listout.length] = element;
+      if (listout.length === 0 && Array.slice)
+        return Array.slice(listin);
+      while ((element = listin[++i]))
+        listout[listout.length] = element;
       return listout;
     },
 
   concatCall =
     function(listout, listin, callback) {
       var i = -1, element;
-      while ((element = listin[++i])) callback(listout[listout.length] = element);
+      while ((element = listin[++i]))
+        callback(listout[listout.length] = element);
       return listout;
     },
 
@@ -423,12 +426,13 @@ NW.Dom = (function(global) {
       from || (from = context);
       id = id.replace(/\\/g, '');
       if (from.getElementById) {
-        result = from.getElementById(id);
-        if (result && id != getAttribute(result, 'id') && from.getElementsByName) {
+        if ((result = from.getElementById(id)) &&
+          id != getAttribute(result, 'id') && from.getElementsByName) {
           names = from.getElementsByName(id);
           result = null;
           while ((element = names[++i])) {
-            if ((node = element.getAttributeNode('id')) && node.value == id) {
+            if ((node = element.getAttributeNode('id')) &&
+              node.value == id) {
               result = element;
               break;
             }
@@ -1167,7 +1171,7 @@ NW.Dom = (function(global) {
       }
 
       return done ?
-        (callback ? concatCall(data, elements, callback) : concatList(data, elements)) : 
+        (callback ? concatCall(data, elements, callback) : concatList(data, elements)) :
         compiledSelectors[selector](elements, snap, data, base, root, from, callback);
     },
 
