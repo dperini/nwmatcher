@@ -1024,6 +1024,7 @@ NW.Dom = (function(global) {
     },
 
   lastSelector,
+  lastPosition,
   lastContext,
   lastSlice,
 
@@ -1038,12 +1039,6 @@ NW.Dom = (function(global) {
       if (RE_SIMPLE_SELECTOR.test(selector))
         return native_api(selector, from, data || [ ], callback);
 
-      // result set
-      elements = [ ];
-
-      // storage setup
-      data || (data = [ ]);
-
       // ensure context is set
       from || (from = context);
 
@@ -1055,8 +1050,6 @@ NW.Dom = (function(global) {
         root = (base = from.ownerDocument || from).documentElement;
       }
 
-      // pre-filtering pass allow to scale proportionally with big DOM trees;
-
       if (hasChanged = lastSelector != selector) {
         // process valid selector strings
         if (reValidator.test(selector)) {
@@ -1065,13 +1058,18 @@ NW.Dom = (function(global) {
           selector = selector.replace(reTrimSpaces, '');
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
-          return data;
+          return data || [ ];
         }
       }
+
+      // storage setup
+      data || (data = [ ]);
 
       // reinitialize indexes
       indexesByNodeType = { };
       indexesByNodeName = { };
+
+      // pre-filtering pass allow to scale proportionally with big DOM trees;
 
       // commas separators are treated sequentially to maintain order
       if ((isSingle = selector.match(reSplitGroup).length < 2)) {
@@ -1080,87 +1078,92 @@ NW.Dom = (function(global) {
           // get right most selector token
           parts = selector.match(reSplitToken);
 
+          // position where token was found
+          lastPosition = RegExp.leftContext.length;
+
           // only last slice before :not rules
           lastSlice = parts[parts.length - 1].split(':not')[0];
         }
 
         // reduce selection context
         if ((parts = selector.match(Optimize.ID))) {
-          if ((element = context.getElementById(parts[1]))) {
-            from = element.parentNode;
+          if ((element = base.getElementById(parts[1]))) {
+            //from = element.parentNode;
+            if (!/[>+~]/.test(selector)) {
+              selector = selector.replace('#' + token, '*');
+              from = element;
+            } else from = element.parentNode;
           }
         }
 
         // ID optimization RTL
         if ((parts = lastSlice.match(Optimize.ID)) &&
-          (token = parts[1]) && NATIVE_GEBID) {
-          if ((element = byId(token, context))) {
+          (token = parts[1]) && base.getElementById) {
+          if ((element = byId(token, base))) {
             if (match(element, selector)) {
               elements = [ element ];
               done = true;
+            } else {
+              from = element;
+              //elements = concatList([ element ], byTag('*', element));
+              //selector = selector.substr(0, lastPosition) +
+              //  selector.substr(lastPosition).replace('#' + token, '*');
             }
-          } else return data;
+          }
         }
 
         // CLASS optimization RTL
         else if ((parts = lastSlice.match(Optimize.CLASS)) &&
-          (token = parts[1])) {
+          (token = parts[1]) && from.getElementsByClassName) {
           elements = byClass(token, from);
+          if (elements.length === 0) return data;
           if (selector == '.' + token) done = true;
+          else selector = selector.substr(0, lastPosition) +
+            selector.substr(lastPosition).replace('.' + token, '*');
         }
 
         // TAG optimization RTL
         else if ((parts = lastSlice.match(Optimize.TAG)) &&
-          (token = parts[1]) && NATIVE_GEBTN) {
+          (token = parts[1]) && from.getElementsByTagName) {
           elements = byTag(token, from);
+          if (elements.length === 0) return data;
           if (selector == token) done = true;
+          else selector = selector.substr(0, lastPosition) +
+            selector.substr(lastPosition).replace(token, '*');
         }
+
+        // ID optimization LTR
+        else if ((parts = selector.match(Optimize.ID)) &&
+          (token = parts[1]) && base.getElementById) {
+          if ((element = byId(token, base))) {
+            //from = element.parentNode;
+            if (!/[>+~]/.test(selector)) {
+              selector = selector.replace('#' + token, '*');
+              from = element;
+            } else from = element.parentNode;
+          }
+        }
+
+        //else console.log(selector);
 
       }
 
-      if (elements.length === 0) {
-
-        if (isSingle && (parts = selector.match(/\#((?:[-\w]|[^\x00-\xa0]|\\.)+)(.*)/))) {
-          if ((element = byId(parts[1]))) {
-            parts[2] = parts[2].replace(/[\x20\t\n\r\f]([ >+~])[\x20\t\n\r\f]/g, '$1');
-            switch (parts[2].charAt(0)) {
-              case '.':
-                elements = byClass(parts[2].slice(1), element);
-                break;
-              case ':':
-                if (parts[2].match(/[ >+~]/)) {
-                  elements = element.getElementsByTagName('*');
-                } else elements = [ element ];
-                break;
-              case ' ':
-                elements = element.getElementsByTagName('*');
-                break;
-              case '~':
-                elements = getChildren(element.parentNode);
-                break;
-              case '>':
-                elements = getChildren(element);
-                break;
-              case  '':
-                elements = [ element ];
-                break;
-              case '+':
-                element = getNextSibling(element);
-                elements = element ? [ element ] : [ ];
-                break;
-              default:
-                break;
-            }
-          } else if (selector.indexOf(':not') < 0) return data;
-        }
-
-        if (elements.length === 0) elements = from.getElementsByTagName('*');
+      if (!elements) {
+        elements = from.getElementsByTagName('*');
       }
       // end of prefiltering pass
 
       // save compiled selectors
-      if (!compiledSelectors[selector]) {
-        compiledSelectors[selector] = compileGroup(selector, '', true);
+      if (!done && !compiledSelectors[selector]) {
+        if (isSingle) {
+          compiledSelectors[selector] =
+            new Function('c,s,r,d,h,g,f',
+              'var n,N,x=0,k=0,e;main:while(N=e=c[k++]){' +
+              SKIP_COMMENTS + compileSelector(selector, ACCEPT_NODE) +
+              '}return r;');
+        } else {
+          compiledSelectors[selector] = compileGroup(selector, '', true);
+        }
       }
 
       return done ?
