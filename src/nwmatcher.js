@@ -180,18 +180,15 @@ NW.Dom = (function(global) {
   // tests are based on the jQuery selector test suite
   BUGGY_GEBCN = NATIVE_GEBCN ?
     (function() {
-      var isBuggy,
-        div = context.createElement('div'),
-        method = 'getElementsByClassName',
-        test = /\u53f0\u5317/;
+      var isBuggy, div = context.createElement('div'), test = '\u53f0\u5317';
 
       // Opera tests
       div.innerHTML = '<span class="' + test + 'abc ' + test + '"></span><span class="x"></span>';
-      isBuggy = !div[method](test)[0];
+      isBuggy = !div.getElementsByClassName(test)[0];
 
       // Safari test
       div.lastChild.className = test;
-      if (!isBuggy) isBuggy = div[method](test).length !== 2;
+      if (!isBuggy) isBuggy = div.getElementsByClassName(test).length !== 2;
 
       div.innerHTML = '';
       div = null;
