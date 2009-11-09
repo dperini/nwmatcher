@@ -458,7 +458,7 @@ NW.Dom = (function(global) {
   // @return array
   byClass = !BUGGY_GEBCN ?
     function(className, from) {
-      return slice.call(from.getElementsByClassName(className.replace(/\\/g, '')), 0);
+      return (from || context).getElementsByClassName(className.replace(/\\/g, ''));
     } :
     function(className, from) {
       // context is handled in byTag for non native gEBCN
