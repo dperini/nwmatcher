@@ -1084,7 +1084,7 @@ NW.Dom = (function(global) {
 
         // CLASS optimization RTL
         else if ((parts = lastSlice.match(Optimize.CLASS)) &&
-          (token = parts[1]) && from.getElementsByClassName) {
+          (token = parts[1])) {
           elements = byClass(token, from);
           if (elements.length === 0) return data;
           if (selector == '.' + token) done = true;
