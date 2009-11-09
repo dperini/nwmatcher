@@ -732,28 +732,17 @@ NW.Dom = (function(global) {
         // *** Adjacent sibling combinator
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
-          if (NATIVE_TRAVERSAL_API) {
-            source = 'if((e=e.previousElementSibling)){' + source + '}';
-          } else {
-            source = 'while((e=e.previousSibling)){if(e.nodeType==1){' +
-              source + 'break;}}';
-          }
+          source = NATIVE_TRAVERSAL_API ?
+            'if((e=e.previousElementSibling)){' + source + '}' :
+            'while((e=e.previousSibling)){if(e.nodeType==1){' + source + 'break;}}';
         }
 
         // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
-          k++;
-          if (NATIVE_TRAVERSAL_API) {
-            // previousSibling particularly slow on Gecko based browsers prior to FF3.1
-            source =
-              'var N' + k + '=e;e=e.parentNode.firstElementChild;' +
-              'while(e!=N' + k +'){if(e){' + source + '}e=e.nextElementSibling;}';
-          } else {
-            source =
-              'var N' + k + '=e;e=e.parentNode.firstChild;' +
-              'while(e!=N' + k +'){if(e.nodeType==1){' + source + '}e=e.nextSibling;}';
-          }
+          source = NATIVE_TRAVERSAL_API ?
+            'while((e=e.previousElementSibling)){' + source + '}' :
+            'while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}';
         }
 
         // *** Child combinator
