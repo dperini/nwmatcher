@@ -1000,10 +1000,36 @@ NW.Dom = (function(global) {
   select_qsa =
     function (selector, from, data, callback) {
 
-      var elements;
-
       if (RE_SIMPLE_SELECTOR.test(selector))
         return native_api(selector, from, data || [ ], callback);
+
+      if (!compiledSelectors[selector] &&
+        !RE_BUGGY_QSAPI.test(selector) &&
+        (!from || QSA_NODE_TYPES[from.nodeType])) {
+
+        var elements;
+        try {
+          elements = (from || base).querySelectorAll(selector);
+        } catch(e) { }
+
+        if (elements) {
+          switch (elements.length) {
+            case 0:
+              return data || [ ];
+            case 1:
+              callback && callback(elements[0]);
+              if (data) data[data.length] = elements[0];
+              else data = [ elements[0] ];
+              return data;
+            default:
+              return callback ?
+                concatCall(data || [ ], elements, callback) :
+                data || !NATIVE_SLICE_PROTO ?
+                  concatList(data || [ ], elements) :
+                  slice.call(elements);
+          }
+        }
+      }
 
       if ((!from || QSA_NODE_TYPES[from.nodeType]) &&
         !RE_BUGGY_QSAPI.test(selector)) {
