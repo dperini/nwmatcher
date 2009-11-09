@@ -968,23 +968,26 @@ NW.Dom = (function(global) {
 
   native_api =
     function(selector, from, data, callback) {
-      var element;
+      var element, elements;
       switch (selector.charAt(0)) {
         case '#':
-          if ((element = byId(selector.slice(1), from))) {
-            data ? (data[data.length] = element) : (data = [ element ]);
+          if ((element = byId(selector.slice(1), base))) {
             callback && callback(element);
+            data[data.length] = element;
           }
-          return data || [ ];
+          return data;
         case '.':
-          return data || callback ?
-            concatCall(data || [ ], byClass(selector.slice(1), from || context), callback) :
-            byClass(selector.slice(1), from || context);
+          elements = byClass(selector.slice(1), from);
+          break;
         default:
-          return data || callback ?
-            concatCall(data || [ ], byTag(selector, from || context), callback) :
-            concatList(data || [ ], byTag(selector, from || context));
+          elements = byTag(selector, from);
+          break;
       }
+      return callback ?
+        concatCall(data, elements, callback) :
+        data || !NATIVE_SLICE_PROTO ?
+          concatList(data, elements) :
+          slice.call(elements);
     },
 
   // select elements matching selector
@@ -996,7 +999,7 @@ NW.Dom = (function(global) {
       var elements;
 
       if (RE_SIMPLE_SELECTOR.test(selector))
-        return native_api(selector, from, data, callback);
+        return native_api(selector, from, data || [ ], callback);
 
       if ((!from || QSA_NODE_TYPES[from.nodeType]) &&
         !RE_BUGGY_QSAPI.test(selector)) {
@@ -1033,7 +1036,7 @@ NW.Dom = (function(global) {
       var done, element, elements, parts, token, hasChanged, isSingle;
 
       if (RE_SIMPLE_SELECTOR.test(selector))
-        return native_api(selector, from, data, callback);
+        return native_api(selector, from, data || [ ], callback);
 
       // result set
       elements = [ ];
