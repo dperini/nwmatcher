@@ -481,18 +481,6 @@ NW.Dom = (function(global) {
       return results;
     },
 
-  getChildren =
-    function(from) {
-      var i = -1, element = from.firstChild, elements = [ ];
-      while (element) {
-        if ((element.nodeType == 1)) {
-            elements[++i] = element;
-        }
-        element = element.nextSibling;
-      }
-      return elements;
-    },
-
   // children position by nodeType
   // @return number
   getIndexesByNodeType =
@@ -527,33 +515,6 @@ NW.Dom = (function(global) {
       }
       indexes.length = i;
       return indexes;
-    },
-
-  getElements =
-    function(tag, from) {
-      var element = from.firstChild, elements = [ ];
-      if (!tag) return elements;
-      tag = tag.toLowerCase();
-      while (element) {
-        if ((element.nodeType == 1 && tag == '*') ||
-            element.nodeName.toLowerCase() == tag) {
-            elements[elements.length] = element;
-        }
-        getElements(tag, element, elements);
-        element = element.nextSibling;
-      }
-      return elements;
-    },
-
-  getNextSibling = NATIVE_TRAVERSAL_API ?
-    function (element) {
-      return element.nextElementSibling;
-    } :
-    function (element) {
-      element = element.nextSibling;
-      while (element && element.nodeType !== 1)
-        element = element.nextSibling;
-      return element;
     },
 
   // attribute value
