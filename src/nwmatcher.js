@@ -514,21 +514,15 @@ NW.Dom = (function(global) {
   // @return number
   getIndexesByNodeName =
     function(element, name) {
-      var i = 0, indexes, node,
-        id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
-      if (!indexesByNodeName[id]) {
-        indexes = { };
-        node = element.firstChild;
-        while (node) {
-          if (node.nodeName.toLowerCase() == name) {
-            indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
-          }
-          node = node.nextSibling;
+      var i = 0, indexes = { }, node = element.firstChild;
+      while (node) {
+        if (node.nodeName.toLowerCase() == name) {
+          indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
         }
-        indexes.length = i;
-        indexesByNodeName[id] = indexes;
+        node = node.nextSibling;
       }
-      return indexesByNodeName[id];
+      indexes.length = i;
+      return indexes;
     },
 
   getElements =
