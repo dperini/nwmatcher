@@ -214,7 +214,7 @@ NW.Dom = (function(global) {
     // IE8 throws error with these pseudos
     div.innerHTML = '<input type="hidden">';
     try {
-      div.querySelectorAll(':enabled').length !== 1 && pattern.push(':enabled', ':disabled');
+      div.querySelectorAll(':enabled').length === 1 && pattern.push(':enabled', ':disabled');
     } catch(e) { }
 
     // :checked bugs whith checkbox fields (Opera 10beta3 bug)
