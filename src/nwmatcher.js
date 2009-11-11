@@ -1245,8 +1245,15 @@ NW.Dom = (function(global) {
           Selectors[name].Expression = rexp;
           Selectors[name].Callback = func;
         }
-      }
+      },
 
+    // for testing purposes only
+    setQSA:
+      function(enable) {
+        this.select = enable && NATIVE_QSAPI ?
+          select_qsa :
+          client_api;
+      }
   };
 
 })(this);
