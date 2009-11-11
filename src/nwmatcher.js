@@ -956,7 +956,7 @@ NW.Dom = (function(global) {
   // version using new Selector API
   // @return array
   select_qsa =
-    function (selector, from, data, callback) {
+    function(selector, from, data, callback) {
 
       if (RE_SIMPLE_SELECTOR.test(selector))
         return native_api(selector, from, data || [ ], callback);
@@ -1002,7 +1002,7 @@ NW.Dom = (function(global) {
   // version using cross-browser client API
   // @return array
   client_api =
-    function client_api(selector, from, data, callback) {
+    function(selector, from, data, callback) {
 
       var done, element, elements, parts, token, hasChanged, isSingle;
 
@@ -1231,7 +1231,7 @@ NW.Dom = (function(global) {
 
     // add or overwrite user defined operators
     registerOperator:
-      function (symbol, resolver) {
+      function(symbol, resolver) {
         if (!Operators[symbol]) {
           Operators[symbol] = resolver;
         }
@@ -1239,7 +1239,7 @@ NW.Dom = (function(global) {
 
     // add selector patterns for user defined callbacks
     registerSelector:
-      function (name, rexp, func) {
+      function(name, rexp, func) {
         if (!Selectors[name]) {
           Selectors[name] = { };
           Selectors[name].Expression = rexp;
