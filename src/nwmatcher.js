@@ -488,7 +488,7 @@ NW.Dom = (function(global) {
         indexes = { };
         node = element.firstChild;
         while (node) {
-          if (node.nodeType == 1) {
+          if (/^[A-Za-z]/.test(node.nodeName)) {
             indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
           }
           node = node.nextSibling;
@@ -503,15 +503,23 @@ NW.Dom = (function(global) {
   // @return number
   getIndexesByNodeName =
     function(element, name) {
-      var i = 0, indexes = { }, node = element.firstChild;
-      while (node) {
-        if (node.nodeName.toLowerCase() == name) {
-          indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
+      var i = 0, indexes, node,
+        id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
+      if (!indexesByNodeName[id] || !indexesByNodeName[id][name]) {
+        indexes = { };
+        node = element.firstChild;
+        while (node) {
+          if (node.nodeName.toUpperCase() == name) {
+            indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
+          }
+          node = node.nextSibling;
         }
-        node = node.nextSibling;
+        indexes.length = i;
+        indexesByNodeName[id] ||
+          (indexesByNodeName[id] = { });
+        indexesByNodeName[id][name] = indexes;
       }
-      indexes.length = i;
-      return indexes;
+      return indexesByNodeName[id];
     },
 
   // attribute value
@@ -571,7 +579,7 @@ NW.Dom = (function(global) {
   ACCEPT_NODE = 'f&&f(N);r[r.length]=N;continue main;',
 
   // fix for IE gEBTN('*') returning collection with comment nodes
-  SKIP_COMMENTS = BUGGY_GEBTN ? 'if(e.nodeType!=1){continue;}' : '',
+  SKIP_COMMENTS = BUGGY_GEBTN ? 'if(!/^[A-Za-z]/.test(e.nodeName)){continue;}' : '',
 
   // use the textContent or innerText property to check CSS3 :contains
   // Safari 2 has a bug with innerText and hidden content, using an
@@ -733,11 +741,6 @@ NW.Dom = (function(global) {
               break;
 
             default:
-              // used for nth-child/of-type
-              type = NATIVE_TRAVERSAL_API ?
-                (match[4] ? 'n.nodeName==e.nodeName' : 'true') :
-                (match[4] ? 'n.nodeName==e.nodeName' : 'n.nodeType==1');
-
               if (match[1] && match[5]) {
                 if (match[5] == 'even') {
                   a = 2;
@@ -752,8 +755,11 @@ NW.Dom = (function(global) {
                   b = 0 || ((n = match[5].match(/(-?\d{1,})$/)) ? parseInt(n[1], 10) : 0);
                 }
 
+                // shortcut check for of-type selectors
+                type = (match[4] ? '[e.nodeName' + NATIVE_TAG_MATCH + ']' : '')
+
                 // executed after the count is computed
-                expr = match[2] == 'last' ? 'n.length-' + (b - 1) : b;
+                expr = match[2] == 'last' ? 'n' + type + '.length-' + (b - 1) : b;
 
                 test =
                   b < 0 ?
@@ -768,22 +774,21 @@ NW.Dom = (function(global) {
                     '';
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
-                source = 'n=s.getIndexesBy' + (match[4] ? 'NodeName' : 'NodeType') +
-                  '(e.parentNode' + (match[4] ? ',e.nodeName.toLowerCase()' : '') + ');' +
-                  'if(n[e.' + CSS_INDEX + ']' + test + '){' + source + '}';
+                source = 'if(e!==h){n=s.getIndexesBy' + (match[4] ? 'NodeName' : 'NodeType') +
+                  '(e.parentNode' + (match[4] ? ',e.nodeName' + NATIVE_TAG_MATCH : '') + ');' +
+                  'if(n' + type + '[e.' + CSS_INDEX + ']' + test + '){' + source + '}}';
 
               } else {
                 // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
-                // too much overhead calling functions out of the main loop ?
                 a = match[2] == 'first' ? 'previous' : 'next';
                 n = match[2] == 'only' ? 'previous' : 'next';
                 b = match[2] == 'first' || match[2] == 'last';
 
-                source = NATIVE_TRAVERSAL_API ?
-                  ( 'n=e.' + a + 'ElementSibling;if(!(n&&' + type + ')){' + (b ? source :
-                    'n=e.' + n + 'ElementSibling;if(!(n&&' + type + ')){' + source + '}') + '}' ) :
-                  ( 'n=e;while((n=n.' + a + 'Sibling)&&!(' + type + '));if(!n){' + (b ? source :
-                    'n=e;while((n=n.' + n + 'Sibling)&&!(' + type + '));if(!n){' + source + '}') + '}' );
+                type = match[4] ? '&&n.nodeName!=e.nodeName' : '&&!/^[A-Za-z]/i.test(n.nodeName)';
+
+                source = 'if(e!==h){' +
+                  ( 'n=e;while((n=n.' + a + 'Sibling)' + type + ');if(!n){' + (b ? source :
+                    'n=e;while((n=n.' + n + 'Sibling)' + type + ');if(!n){' + source + '}') + '}' ) + '}';
               }
               break;
           }
