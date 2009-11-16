@@ -344,7 +344,7 @@ NW.Dom = (function(global) {
     // element attribute matcher
     attribute: /^\[[\x20\t\n\r\f]*([-\w]*:?(?:[-\w])+)[\x20\t\n\r\f]*(?:([~*^$|!]?=)[\x20\t\n\r\f]*(["']*)([^'"()]*?)\3)?[\x20\t\n\r\f]*\](.*)/,
     // structural pseudo-classes
-    spseudos: /^\:(root|empty|nth)?-?(first|last|only)?-?(child)?-?(of-type)?(\((?:even|odd|[^\)]*)\))?(.*)/,
+    spseudos: /^\:(root|empty|nth)?-?(first|last|only)?-?(child)?-?(of-type)?(?:\((even|odd|[^\)]*)\))?(.*)/,
     // uistates + dynamic + negation pseudo-classes
     dpseudos: /^\:([\w]+|[^\x00-\xa0]+)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
     // E > F
@@ -739,8 +739,6 @@ NW.Dom = (function(global) {
                 (match[4] ? 'n.nodeName==e.nodeName' : 'n.nodeType==1');
 
               if (match[1] && match[5]) {
-                // remove the ( ) grabbed above
-                match[5] = match[5].replace(/\(|\)/g, '');
                 if (match[5] == 'even') {
                   a = 2;
                   b = 0;
