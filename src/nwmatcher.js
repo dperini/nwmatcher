@@ -112,10 +112,6 @@ NW.Dom = (function(global) {
   // NOTE: NATIVE_XXXXX check for existance of method only
   // so through the code read it as "supported", maybe BUGGY
 
-  // supports lowercase node names
-  NATIVE_TAG_MATCH =
-    typeof context.createElementNS == 'function' ? '.toUpperCase()' : '',
-
   // supports the new traversal API
   NATIVE_TRAVERSAL_API =
     'nextElementSibling' in root && 'previousElementSibling' in root,
@@ -573,13 +569,19 @@ NW.Dom = (function(global) {
 
   /*---------------------------- COMPILER METHODS ----------------------------*/
 
-  // conditionals optimizers for the compiler
-
   // do not change this, it is searched & replaced
+  // in multiple places to build compiled functions
   ACCEPT_NODE = 'f&&f(N);r[r.length]=N;continue main;',
 
-  // fix for IE gEBTN('*') returning collection with comment nodes
-  SKIP_COMMENTS = BUGGY_GEBTN ? 'if(!/^[A-Za-z]/.test(e.nodeName)){continue;}' : '',
+  // conditionals optimizers used internally by compiler
+
+  // checks if nodeName comparisons need to be uppercased
+  TO_UPPER_CASE = typeof context.createElementNS == 'function' ?
+    '.toUpperCase()' : '',
+
+  // filter IE gEBTN('*') results containing non-elements
+  SKIP_COMMENTS = BUGGY_GEBTN ?
+    'if(!/^[A-Za-z]/.test(e.nodeName)){continue;}' : '',
 
   // use the textContent or innerText property to check CSS3 :contains
   // Safari 2 has a bug with innerText and hidden content, using an
@@ -656,7 +658,7 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.tagName))) {
           // both tagName and nodeName properties may be upper or lower case
           // depending on their creation NAMESPACE in createElementNS()
-          source = 'if(e.nodeName' + NATIVE_TAG_MATCH + '=="' +
+          source = 'if(e.nodeName' + TO_UPPER_CASE + '=="' +
             match[1].toUpperCase() + '"){' + source + '}';
         }
 
@@ -756,7 +758,7 @@ NW.Dom = (function(global) {
                 }
 
                 // shortcut check for of-type selectors
-                type = (match[4] ? '[e.nodeName' + NATIVE_TAG_MATCH + ']' : '')
+                type = (match[4] ? '[e.nodeName' + TO_UPPER_CASE + ']' : '')
 
                 // executed after the count is computed
                 expr = match[2] == 'last' ? 'n' + type + '.length-' + (b - 1) : b;
@@ -775,7 +777,7 @@ NW.Dom = (function(global) {
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
                 source = 'if(e!==h){n=s.getIndexesBy' + (match[4] ? 'NodeName' : 'NodeType') +
-                  '(e.parentNode' + (match[4] ? ',e.nodeName' + NATIVE_TAG_MATCH : '') + ');' +
+                  '(e.parentNode' + (match[4] ? ',e.nodeName' + TO_UPPER_CASE : '') + ');' +
                   'if(n' + type + '[e.' + CSS_INDEX + ']' + test + '){' + source + '}}';
 
               } else {
