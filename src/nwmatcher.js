@@ -998,10 +998,8 @@ NW.Dom = (function(global) {
       return client_api(selector, from, data, callback);
     },
 
-  lastSelector,
-  lastPosition,
-  lastContext,
-  lastSlice,
+  // keep last selector parsing informations
+  lastContext, lastIndex, lastSelector, lastSlice,
 
   // select elements matching selector
   // version using cross-browser client API
@@ -1053,8 +1051,10 @@ NW.Dom = (function(global) {
           // get right most selector token
           parts = selector.match(reSplitToken);
 
-          // position where token was found
-          lastPosition = RegExp.leftContext.length;
+          token = parts[parts.length - 1];
+
+          // position where the last token was found
+          lastIndex = selector.length - token.length;
 
           // only last slice before :not rules
           lastSlice = parts[parts.length - 1].split(':not')[0];
@@ -1081,8 +1081,8 @@ NW.Dom = (function(global) {
             } else {
               from = element;
               //elements = concatList([ element ], byTag('*', element));
-              //selector = selector.substr(0, lastPosition) +
-              //  selector.substr(lastPosition).replace('#' + token, '*');
+              //selector = selector.substr(0, lastIndex) +
+              //  selector.substr(lastIndex).replace('#' + token, '*');
             }
           }
         }
@@ -1093,8 +1093,8 @@ NW.Dom = (function(global) {
           elements = byClass(token, from);
           if (elements.length === 0) return data;
           if (selector == '.' + token) done = true;
-          else selector = selector.substr(0, lastPosition) +
-            selector.substr(lastPosition).replace('.' + token, '*');
+          else selector = selector.substr(0, lastIndex) +
+            selector.substr(lastIndex).replace('.' + token, '*');
         }
 
         // TAG optimization RTL
@@ -1103,8 +1103,8 @@ NW.Dom = (function(global) {
           elements = byTag(token, from);
           if (elements.length === 0) return data;
           if (selector == token) done = true;
-          else selector = selector.substr(0, lastPosition) +
-            selector.substr(lastPosition).replace(token, '*');
+          else selector = selector.substr(0, lastIndex) +
+            selector.substr(lastIndex).replace(token, '*');
         }
 
         // ID optimization LTR
