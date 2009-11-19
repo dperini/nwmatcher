@@ -813,15 +813,15 @@ NW.Dom = (function(global) {
             // CSS3 UI element states
             case 'checked':
               // only radio buttons and check boxes
-              source = 'if("form" in e&&/radio|checkbox/i.test(e.type)&&e.checked===true){' + source + '}';
+              source = 'if("form" in e&&/radio|checkbox/i.test(e.type)&&e.checked){' + source + '}';
               break;
             case 'enabled':
               // does not consider hidden input fields
-              source = 'if((("form" in e&&e.type!=="hidden")||s.isLink(e))&&e.disabled===false){' + source + '}';
+              source = 'if((("form" in e&&e.type!=="hidden")||s.isLink(e))&&"disabled" in e&&!e.disabled){' + source + '}';
               break;
             case 'disabled':
               // does not consider hidden input fields
-              source = 'if((("form" in e&&e.type!=="hidden")||s.isLink(e))&&e.disabled===true){' + source + '}';
+              source = 'if((("form" in e&&e.type!=="hidden")||s.isLink(e))&&"disabled" in e&&e.disabled){' + source + '}';
               break;
 
             // CSS3 target pseudo-class
@@ -847,7 +847,7 @@ NW.Dom = (function(global) {
               source = 'if("hoverElement" in d&&e===d.hoverElement){' + source + '}';
               break;
             case 'focus':
-              source = 'if("form" in e&&e===d.activeElement&&typeof d.hasFocus=="function"&&d.hasFocus()===true){' + source + '}';
+              source = 'if("form" in e&&e===d.activeElement&&typeof d.hasFocus=="function"&&d.hasFocus()){' + source + '}';
               break;
 
             // CSS2 :contains and :selected pseudo-classes
@@ -861,7 +861,7 @@ NW.Dom = (function(global) {
               for (i = 0; n[i]; i++) {
                 n[i].selectedIndex;
               }
-              source = 'if("form" in e&&e.selected===true){' + source + '}';
+              source = 'if("form" in e&&e.selected){' + source + '}';
               break;
 
             default:
