@@ -123,6 +123,7 @@ NW.Dom = (function(global) {
   NATIVE_HAS_ATTRIBUTE = isNative(root, 'hasAttribute'),
 
   // detect if DOM methods are native in browsers
+  NATIVE_FOCUS = isNative(context, 'hasFocus'),
   NATIVE_QSAPI = isNative(context, 'querySelector'),
   NATIVE_GEBID = isNative(context, 'getElementById'),
   NATIVE_GEBTN = isNative(root, 'getElementsByTagName'),
@@ -848,7 +849,7 @@ NW.Dom = (function(global) {
               source = 'if(e===d.hoverElement){' + source + '}';
               break;
             case 'focus':
-              source = typeof base.hasFocus == 'function' ?
+              source = NATIVE_FOCUS ?
                 'if(e.type&&e===d.activeElement&&d.hasFocus()){' + source + '}' :
                 'if(e.type&&e===d.activeElement){' + source + '}';
               break;
