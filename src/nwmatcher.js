@@ -24,14 +24,11 @@ NW.Dom = (function(global) {
   // processing context
   base = global.document,
 
-  // script loading context
-  context = base,
+  // document type node
+  docType = base.doctype,
 
-  // document type node (+DTD)
-  docType = context.doctype,
-
-  // context root element (HTML)
-  root = context.documentElement,
+  // context root element
+  root = base.documentElement,
 
   // current DOM viewport/window, also used to
   // detect Safari 2.0.x [object AbstractView]
@@ -123,9 +120,9 @@ NW.Dom = (function(global) {
   NATIVE_HAS_ATTRIBUTE = isNative(root, 'hasAttribute'),
 
   // detect if DOM methods are native in browsers
-  NATIVE_FOCUS = isNative(context, 'hasFocus'),
-  NATIVE_QSAPI = isNative(context, 'querySelector'),
-  NATIVE_GEBID = isNative(context, 'getElementById'),
+  NATIVE_FOCUS = isNative(base, 'hasFocus'),
+  NATIVE_QSAPI = isNative(base, 'querySelector'),
+  NATIVE_GEBID = isNative(base, 'getElementById'),
   NATIVE_GEBTN = isNative(root, 'getElementsByTagName'),
   NATIVE_GEBCN = isNative(root, 'getElementsByClassName'),
 
@@ -133,14 +130,15 @@ NW.Dom = (function(global) {
   // Opera 9.27 and an id="length" will fold this
   NATIVE_SLICE_PROTO =
     (function() {
-      var isSupported, div = context.createElement('div');
+      var isSupported, div = base.createElement('div');
       try {
-        div.innerHTML = '<div id="length"></div>';
+        div.appendChild(base.createElement('div')).setAttribute('id', 'length');
         root.insertBefore(div, root.firstChild);
         isSupported = slice.call(div.childNodes, 0)[0];
       } catch(e) {
       } finally {
-        root.removeChild(div).innerHTML = '';
+        div.removeChild(div.firstChild);
+        root.removeChild(div);
         div = null;
       }
       return !!isSupported;
@@ -150,11 +148,12 @@ NW.Dom = (function(global) {
 
   BUGGY_GEBID = NATIVE_GEBID ?
     (function() {
-      var isBuggy, div = context.createElement('div');
-      div.innerHTML = '<a name="Z"></a>';
+      var isBuggy, div = base.createElement('div');
+      div.appendChild(base.createElement('a')).setAttribute('name', 'Z');
       root.insertBefore(div, root.firstChild);
       isBuggy = div.ownerDocument.getElementById('Z');
-      root.removeChild(div).innerHTML = '';
+      div.removeChild(div.firstChild);
+      root.removeChild(div);
       div = null;
       return !!isBuggy;
     })() :
@@ -163,10 +162,10 @@ NW.Dom = (function(global) {
   // detect IE gEBTN comment nodes bug
   BUGGY_GEBTN = NATIVE_GEBTN ?
     (function() {
-      var isBuggy, div = context.createElement('div');
-      div.appendChild(context.createComment(''));
+      var isBuggy, div = base.createElement('div');
+      div.appendChild(base.createComment(''));
       isBuggy = div.getElementsByTagName('*')[0];
-      div.innerHTML = '';
+      div.removeChild(div.firstChild); 
       div = null;
       return !!isBuggy;
     })() :
@@ -177,17 +176,21 @@ NW.Dom = (function(global) {
   // tests are based on the jQuery selector test suite
   BUGGY_GEBCN = NATIVE_GEBCN ?
     (function() {
-      var isBuggy, div = context.createElement('div'), test = '\u53f0\u5317';
+      var isBuggy, div = base.createElement('div'), test = '\u53f0\u5317';
 
       // Opera tests
-      div.innerHTML = '<span class="' + test + 'abc ' + test + '"></span><span class="x"></span>';
+      div.appendChild(base.createElement('span')).setAttribute('class', test + 'abc ' + test);
+      div.appendChild(base.createElement('span')).setAttribute('class', 'x');
+
+      // Opera tests
       isBuggy = !div.getElementsByClassName(test)[0];
 
       // Safari test
       div.lastChild.className = test;
       if (!isBuggy) isBuggy = div.getElementsByClassName(test).length !== 2;
 
-      div.innerHTML = '';
+      div.removeChild(div.firstChild); 
+      div.removeChild(div.firstChild); 
       div = null;
       return isBuggy;
     })() :
@@ -195,38 +198,46 @@ NW.Dom = (function(global) {
 
   // check Seletor API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ? (function() {
-    var pattern = [ '!=', ':contains', ':selected' ], div = context.createElement('div');
+    var pattern = [ '!=', ':contains', ':selected' ],
+      div = base.createElement('div'), input;
 
     // WebKit treats case insensitivity correctly with classNames (when no DOCTYPE)
     // obsolete bug https://bugs.webkit.org/show_bug.cgi?id=19047
     // so the bug is in all other browsers code now :-)
     // new specs http://www.whatwg.org/specs/web-apps/current-work/#selectors
-    div.innerHTML = '<b class="X"></b>';
+    div.appendChild(base.createElement('b')).setAttribute('class', 'X');
     if (compatMode == 'BackCompat' && div.querySelector('.x') === null) {
       return { 'test': function() { return true; } };
     }
+    div.removeChild(div.firstChild);
 
     // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
     // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
     // IE8 throws error with these pseudos
-    div.innerHTML = '<input type="hidden">';
+    (input = base.createElement('input')).setAttribute('type', 'hidden');
+    div.appendChild(input);
     try {
-      div.querySelectorAll(':enabled').length === 1 && pattern.push(':enabled', ':disabled');
+      div.querySelectorAll(':enabled').length === 1 &&
+        pattern.push(':enabled', ':disabled');
     } catch(e) { }
+    div.removeChild(div.firstChild);
 
     // :checked bugs whith checkbox fields (Opera 10beta3 bug)
-    div.innerHTML = '<input type="checkbox" checked>';
+    (input = base.createElement('input')).setAttribute('type', 'hidden');
+    div.appendChild(input);
+    input.setAttribute('checked', 'checked');
     try {
-      div.querySelectorAll(':checked').length !== 1 && pattern.push(':checked');
+      div.querySelectorAll(':checked').length !== 1 &&
+        pattern.push(':checked');
     } catch(e) { }
+    div.removeChild(div.firstChild);
 
     // :link bugs with hyperlinks matching (Firefox/Safari)
-    div.innerHTML = '<a href="x"></a>';
+    div.appendChild(base.createElement('a')).setAttribute('href', 'x');
     div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
+    div.removeChild(div.firstChild);
 
-    div.innerHTML = '';
     div = null;
-
     return pattern.length ?
       new RegExp(pattern.join('|')) :
       { 'test': function() { return false; } };
@@ -235,13 +246,15 @@ NW.Dom = (function(global) {
 
   // Safari 2 missing document.compatMode property
   // makes it harder to detect Quirks vs. Strict
-  compatMode = context.compatMode ||
+  compatMode = base.compatMode ||
     (function() {
       var div = document.createElement('div'),
         isStrict = div.style &&
           (div.style.width = 1) &&
           div.style.width != '1px';
+
       div = null;
+
       return !!isStrict ? 'CSS1Compat' : 'BackCompat';
     })(),
 
@@ -417,7 +430,7 @@ NW.Dom = (function(global) {
   byId =
     function(id, from) {
       var i = -1, element, names, node, result;
-      from || (from = context);
+      from || (from = base);
       id = id.replace(/\\/g, '');
       if (from.getElementById) {
         if ((result = from.getElementById(id)) &&
@@ -442,26 +455,25 @@ NW.Dom = (function(global) {
   // @return nodeList (live)
   byTag =
     function(tag, from) {
-      return (from || context).getElementsByTagName(tag);
+      return (from || base).getElementsByTagName(tag);
     },
 
   // elements by name
   // @return array
   byName =
     function(name, from) {
-      return select('[name="' + name.replace(/\\/g, '') + '"]', from || context);
+      return select('[name="' + name.replace(/\\/g, '') + '"]', from || base);
     },
 
   // elements by class
   // @return array
   byClass = !BUGGY_GEBCN ?
     function(className, from) {
-      return (from || context).getElementsByClassName(className.replace(/\\/g, ''));
+      return (from || base).getElementsByClassName(className.replace(/\\/g, ''));
     } :
     function(className, from) {
-      // context is handled in byTag for non native gEBCN
       var i = -1, j = i, results = [ ], element,
-        elements = (from || context).getElementsByTagName('*'),
+        elements = (from || base).getElementsByTagName('*'),
         cn = isClassNameLowered ? className.toLowerCase() : className;
       className = ' ' + cn.replace(/\\/g, '') + ' ';
       while ((element = elements[++i])) {
@@ -577,12 +589,12 @@ NW.Dom = (function(global) {
   // conditionals optimizers used internally by compiler
 
   // checks if nodeName comparisons need to be uppercased
-  TO_UPPER_CASE = typeof context.createElementNS == 'function' ?
+  TO_UPPER_CASE = typeof base.createElementNS == 'function' ?
     '.toUpperCase()' : '',
 
   // filter IE gEBTN('*') results containing non-elements
   SKIP_COMMENTS = BUGGY_GEBTN ?
-    'if(e.nodeName.charCodeAt(0)i<65){continue;}' : '',
+    'if(e.nodeName.charCodeAt(0)<65){continue;}' : '',
 
   // use the textContent or innerText property to check CSS3 :contains
   // Safari 2 has a bug with innerText and hidden content, using an
@@ -591,10 +603,11 @@ NW.Dom = (function(global) {
     'textContent' in root ?
     'e.textContent' :
     (function() {
-      var t = context.createElement('div');
-      t.innerHTML = '<p>p</p>';
-      t.style.display = 'none';
-      return t.innerText.length > 0 ?
+      var div = base.createElement('div'), p;
+      div.appendChild(p = base.createElement('p'));
+      p.appendChild(base.createTextNode('p'));
+      div.style.display = 'none';
+      return div.innerText ?
         'e.innerText' :
         's.stripTags(e.innerHTML)';
     })(),
@@ -1016,7 +1029,7 @@ NW.Dom = (function(global) {
         return native_api(selector, from, data || [ ], callback);
 
       // ensure context is set
-      from || (from = context);
+      from || (from = base);
 
       // extract context if changed
       if (lastContext != from) {
