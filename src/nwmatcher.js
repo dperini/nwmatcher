@@ -751,34 +751,33 @@ NW.Dom = (function(global) {
                   a = 2;
                   b = 1;
                 } else {
-                  // assumes correct "an+b" format
-                  a = match[5].match(/^-/) ? -1 : match[5].match(/^n/) ? 1 : 0;
-                  a = a || ((n = match[5].match(/(-?\d{1,})n/)) ? parseInt(n[1], 10) : 0);
-                  b = 0 || ((n = match[5].match(/(-?\d{1,})$/)) ? parseInt(n[1], 10) : 0);
+                  // assumes correct "an+b" format, "b" before "a" to keep "n" values
+                  b = ((n = match[5].match(/(-?\d{1,})$/)) ? parseInt(n[1], 10) : 0);
+                  a = ((n = match[5].match(/(-?\d{0,})n/)) ? parseInt(n[1], 10) : 0);
+                  if (n && n[1] == '-') a = -1;
                 }
 
-                // shortcut check for of-type selectors
-                type = (match[4] ? '[e.nodeName' + TO_UPPER_CASE + ']' : '')
-
                 // executed after the count is computed
-                expr = match[2] == 'last' ? 'n' + type + '.length-' + (b - 1) : b;
+                type = match[4] ? 'n[e.nodeName' + TO_UPPER_CASE + ']' : 'n';
+                expr = match[2] == 'last' ? type + '.length-' + (b - 1) : b;
 
-                test =
-                  b < 0 ?
-                    a <= 1 ?
-                      '<=' + Math.abs(b) :
-                      '%' + a + '===' + (a + b) :
-                  a > Math.abs(b) ? '%' + a + '===' + b :
-                  a === Math.abs(b) ? '%' + a + '===' + 0 :
-                  a === 0 ? '==' + expr :
-                  a < 0 ? '<=' + b :
-                  a > 0 ? '>=' + b :
-                    '';
+                // shortcut check for of-type selectors
+                type = type + '[e.' + CSS_INDEX + ']';
+
+                // build test expression out of structural pseudo (an+b) parameters
+                // see here: http://www.w3.org/TR/css3-selectors/#nth-child-pseudo 
+                test = b < 1 && a > 1 ? '(' + type + '-(' + b + '))%' + a + '==0' :
+                  a > +1 ? type + '>=' + b + '&&(' + type + '-(' + b + '))%' + a + '==0' :
+                  a < -1 ? type + '<=' + b + '&&(' + type + '-(' + b + '))%' + a + '==0' :
+                  a == 0 ? type + '==' + expr : a == -1 ? type + '<=' + b : type + '>=' + b;
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
-                source = 'if(e!==h){n=s.getIndexesBy' + (match[4] ? 'NodeName' : 'NodeType') +
-                  '(e.parentNode' + (match[4] ? ',e.nodeName' + TO_UPPER_CASE : '') + ');' +
-                  'if(n' + type + '[e.' + CSS_INDEX + ']' + test + '){' + source + '}}';
+                source =
+                  'if(e!==h){' +
+                    'n=s.getIndexesBy' + (match[4] ? 'NodeName' : 'NodeType') +
+                    '(e.parentNode' + (match[4] ? ',e.nodeName' + TO_UPPER_CASE : '') + ');' +
+                    'if(' + test + '){' + source + '}' +
+                  '}';
 
               } else {
                 // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
