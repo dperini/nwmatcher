@@ -835,11 +835,11 @@ NW.Dom = (function(global) {
               break;
             case 'enabled':
               // does not consider hidden input fields
-              source = 'if(((e.type&&e.type!=="hidden")||s.isLink(e))&&!e.disabled){' + source + '}';
+              source = 'if(((e.type&&e.type.toLowerCase()!=="hidden")||s.isLink(e))&&!e.disabled){' + source + '}';
               break;
             case 'disabled':
               // does not consider hidden input fields
-              source = 'if(((e.type&&e.type!=="hidden")||s.isLink(e))&&e.disabled){' + source + '}';
+              source = 'if(((e.type&&e.type.toLowerCase()!=="hidden")||s.isLink(e))&&e.disabled){' + source + '}';
               break;
 
             // CSS3 target pseudo-class
