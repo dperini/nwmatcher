@@ -1051,13 +1051,6 @@ NW.Dom = (function(global) {
         }
       }
 
-      // storage setup
-      data || (data = [ ]);
-
-      // reinitialize indexes
-      indexesByNodeType = { };
-      indexesByNodeName = { };
-
       // pre-filtering pass allow to scale proportionally with big DOM trees;
 
       // commas separators are treated sequentially to maintain order
@@ -1107,7 +1100,7 @@ NW.Dom = (function(global) {
         else if ((parts = lastSlice.match(Optimize.CLASS)) &&
           (token = parts[1])) {
           elements = byClass(token, from);
-          if (elements.length === 0) return data;
+          if (elements.length === 0) return data || [ ];
           if (selector == '.' + token) done = true;
           else selector = selector.substr(0, lastIndex) +
             selector.substr(lastIndex).replace('.' + token, '*');
@@ -1117,7 +1110,7 @@ NW.Dom = (function(global) {
         else if ((parts = lastSlice.match(Optimize.TAG)) &&
           (token = parts[1]) && from.getElementsByTagName) {
           elements = byTag(token, from);
-          if (elements.length === 0) return data;
+          if (elements.length === 0) return data || [ ];
           if (selector == token) done = true;
           else selector = selector.substr(0, lastIndex) +
             selector.substr(lastIndex).replace(token, '*');
@@ -1157,9 +1150,15 @@ NW.Dom = (function(global) {
         }
       }
 
+      if (!done) {
+        // reinitialize indexes
+        indexesByNodeType = { };
+        indexesByNodeName = { };
+      }
+
       return done ?
-        (callback ? concatCall(data, elements, callback) : concatList(data, elements)) :
-        compiledSelectors[selector](elements, snap, data, base, root, from, callback);
+        callback ? concatCall(data || [ ], elements, callback) : concatList(data || [ ], elements) :
+        compiledSelectors[selector](elements, snap, data || [ ], base, root, from, callback);
     },
 
   // use the new native Selector API if available,
