@@ -58,7 +58,7 @@ NW.Dom = (function(global) {
   // split last, right most, selector group token
   reSplitToken = /([^ >+~,\\()[\]]+|\(.*\)|\[.*\]|\\.)+/g,
 
-  // for pseudos, ids and to remove whitespace in excess
+  // for pseudos, ids and in excess whitespace removal
   reClassValue = /([-\w]+)/,
   reIdSelector = /\#([-\w]+)$/,
   reEdgeSpaces = /[\x20\t\n\r\f]/g,
@@ -347,7 +347,8 @@ NW.Dom = (function(global) {
   Optimize = {
     ID: new RegExp("#" + encoding + "|" + skipgroup),
     TAG: new RegExp(TAGS + encoding + "|" + skipgroup),
-    CLASS: new RegExp("\\." + encoding + "|" + skipgroup)
+    CLASS: new RegExp("\\." + encoding + "|" + skipgroup),
+    NAME: /\[\s*name\s*=\s*((["']*)([^'"()]*?)\2)?\s*\]/
   },
 
   // precompiled Regular Expressions
@@ -1026,7 +1027,7 @@ NW.Dom = (function(global) {
   client_api =
     function(selector, from, data, callback) {
 
-      var done, element, elements, parts, token, hasChanged, isSingle;
+      var i, done, element, elements, parts, token, hasChanged, isSingle;
 
       if (RE_SIMPLE_SELECTOR.test(selector))
         return native_api(selector, from, data || [ ], callback);
@@ -1130,6 +1131,20 @@ NW.Dom = (function(global) {
             } else from = element.parentNode;
           }
         }
+
+        else if ((parts = selector.match(Optimize.NAME)) &&
+          (token = parts[1]) && base.getElementsByName) {
+          elements = base.getElementsByName(token);
+          i = -1;
+          data || (data = [ ]);
+          while ((element = elements[++i])) {
+            if (element.getAttribute('name')) {
+              callback && callback(element);
+              data[data.length] = element;
+            }
+          }
+          return data || [ ];
+        }
 
         //else console.log(selector);
 
