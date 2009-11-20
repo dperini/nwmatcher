@@ -47,20 +47,21 @@ NW.Dom = (function(global) {
   // discard invalid chars found in passed selector
   reValidator = /([.:#*\w]|[^\x00-\xa0])/,
 
-  // split comma separated selector groups, exclude commas inside '' "" () []
-  // example: (#div a, ul > li a) group 1 is (#div a) group 2 is (ul > li a)
-  reSplitGroup = /([^,()[\]]+|\([^()]+\)|\(.*\)|\[(?:\[[^[\]]*\]|["'][^'"]*["']|[^'"[\]]+)+\]|\[.*\]|\\.)+/g,
+  // Only five chars can occur in whitespace, they are:
+  // \x20 \t \n \r \f, checks now uniformed in the code
+  // http://www.w3.org/TR/css3-selectors/#selector-syntax
+  reTrimSpaces = /^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g,
+
+  // split comma groups, exclude commas in '' "" () []
+  reSplitGroup = /([^,\\()[\]]+|\(.*\)|\[.*\]|\\.)+/g,
 
   // split last, right most, selector group token
-  reSplitToken = /([^ >+~,\\()[\]]+|\([^()]+\)|\(.*\)|\[[^[\]]+\]|\[.*\]|\\.)+/g,
+  reSplitToken = /([^ >+~,\\()[\]]+|\(.*\)|\[.*\]|\\.)+/g,
 
-  // Only five characters can occur in whitespace, they are:
-  // \x20 \t \n \r \f, checks now uniformed through the code
-  // http://www.w3.org/TR/css3-selectors/#selector-syntax
-
+  // for pseudos, ids and to remove whitespace in excess
   reClassValue = /([-\w]+)/,
   reIdSelector = /\#([-\w]+)$/,
-  reTrimSpaces = /^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g,
+  reEdgeSpaces = /[\x20\t\n\r\f]/g,
 
   /*----------------------------- UTILITY METHODS ----------------------------*/
 
@@ -477,11 +478,10 @@ NW.Dom = (function(global) {
         cn = isClassNameLowered ? className.toLowerCase() : className;
       className = ' ' + cn.replace(/\\/g, '') + ' ';
       while ((element = elements[++i])) {
-        if ((cn = element.className)) {
-          if ((' ' + (isClassNameLowered ? cn.toLowerCase() : cn).
-            replace(/[\t\n\r\f]/g, ' ') + ' ').indexOf(className) > -1) {
-            results[++j] = element;
-          }
+        if ((cn = element.className) && cn.length &&
+          (' ' + (isClassNameLowered ? cn.toLowerCase() : cn).
+          replace(reEdgeSpaces, ' ') + ' ').indexOf(className) > -1) {
+          results[++j] = element;
         }
       }
       return results;
@@ -685,7 +685,7 @@ NW.Dom = (function(global) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a
           // list of whitespace-separated values, see section 6.4 Class selectors
           // and notes at the bottom; explicitly non-normative in this specification.
-          source = 'if((" "+e.className+" ")' +
+          source = 'n=e.className;if(n.length&&(" "+n+" ")' +
             (isClassNameLowered ? '.toLowerCase()' : '') +
             '.replace(/[\\t\\n\\r\\f]/g," ").indexOf(" ' +
             (isClassNameLowered ? match[1].toLowerCase() : match[1]) +
