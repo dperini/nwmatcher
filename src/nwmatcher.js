@@ -731,13 +731,13 @@ NW.Dom = (function(global) {
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'if(e!==g&&(e=e.parentNode)&&e.nodeName.charCodeAt(0)>64){' + source + '}';
+          source = 'if(e!==g&&(e=e.parentNode)){' + source + '}';
         }
 
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'while(e!==g&&(e=e.parentNode)&&e.nodeName.charCodeAt(0)>64){' + source + '}';
+          source = 'while(e!==g&&(e=e.parentNode)){' + source + '}';
         }
 
         // *** Structural pseudo-classes
