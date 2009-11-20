@@ -623,19 +623,22 @@ NW.Dom = (function(global) {
         while ((token = parts[++i])) {
           token = token.replace(reTrimSpaces, '');
           // avoid repeating the same token in comma separated group (p, p)
-          if (!seen[token]) source += 'e=N;' + compileSelector(token, mode ? ACCEPT_NODE : 'return true;');
+          if (!seen[token]) {
+            source += i > 0 ? 'e=N;' : '';
+            source += compileSelector(token, mode ? ACCEPT_NODE : 'return true;');
+          }
           seen[token] = true;
         }
       }
       if (mode) {
         // for select method
         return new Function('c,s,r,d,h,g,f',
-          'var n,N,x=0,k=0,e;main:while(N=e=c[k++]){' +
+          'var n,x=0,N,k=0,e;main:while(N=e=c[k++]){' +
           SKIP_COMMENTS + source + '}return r;');
       } else {
         // for match method
         return new Function('e,s,r,d,h,g,f',
-          'var n,N,x=0;N=e;' + source + 'return false;');
+          'var n,x=0,N=e;' + source + 'return false;');
       }
     },
 
@@ -974,7 +977,7 @@ NW.Dom = (function(global) {
     },
 
   // select elements matching selector
-  // version using new Selector API
+  // using new Query Selector API
   // @return array
   select_qsa =
     function(selector, from, data, callback) {
@@ -1018,7 +1021,7 @@ NW.Dom = (function(global) {
   lastContext, lastIndex, lastSelector, lastSlice,
 
   // select elements matching selector
-  // version using cross-browser client API
+  // using cross-browser client API
   // @return array
   client_api =
     function(selector, from, data, callback) {
@@ -1142,7 +1145,7 @@ NW.Dom = (function(global) {
         if (isSingle) {
           compiledSelectors[selector] =
             new Function('c,s,r,d,h,g,f',
-              'var n,N,x=0,k=0,e;main:while(N=e=c[k++]){' +
+              'var n,x=0,N,k=0,e;main:while(N=e=c[k++]){' +
               SKIP_COMMENTS + compileSelector(selector, ACCEPT_NODE) +
               '}return r;');
         } else {
