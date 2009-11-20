@@ -53,10 +53,10 @@ NW.Dom = (function(global) {
   reTrimSpaces = /^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g,
 
   // split comma groups, exclude commas in '' "" () []
-  reSplitGroup = /([^,\\()[\]]+|\(.*\)|\[.*\]|\\.)+/g,
+  reSplitGroup = /([^,\\()[\]]+|\([^()]+\)|\(.*\)|\[(?:\[[^[\]]*\]|["'][^'"]*["']|[^'"[\]]+)+\]|\[.*\]|\\.)+/g,
 
   // split last, right most, selector group token
-  reSplitToken = /([^ >+~,\\()[\]]+|\(.*\)|\[.*\]|\\.)+/g,
+  reSplitToken = /([^ >+~,\\()[\]]+|\([^()]+\)|\(.*\)|\[[^[\]]+\]|\[.*\]|\\.)+/g,
 
   // for pseudos, ids and in excess whitespace removal
   reClassValue = /([-\w]+)/,
