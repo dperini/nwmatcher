@@ -686,7 +686,7 @@ NW.Dom = (function(global) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a
           // list of whitespace-separated values, see section 6.4 Class selectors
           // and notes at the bottom; explicitly non-normative in this specification.
-          source = 'n=e.className;if(n.length&&(" "+n+" ")' +
+          source = 'n=e.className;if(n&&n.length&&(" "+n+" ")' +
             (isClassNameLowered ? '.toLowerCase()' : '') +
             '.replace(/[\\t\\n\\r\\f]/g," ").indexOf(" ' +
             (isClassNameLowered ? match[1].toLowerCase() : match[1]) +
