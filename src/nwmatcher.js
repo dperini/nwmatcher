@@ -484,7 +484,7 @@ NW.Dom = (function(global) {
         indexes = { };
         node = element.firstChild;
         while (node) {
-          if (/^[A-Za-z]/.test(node.nodeName)) {
+          if (node.nodeName.charCodeAt(0) > 64) {
             indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
           }
           node = node.nextSibling;
@@ -581,7 +581,7 @@ NW.Dom = (function(global) {
 
   // filter IE gEBTN('*') results containing non-elements
   SKIP_COMMENTS = BUGGY_GEBTN ?
-    'if(!/^[A-Za-z]/.test(e.nodeName)){continue;}' : '',
+    'if(e.nodeName.charCodeAt(0)i<65){continue;}' : '',
 
   // use the textContent or innerText property to check CSS3 :contains
   // Safari 2 has a bug with innerText and hidden content, using an
@@ -700,7 +700,7 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.adjacent))) {
           source = NATIVE_TRAVERSAL_API ?
             'if((e=e.previousElementSibling)){' + source + '}' :
-            'while((e=e.previousSibling)){if(e.nodeType==1){' + source + 'break;}}';
+            'while((e=e.previousSibling)){if(e.nodeName.charCodeAt(0)>64){' + source + 'break;}}';
         }
 
         // *** General sibling combinator
@@ -708,19 +708,19 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.relative))) {
           source = NATIVE_TRAVERSAL_API ?
             'while((e=e.previousElementSibling)){' + source + '}' :
-            'while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}';
+            'while((e=e.previousSibling)){if(e.nodeName.charCodeAt(0)>64){' + source + '}}';
         }
 
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'if(e!==g&&(e=e.parentNode)&&e.nodeType==1){' + source + '}';
+          source = 'if(e!==g&&(e=e.parentNode)&&e.nodeName.charCodeAt(0)>64){' + source + '}';
         }
 
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'while(e!==g&&(e=e.parentNode)&&e.nodeType==1){' + source + '}';
+          source = 'while(e!==g&&(e=e.parentNode)&&e.nodeName.charCodeAt(0)>64){' + source + '}';
         }
 
         // *** Structural pseudo-classes
@@ -785,7 +785,7 @@ NW.Dom = (function(global) {
                 n = match[2] == 'only' ? 'previous' : 'next';
                 b = match[2] == 'first' || match[2] == 'last';
 
-                type = match[4] ? '&&n.nodeName!=e.nodeName' : '&&!/^[A-Za-z]/i.test(n.nodeName)';
+                type = match[4] ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName.charCodeAt(0)<65';
 
                 source = 'if(e!==h){' +
                   ( 'n=e;while((n=n.' + a + 'Sibling)' + type + ');if(!n){' + (b ? source :
@@ -917,7 +917,8 @@ NW.Dom = (function(global) {
   match =
     function(element, selector, from, data, callback) {
       // make sure an element node was passed
-      if (element && element.nodeType == 1) {
+      if (element && element.nodeType == 1 &&
+        element.nodeName.charCodeAt(0)>64) {
         if (typeof selector == 'string' && selector.length) {
           base = element.ownerDocument;
           root = base.documentElement;
