@@ -61,7 +61,7 @@ NW.Dom = (function(global) {
   // for pseudos, ids and in excess whitespace removal
   reClassValue = /([-\w]+)/,
   reIdSelector = /\#([-\w]+)$/,
-  reEdgeSpaces = /[\x20\t\n\r\f]/g,
+  reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
   /*----------------------------- UTILITY METHODS ----------------------------*/
 
@@ -481,7 +481,7 @@ NW.Dom = (function(global) {
       while ((element = elements[++i])) {
         if ((cn = element.className) && cn.length &&
           (' ' + (isClassNameLowered ? cn.toLowerCase() : cn).
-          replace(reEdgeSpaces, ' ') + ' ').indexOf(className) > -1) {
+          replace(reWhiteSpaces, ' ') + ' ').indexOf(className) > -1) {
           results[++j] = element;
         }
       }
