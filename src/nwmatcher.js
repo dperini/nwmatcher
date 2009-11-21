@@ -479,9 +479,9 @@ NW.Dom = (function(global) {
         cn = isClassNameLowered ? className.toLowerCase() : className;
       className = ' ' + cn.replace(/\\/g, '') + ' ';
       while ((element = elements[++i])) {
-        if ((cn = element.className) && cn.length &&
+        if ((cn = element.getAttribute('class')) && cn.length &&
           (' ' + (isClassNameLowered ? cn.toLowerCase() : cn).
-          replace(reWhiteSpaces, ' ') + ' ').indexOf(className) > -1) {
+          replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
           results[++j] = element;
         }
       }
