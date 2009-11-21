@@ -1134,17 +1134,17 @@ NW.Dom = (function(global) {
 
         else if ((parts = selector.match(Optimize.NAME)) &&
           (token = parts[1]) && base.getElementsByName) {
-          elements = base.getElementsByName(token);
-          i = -1;
+          elements = base.getElementsByName(token);
+          i = -1;
           data || (data = [ ]);
-          while ((element = elements[++i])) {
-            if (element.getAttribute('name')) {
-              callback && callback(element);
-              data[data.length] = element;
-            }
-          }
-          return data || [ ];
-        }
+          while ((element = elements[++i])) {
+            if (element.getAttribute('name')) {
+              callback && callback(element);
+              data[data.length] = element;
+            }
+          }
+          return data;
+        }
 
         //else console.log(selector);
 
