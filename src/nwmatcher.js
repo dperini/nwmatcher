@@ -22,17 +22,17 @@ NW.Dom = (function(global) {
   var version = 'nwmatcher-1.2.0',
 
   // processing context
-  base = global.document,
+  doc = global.document,
 
   // document type node
-  docType = base.doctype,
+  docType = doc.doctype,
 
   // context root element
-  root = base.documentElement,
+  root = doc.documentElement,
 
   // current DOM viewport/window, also used to
   // detect Safari 2.0.x [object AbstractView]
-  view = base.defaultView || base.parentWindow,
+  view = doc.defaultView || doc.parentWindow,
 
   // http://www.w3.org/TR/css3-syntax/#characters
   // unicode/ISO 10646 characters 161 and higher
@@ -121,9 +121,9 @@ NW.Dom = (function(global) {
   NATIVE_HAS_ATTRIBUTE = isNative(root, 'hasAttribute'),
 
   // detect if DOM methods are native in browsers
-  NATIVE_FOCUS = isNative(base, 'hasFocus'),
-  NATIVE_QSAPI = isNative(base, 'querySelector'),
-  NATIVE_GEBID = isNative(base, 'getElementById'),
+  NATIVE_FOCUS = isNative(doc, 'hasFocus'),
+  NATIVE_QSAPI = isNative(doc, 'querySelector'),
+  NATIVE_GEBID = isNative(doc, 'getElementById'),
   NATIVE_GEBTN = isNative(root, 'getElementsByTagName'),
   NATIVE_GEBCN = isNative(root, 'getElementsByClassName'),
 
@@ -131,9 +131,9 @@ NW.Dom = (function(global) {
   // Opera 9.27 and an id="length" will fold this
   NATIVE_SLICE_PROTO =
     (function() {
-      var isSupported, div = base.createElement('div');
+      var isSupported, div = doc.createElement('div');
       try {
-        div.appendChild(base.createElement('div')).setAttribute('id', 'length');
+        div.appendChild(doc.createElement('div')).setAttribute('id', 'length');
         root.insertBefore(div, root.firstChild);
         isSupported = slice.call(div.childNodes, 0)[0];
       } catch(e) {
@@ -149,8 +149,8 @@ NW.Dom = (function(global) {
 
   BUGGY_GEBID = NATIVE_GEBID ?
     (function() {
-      var isBuggy, div = base.createElement('div');
-      div.appendChild(base.createElement('a')).setAttribute('name', 'Z');
+      var isBuggy, div = doc.createElement('div');
+      div.appendChild(doc.createElement('a')).setAttribute('name', 'Z');
       root.insertBefore(div, root.firstChild);
       isBuggy = div.ownerDocument.getElementById('Z');
       div.removeChild(div.firstChild);
@@ -163,8 +163,8 @@ NW.Dom = (function(global) {
   // detect IE gEBTN comment nodes bug
   BUGGY_GEBTN = NATIVE_GEBTN ?
     (function() {
-      var isBuggy, div = base.createElement('div');
-      div.appendChild(base.createComment(''));
+      var isBuggy, div = doc.createElement('div');
+      div.appendChild(doc.createComment(''));
       isBuggy = div.getElementsByTagName('*')[0];
       div.removeChild(div.firstChild);
       div = null;
@@ -177,11 +177,11 @@ NW.Dom = (function(global) {
   // tests are based on the jQuery selector test suite
   BUGGY_GEBCN = NATIVE_GEBCN ?
     (function() {
-      var isBuggy, div = base.createElement('div'), test = '\u53f0\u5317';
+      var isBuggy, div = doc.createElement('div'), test = '\u53f0\u5317';
 
       // Opera tests
-      div.appendChild(base.createElement('span')).setAttribute('class', test + 'abc ' + test);
-      div.appendChild(base.createElement('span')).setAttribute('class', 'x');
+      div.appendChild(doc.createElement('span')).setAttribute('class', test + 'abc ' + test);
+      div.appendChild(doc.createElement('span')).setAttribute('class', 'x');
 
       // Opera tests
       isBuggy = !div.getElementsByClassName(test)[0];
@@ -200,13 +200,13 @@ NW.Dom = (function(global) {
   // check Seletor API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ? (function() {
     var pattern = [ '!=', ':contains', ':selected' ],
-      div = base.createElement('div'), input;
+      div = doc.createElement('div'), input;
 
     // WebKit treats case insensitivity correctly with classNames (when no DOCTYPE)
     // obsolete bug https://bugs.webkit.org/show_bug.cgi?id=19047
     // so the bug is in all other browsers code now :-)
     // new specs http://www.whatwg.org/specs/web-apps/current-work/#selectors
-    div.appendChild(base.createElement('b')).setAttribute('class', 'X');
+    div.appendChild(doc.createElement('b')).setAttribute('class', 'X');
     if (compatMode == 'BackCompat' && div.querySelector('.x') === null) {
       return { 'test': function() { return true; } };
     }
@@ -215,7 +215,7 @@ NW.Dom = (function(global) {
     // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
     // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
     // IE8 throws error with these pseudos
-    (input = base.createElement('input')).setAttribute('type', 'hidden');
+    (input = doc.createElement('input')).setAttribute('type', 'hidden');
     div.appendChild(input);
     try {
       div.querySelectorAll(':enabled').length === 1 &&
@@ -224,7 +224,7 @@ NW.Dom = (function(global) {
     div.removeChild(div.firstChild);
 
     // :checked bugs whith checkbox fields (Opera 10beta3 bug)
-    (input = base.createElement('input')).setAttribute('type', 'hidden');
+    (input = doc.createElement('input')).setAttribute('type', 'hidden');
     div.appendChild(input);
     input.setAttribute('checked', 'checked');
     try {
@@ -234,7 +234,7 @@ NW.Dom = (function(global) {
     div.removeChild(div.firstChild);
 
     // :link bugs with hyperlinks matching (Firefox/Safari)
-    div.appendChild(base.createElement('a')).setAttribute('href', 'x');
+    div.appendChild(doc.createElement('a')).setAttribute('href', 'x');
     div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
     div.removeChild(div.firstChild);
 
@@ -247,7 +247,7 @@ NW.Dom = (function(global) {
 
   // Safari 2 missing document.compatMode property
   // makes it harder to detect Quirks vs. Strict
-  compatMode = base.compatMode ||
+  compatMode = doc.compatMode ||
     (function() {
       var div = document.createElement('div'),
         isStrict = div.style &&
@@ -432,7 +432,7 @@ NW.Dom = (function(global) {
   byId =
     function(id, from) {
       var i = -1, element, names, node, result;
-      from || (from = base);
+      from || (from = doc);
       id = id.replace(/\\/g, '');
       if (from.getElementById) {
         if ((result = from.getElementById(id)) &&
@@ -457,25 +457,25 @@ NW.Dom = (function(global) {
   // @return nodeList (live)
   byTag =
     function(tag, from) {
-      return (from || base).getElementsByTagName(tag);
+      return (from || doc).getElementsByTagName(tag);
     },
 
   // elements by name
   // @return array
   byName =
     function(name, from) {
-      return select('[name="' + name.replace(/\\/g, '') + '"]', from || base);
+      return select('[name="' + name.replace(/\\/g, '') + '"]', from || doc);
     },
 
   // elements by class
   // @return array
   byClass = !BUGGY_GEBCN ?
     function(className, from) {
-      return (from || base).getElementsByClassName(className.replace(/\\/g, ''));
+      return (from || doc).getElementsByClassName(className.replace(/\\/g, ''));
     } :
     function(className, from) {
       var i = -1, j = i, results = [ ], element,
-        elements = (from || base).getElementsByTagName('*'),
+        elements = (from || doc).getElementsByTagName('*'),
         cn = isClassNameLowered ? className.toLowerCase() : className;
       className = ' ' + cn.replace(/\\/g, '') + ' ';
       while ((element = elements[++i])) {
@@ -590,7 +590,7 @@ NW.Dom = (function(global) {
   // conditionals optimizers used internally by compiler
 
   // checks if nodeName comparisons need to be uppercased
-  TO_UPPER_CASE = typeof base.createElementNS == 'function' ?
+  TO_UPPER_CASE = typeof doc.createElementNS == 'function' ?
     '.toUpperCase()' : '',
 
   // filter IE gEBTN('*') results containing non-elements
@@ -604,9 +604,9 @@ NW.Dom = (function(global) {
     'textContent' in root ?
     'e.textContent' :
     (function() {
-      var div = base.createElement('div'), p;
-      div.appendChild(p = base.createElement('p'));
-      p.appendChild(base.createTextNode('p'));
+      var div = doc.createElement('div'), p;
+      div.appendChild(p = doc.createElement('p'));
+      p.appendChild(doc.createTextNode('p'));
       div.style.display = 'none';
       return div.innerText ?
         'e.innerText' :
@@ -845,7 +845,7 @@ NW.Dom = (function(global) {
 
             // CSS3 target pseudo-class
             case 'target':
-              n = base.location.hash;
+              n = doc.location.hash;
               source = 'if(e.id=="' + n + '"&&e.href!=void 0){' + source + '}';
               break;
 
@@ -878,7 +878,7 @@ NW.Dom = (function(global) {
               break;
             case 'selected':
               // fix Safari selectedIndex property bug
-              n = base.getElementsByTagName('select');
+              n = doc.getElementsByTagName('select');
               for (i = 0; n[i]; i++) {
                 n[i].selectedIndex;
               }
@@ -938,14 +938,14 @@ NW.Dom = (function(global) {
       if (element && element.nodeType == 1 &&
         element.nodeName.charCodeAt(0)>64) {
         if (typeof selector == 'string' && selector.length) {
-          base = element.ownerDocument;
-          root = base.documentElement;
+          doc = element.ownerDocument;
+          root = doc.documentElement;
           // save compiled matchers
           if (!compiledMatchers[selector]) {
             compiledMatchers[selector] = compileGroup(selector, '', false);
           }
           // result of compiled matcher
-          return compiledMatchers[selector](element, snap, data, base, root, from || base, callback);
+          return compiledMatchers[selector](element, snap, data, doc, root, from || doc, callback);
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
         }
@@ -992,7 +992,7 @@ NW.Dom = (function(global) {
 
         var elements;
         try {
-          elements = (from || base).querySelectorAll(selector);
+          elements = (from || doc).querySelectorAll(selector);
         } catch(e) { }
 
         if (elements) {
@@ -1033,14 +1033,14 @@ NW.Dom = (function(global) {
         return native_api(selector, from, data || [ ], callback);
 
       // ensure context is set
-      from || (from = base);
+      from || (from = doc);
 
       // extract context if changed
       if (lastContext != from) {
         // save passed context
         lastContext = from;
         // reference context ownerDocument and document root (HTML)
-        root = (base = from.ownerDocument || from).documentElement;
+        root = (doc = from.ownerDocument || from).documentElement;
       }
 
       if (hasChanged = lastSelector != selector) {
@@ -1075,7 +1075,7 @@ NW.Dom = (function(global) {
 
         // reduce selection context
         if ((parts = selector.match(Optimize.ID))) {
-          if ((element = base.getElementById(parts[1]))) {
+          if ((element = doc.getElementById(parts[1]))) {
             //from = element.parentNode;
             if (!/[>+~]/.test(selector)) {
               selector = selector.replace('#' + token, '*');
@@ -1086,8 +1086,8 @@ NW.Dom = (function(global) {
 
         // ID optimization RTL
         if ((parts = lastSlice.match(Optimize.ID)) &&
-          (token = parts[1]) && base.getElementById) {
-          if ((element = byId(token, base))) {
+          (token = parts[1]) && doc.getElementById) {
+          if ((element = byId(token, doc))) {
             if (match(element, selector)) {
               elements = [ element ];
               done = true;
@@ -1122,8 +1122,8 @@ NW.Dom = (function(global) {
 
         // ID optimization LTR
         else if ((parts = selector.match(Optimize.ID)) &&
-          (token = parts[1]) && base.getElementById) {
-          if ((element = byId(token, base))) {
+          (token = parts[1]) && doc.getElementById) {
+          if ((element = byId(token, doc))) {
             //from = element.parentNode;
             if (!/[>+~]/.test(selector)) {
               selector = selector.replace('#' + token, '*');
@@ -1133,8 +1133,8 @@ NW.Dom = (function(global) {
         }
 
         else if ((parts = selector.match(Optimize.NAME)) &&
-          (token = parts[1]) && base.getElementsByName) {
-          elements = base.getElementsByName(token);
+          (token = parts[1]) && doc.getElementsByName) {
+          elements = doc.getElementsByName(token);
           i = -1;
           data || (data = [ ]);
           while ((element = elements[++i])) {
@@ -1176,7 +1176,7 @@ NW.Dom = (function(global) {
 
       return done ?
         callback ? concatCall(data || [ ], elements, callback) : concatList(data || [ ], elements) :
-        compiledSelectors[selector](elements, snap, data || [ ], base, root, from, callback);
+        compiledSelectors[selector](elements, snap, data || [ ], doc, root, from, callback);
     },
 
   // use the new native Selector API if available,
