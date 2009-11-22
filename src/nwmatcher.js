@@ -45,7 +45,7 @@ NW.Dom = (function(global) {
   skipgroup = '(?:\\[.*\\]|\\(.*\\))',
 
   // discard invalid chars found in passed selector
-  reValidator = /([.:#*\w]|[^\x00-\xa0])/,
+  reValidator = /^([.:#*]|[>+~a-zA-Z]|[^\x00-\xa0]|\[.*\])/,
 
   // Only five chars can occur in whitespace, they are:
   // \x20 \t \n \r \f, checks now uniformed in the code
@@ -62,6 +62,9 @@ NW.Dom = (function(global) {
   reClassValue = /([-\w]+)/,
   reIdSelector = /\#([-\w]+)$/,
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
+
+  reLeftContext = /^\s*[>+~]+/,
+  reRightContext = /[>+~]+\s*$/,
 
   /*----------------------------- UTILITY METHODS ----------------------------*/
 
@@ -1031,6 +1034,18 @@ NW.Dom = (function(global) {
 
       if (RE_SIMPLE_SELECTOR.test(selector))
         return native_api(selector, from, data || [ ], callback);
+
+      // add left context if missing
+      if (reLeftContext.test(selector))
+        selector = !from ?
+          '*' + selector :
+          from.id ?
+            '#' + from.id + selector :
+            selector;
+
+      // add right context if missing
+      if (reRightContext.test(selector))
+        selector = selector + '*';
 
       // ensure context is set
       from || (from = doc);
