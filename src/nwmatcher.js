@@ -166,7 +166,7 @@ NW.Dom = (function(global) {
       var isBuggy, div = base.createElement('div');
       div.appendChild(base.createComment(''));
       isBuggy = div.getElementsByTagName('*')[0];
-      div.removeChild(div.firstChild); 
+      div.removeChild(div.firstChild);
       div = null;
       return !!isBuggy;
     })() :
@@ -190,8 +190,8 @@ NW.Dom = (function(global) {
       div.lastChild.className = test;
       if (!isBuggy) isBuggy = div.getElementsByClassName(test).length !== 2;
 
-      div.removeChild(div.firstChild); 
-      div.removeChild(div.firstChild); 
+      div.removeChild(div.firstChild);
+      div.removeChild(div.firstChild);
       div = null;
       return isBuggy;
     })() :
@@ -594,7 +594,7 @@ NW.Dom = (function(global) {
     '.toUpperCase()' : '',
 
   // filter IE gEBTN('*') results containing non-elements
-  SKIP_COMMENTS = BUGGY_GEBTN ?
+  SKIP_NON_ELEMENTS = BUGGY_GEBTN ?
     'if(e.nodeName.charCodeAt(0)<65){continue;}' : '',
 
   // use the textContent or innerText property to check CSS3 :contains
@@ -635,7 +635,7 @@ NW.Dom = (function(global) {
         // for select method
         return new Function('c,s,r,d,h,g,f',
           'var n,x=0,N,k=0,e;main:while(N=e=c[k++]){' +
-          SKIP_COMMENTS + source + '}return r;');
+          SKIP_NON_ELEMENTS + source + '}return r;');
       } else {
         // for match method
         return new Function('e,s,r,d,h,g,f',
@@ -783,7 +783,7 @@ NW.Dom = (function(global) {
                 type = type + '[e.' + CSS_INDEX + ']';
 
                 // build test expression out of structural pseudo (an+b) parameters
-                // see here: http://www.w3.org/TR/css3-selectors/#nth-child-pseudo 
+                // see here: http://www.w3.org/TR/css3-selectors/#nth-child-pseudo
                 test = b < 1 && a > 1 ? '(' + type + '-(' + b + '))%' + a + '==0' :
                   a > +1 ? type + '>=' + b + '&&(' + type + '-(' + b + '))%' + a + '==0' :
                   a < -1 ? type + '<=' + b + '&&(' + type + '-(' + b + '))%' + a + '==0' :
@@ -1161,7 +1161,7 @@ NW.Dom = (function(global) {
           compiledSelectors[selector] =
             new Function('c,s,r,d,h,g,f',
               'var n,x=0,N,k=0,e;main:while(N=e=c[k++]){' +
-              SKIP_COMMENTS + compileSelector(selector, ACCEPT_NODE) +
+              SKIP_NON_ELEMENTS + compileSelector(selector, ACCEPT_NODE) +
               '}return r;');
         } else {
           compiledSelectors[selector] = compileGroup(selector, '', true);
