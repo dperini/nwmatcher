@@ -434,26 +434,32 @@ NW.Dom = (function(global) {
   // @return element reference or null
   byId =
     function(id, from) {
-      var i = -1, element, names, node, result;
+      var i = -1, element, elements, names, node;
       from || (from = doc);
       id = id.replace(/\\/g, '');
       if (from.getElementById) {
-        if ((result = from.getElementById(id)) &&
-          id != getAttribute(result, 'id') && from.getElementsByName) {
+        if ((element = from.getElementById(id)) &&
+          id != getAttribute(element, 'id') && from.getElementsByName) {
           names = from.getElementsByName(id);
-          result = null;
           while ((element = names[++i])) {
             if ((node = element.getAttributeNode('id')) &&
               node.value == id) {
-              result = element;
-              break;
+              return element;
             }
           }
+          return null;
         }
-      } else {
-        result = select('[id="' + id + '"]', from)[0] || null;
+        return element;
       }
-      return result;
+
+      // fallback to manual
+      elements = byTag('*', from);
+      while ((element = elements[++i])) {
+        if (element.getAttribute('id') == id) {
+          return element;
+        }
+      }
+      return null;
     },
 
   // elements by tag
