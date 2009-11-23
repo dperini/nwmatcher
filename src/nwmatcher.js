@@ -1127,35 +1127,30 @@ NW.Dom = (function(global) {
         }
 
         // CLASS optimization RTL
-        else if ((parts = lastSlice.match(Optimize.CLASS)) &&
-          (token = parts[1])) {
-          elements = byClass(token, from);
-          if (elements.length === 0) return data || [ ];
+        else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
+          if ((elements = byClass(token, from)).length === 0) return data || [ ];
           if (selector == '.' + token) done = true;
           else selector = selector.substr(0, lastIndex) +
             selector.substr(lastIndex).replace('.' + token, '*');
         }
 
         // TAG optimization RTL
-        else if ((parts = lastSlice.match(Optimize.TAG)) &&
-          (token = parts[1]) && from.getElementsByTagName) {
-          elements = byTag(token, from);
-          if (elements.length === 0) return data || [ ];
+        else if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
+          if ((elements = byTag(token, from)).length === 0) return data || [ ];
           if (selector == token) done = true;
           else selector = selector.substr(0, lastIndex) +
             selector.substr(lastIndex).replace(token, '*');
         }
 
         // ID optimization LTR
-        else if ((parts = selector.match(Optimize.ID)) &&
-          (token = parts[1]) && doc.getElementById) {
+        else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
           if ((element = byId(token, doc))) {
-            //from = element.parentNode;
-            if (!/[>+~]/.test(selector)) {
+            if (/[>+~]/.test(selector)) from = element.parentNode;
+            else {
               selector = selector.replace('#' + token, '*');
               from = element;
-            } else from = element.parentNode;
-          }
+            }
+          } else return data || [ ];
         }
 
         else if ((parts = selector.match(Optimize.NAME)) &&
