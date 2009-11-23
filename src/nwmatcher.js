@@ -1090,14 +1090,13 @@ NW.Dom = (function(global) {
         if (hasChanged) {
           // get right most selector token
           parts = selector.match(reSplitToken);
-
           token = parts[parts.length - 1];
+
+          // only last slice before :not rules
+          lastSlice = token.split(':not')[0];
 
           // position where the last token was found
           lastIndex = selector.length - token.length;
-
-          // only last slice before :not rules
-          lastSlice = parts[parts.length - 1].split(':not')[0];
         }
 
         // reduce selection context
