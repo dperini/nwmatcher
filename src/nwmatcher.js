@@ -262,6 +262,12 @@ NW.Dom = (function(global) {
       return !!isStrict ? 'CSS1Compat' : 'BackCompat';
     })(),
 
+  // XML works in W3C browsers
+  isXML = !!doc.xmlVersion,
+
+  // detect Quirks/Strict mode
+  isQuirks = compatMode.indexOf('CSS') > -1 ? false : true,
+
   // matches simple id, tagname & classname selectors
   RE_SIMPLE_SELECTOR = BUGGY_GEBTN || BUGGY_GEBCN ?
     /^#?[-\w]+$/ : /^[.#*]?[-\w]*$/,
@@ -282,7 +288,7 @@ NW.Dom = (function(global) {
   // http://www.whatwg.org/specs/web-apps/current-work/#selectors
   HTML_TABLE = {
     // class attribute must be treated case-insensitive in HTML quirks mode
-    'class': compatMode.indexOf('CSS') > -1 ? 0 : 1,
+    'class': isQuirks ? 0 : 1,
     'accept': 1, 'accept-charset': 1, 'align': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'checked': 1, 'clear': 1, 'codetype': 1, 'color': 1,
     'compact': 1, 'declare': 1, 'defer': 1, 'dir': 1, 'direction': 1, 'disabled': 1,
@@ -306,9 +312,6 @@ NW.Dom = (function(global) {
 
   INSENSITIVE_TABLE = docType && docType.systemId && docType.systemId.indexOf('xhtml') > -1 ?
     XHTML_TABLE : HTML_TABLE,
-
-  // shortcut for the frequently checked case sensitivity of the class attribute
-  isClassNameLowered = INSENSITIVE_TABLE['class'],
 
   // placeholder to add functionalities
   Selectors = {
@@ -485,11 +488,11 @@ NW.Dom = (function(global) {
     function(className, from) {
       var i = -1, j = i, results = [ ], element,
         elements = (from || doc).getElementsByTagName('*'),
-        cn = isClassNameLowered ? className.toLowerCase() : className;
+        cn = isQuirks ? className.toLowerCase() : className;
       className = ' ' + cn.replace(/\\/g, '') + ' ';
       while ((element = elements[++i])) {
         if ((cn = element.getAttribute('class')) && cn.length &&
-          (' ' + (isClassNameLowered ? cn.toLowerCase() : cn).
+          (' ' + (isQuirks ? cn.toLowerCase() : cn).
           replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
           results[++j] = element;
         }
@@ -696,9 +699,9 @@ NW.Dom = (function(global) {
           // list of whitespace-separated values, see section 6.4 Class selectors
           // and notes at the bottom; explicitly non-normative in this specification.
           source = 'n=e.className;if(n&&n.length&&(" "+n+" ")' +
-            (isClassNameLowered ? '.toLowerCase()' : '') +
+            (isQuirks ? '.toLowerCase()' : '') +
             '.replace(/[\\t\\n\\r\\f]/g," ").indexOf(" ' +
-            (isClassNameLowered ? match[1].toLowerCase() : match[1]) +
+            (isQuirks ? match[1].toLowerCase() : match[1]) +
             ' ")>-1){' + source + '}';
         }
 
