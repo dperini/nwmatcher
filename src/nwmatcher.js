@@ -34,6 +34,12 @@ NW.Dom = (function(global) {
   // detect Safari 2.0.x [object AbstractView]
   view = doc.defaultView || doc.parentWindow,
 
+  // persist last selector parsing data
+  lastIndex, lastSelector, lastSlice,
+
+  // initialize to current loading context
+  lastContext = doc,
+
   // http://www.w3.org/TR/css3-syntax/#characters
   // unicode/ISO 10646 characters 161 and higher
   // NOTE: Safari 2.0.x crashes with escaped (\\)
@@ -256,9 +262,7 @@ NW.Dom = (function(global) {
         isStrict = div.style &&
           (div.style.width = 1) &&
           div.style.width != '1px';
-
       div = null;
-
       return !!isStrict ? 'CSS1Compat' : 'BackCompat';
     })(),
 
@@ -1030,9 +1034,6 @@ NW.Dom = (function(global) {
       // fall back to NWMatcher select
       return client_api(selector, from, data, callback);
     },
-
-  // keep last selector parsing informations
-  lastContext, lastIndex, lastSelector, lastSlice,
 
   // select elements matching selector
   // using cross-browser client API
