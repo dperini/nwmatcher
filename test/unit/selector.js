@@ -178,30 +178,24 @@ test("child and adjacent", function() {
 	t( "Nth-child", "#main form#form > *:nth-child(2)", ["text1"] );
 	t( "Nth-child", "#main form#form > :nth-child(2)", ["text1"] );
 
-	var first = "first";
-	
-	if ( document.querySelectorAll || NW.Dom ) {
-		first = "nth-of-type(1)";
-	}
-
-	t( "Nth-child", "#form select:" + first + " option:nth-child(3)", ["option1c"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(0n+3)", ["option1c"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(1n+0)", ["option1a", "option1b", "option1c", "option1d"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(1n)", ["option1a", "option1b", "option1c", "option1d"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(n)", ["option1a", "option1b", "option1c", "option1d"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(even)", ["option1b", "option1d"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(odd)", ["option1a", "option1c"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(2n)", ["option1b", "option1d"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(2n+1)", ["option1a", "option1c"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(3n)", ["option1c"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(3n+1)", ["option1a", "option1d"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(3n+2)", ["option1b"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(3n+3)", ["option1c"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(3n-1)", ["option1b"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(3n-2)", ["option1a", "option1d"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(3n-3)", ["option1c"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(3n+0)", ["option1c"] );
-	t( "Nth-child", "#form select:" + first + " option:nth-child(-n+3)", ["option1a", "option1b", "option1c"] );
+	t( "Nth-child", "#form select:first option:nth-child(3)", ["option1c"] );
+	t( "Nth-child", "#form select:first option:nth-child(0n+3)", ["option1c"] );
+	t( "Nth-child", "#form select:first option:nth-child(1n+0)", ["option1a", "option1b", "option1c", "option1d"] );
+	t( "Nth-child", "#form select:first option:nth-child(1n)", ["option1a", "option1b", "option1c", "option1d"] );
+	t( "Nth-child", "#form select:first option:nth-child(n)", ["option1a", "option1b", "option1c", "option1d"] );
+	t( "Nth-child", "#form select:first option:nth-child(even)", ["option1b", "option1d"] );
+	t( "Nth-child", "#form select:first option:nth-child(odd)", ["option1a", "option1c"] );
+	t( "Nth-child", "#form select:first option:nth-child(2n)", ["option1b", "option1d"] );
+	t( "Nth-child", "#form select:first option:nth-child(2n+1)", ["option1a", "option1c"] );
+	t( "Nth-child", "#form select:first option:nth-child(3n)", ["option1c"] );
+	t( "Nth-child", "#form select:first option:nth-child(3n+1)", ["option1a", "option1d"] );
+	t( "Nth-child", "#form select:first option:nth-child(3n+2)", ["option1b"] );
+	t( "Nth-child", "#form select:first option:nth-child(3n+3)", ["option1c"] );
+	t( "Nth-child", "#form select:first option:nth-child(3n-1)", ["option1b"] );
+	t( "Nth-child", "#form select:first option:nth-child(3n-2)", ["option1a", "option1d"] );
+	t( "Nth-child", "#form select:first option:nth-child(3n-3)", ["option1c"] );
+	t( "Nth-child", "#form select:first option:nth-child(3n+0)", ["option1c"] );
+	t( "Nth-child", "#form select:first option:nth-child(-n+3)", ["option1a", "option1b", "option1c"] );
 });
 
 test("attributes", function() {
