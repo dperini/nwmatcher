@@ -1003,7 +1003,8 @@ NW.Dom = (function(global) {
       if (RE_SIMPLE_SELECTOR.test(selector))
         return native_api(selector, from, data || [ ], callback);
 
-      if (!compiledSelectors[selector] &&
+      if (!isXML &&
+        !compiledSelectors[selector] &&
         !RE_BUGGY_QSAPI.test(selector) &&
         (!from || QSA_NODE_TYPES[from.nodeType])) {
 
