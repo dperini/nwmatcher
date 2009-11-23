@@ -1067,6 +1067,7 @@ NW.Dom = (function(global) {
         lastContext = from;
         // reference context ownerDocument and document root (HTML)
         root = (doc = from.ownerDocument || from).documentElement;
+        isXML = !!doc.xmlVersion;
       }
 
       if (hasChanged = lastSelector != selector) {
