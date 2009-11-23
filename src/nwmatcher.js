@@ -491,8 +491,8 @@ NW.Dom = (function(global) {
         cn = isQuirks ? className.toLowerCase() : className;
       className = ' ' + cn.replace(/\\/g, '') + ' ';
       while ((element = elements[++i])) {
-        if ((cn = element.getAttribute('class')) && cn.length &&
-          (' ' + (isQuirks ? cn.toLowerCase() : cn).
+        cn = isXML ? element.getAttribute('class') : element.className;
+        if (cn && (' ' + (isQuirks ? cn.toLowerCase() : cn).
           replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
           results[++j] = element;
         }
@@ -698,9 +698,10 @@ NW.Dom = (function(global) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a
           // list of whitespace-separated values, see section 6.4 Class selectors
           // and notes at the bottom; explicitly non-normative in this specification.
-          source = 'n=e.className;if(n&&n.length&&(" "+n+" ")' +
-            (isQuirks ? '.toLowerCase()' : '') +
-            '.replace(/[\\t\\n\\r\\f]/g," ").indexOf(" ' +
+          expr = 'd.xmlVersion?e.getAttribute("class"):e.className';
+          source = 'if((n=' + expr + ')&&(" "+' +
+            (isQuirks ? 'n.toLowerCase()' : 'n') +
+            '.replace(' + reWhiteSpace +'," ")+" ").indexOf(" ' +
             (isQuirks ? match[1].toLowerCase() : match[1]) +
             ' ")>-1){' + source + '}';
         }
