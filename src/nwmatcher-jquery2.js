@@ -15,8 +15,18 @@
  *
  */
 
+// the following regular expressions are taken from latest jQuery
+// /:(nth|eq|gt|lt|first|last|even|odd)(?:\((\d*)\))?(?=[^-]|$)/;
+// /:((?:[\w\u00c0-\uFFFF_-]|\\.)+)(?:\((['"]*)((?:\([^\)]+\)|[^\2\(\)]*)+)\2\))?/
+
+// must register in this order due to how the selectors
+// are written, the second begins with a grab all rule...
+
 // for structural pseudo-classes extensions
-var jquery_ChildSelectors = function(match, source) {
+NW.Dom.registerSelector(
+  'jquery:child',
+  /^\:(first|last|even|odd|nth|eq|gt|lt)(?:\(([^()]*)\))?(.*)/,
+  function(match, source) {
 
   var status = true,
   // do not change this, it is searched & replaced
@@ -58,10 +68,13 @@ var jquery_ChildSelectors = function(match, source) {
     'status': status
   };
 
-};
+});
 
 // for element pseudo-classes extensions
-var jquery_PseudoSelectors = function(match, source) {
+NW.Dom.registerSelector(
+  'jquery:pseudo',
+  /^\:(\w+|^\x00-\xa0+)(?:\((["']*)([^'"()]*)\2\))?(.*)/,
+  function(match, source) {
 
   var status = true,
   // do not change this, it is searched & replaced
@@ -109,34 +122,16 @@ var jquery_PseudoSelectors = function(match, source) {
     'status': status
   };
 
-};
-
-// the following regular expressions are taken from latest jQuery
-// /:(nth|eq|gt|lt|first|last|even|odd)(?:\((\d*)\))?(?=[^-]|$)/;
-// /:((?:[\w\u00c0-\uFFFF_-]|\\.)+)(?:\((['"]*)((?:\([^\)]+\)|[^\2\(\)]*)+)\2\))?/
-
-// must register in this order due to how the selectors
-// are written, the second begins with a grab all rule...
-NW.Dom.registerSelector(
-  'jQuery-child',
-  /^\:(first|last|even|odd|nth|eq|gt|lt)(?:\(([^()]*)\))?(.*)/,
-  jquery_ChildSelectors
-);
-
-NW.Dom.registerSelector(
-  'jQuery-pseudo',
-  /^\:(\w+|^\x00-\xa0+)(?:\((["']*)([^'"()]*)\2\))?(.*)/,
-  jquery_PseudoSelectors
-);
+});
 
 (function(global) {
 
   // # cleaned
   var cnt = 0,
 
-  context = global.document,
+  doc = global.document,
 
-  root = context.documentElement,
+  root = doc.documentElement,
 
   // remove comment nodes and empty text nodes
   // unique child with empty text nodes are kept
@@ -154,7 +149,9 @@ NW.Dom.registerSelector(
             node.parentNode.removeChild(node);
             cnt++;
           }
-        } else if (node.nodeType == 8) {
+        } else if (node.nodeName.charCodeAt(0) < 65) {
+          // remove non elements, nodeType == 8
+          // and IE fake closed elements tags
           node.parentNode.removeChild(node);
         }
         node = next;
@@ -163,7 +160,7 @@ NW.Dom.registerSelector(
 
   start = root.addEventListener ?
     function() {
-      context.removeEventListener('DOMContentLoaded', start, false);
+      doc.removeEventListener('DOMContentLoaded', start, false);
       cleanDOM(root);
       NW.Dom.select('*:nth-child(n)');
       // XML parsing ?
@@ -171,8 +168,8 @@ NW.Dom.registerSelector(
       top.status += 'Removed ' + cnt + ' empty text nodes.';
     } :
     function() {
-      if (context.readyState == 'complete') {
-        context.detachEvent('onreadystatechange', start);
+      if (doc.readyState == 'complete') {
+        doc.detachEvent('onreadystatechange', start);
         cleanDOM(root);
         NW.Dom.select('*:nth-child(n)');
         // will crash IE6
@@ -181,10 +178,10 @@ NW.Dom.registerSelector(
       }
     };
 
-  if (context.addEventListener) {
-    context.addEventListener('DOMContentLoaded', start, false);
-  } else if (context.attachEvent) {
-    context.attachEvent('onreadystatechange', start);
+  if (doc.addEventListener) {
+    doc.addEventListener('DOMContentLoaded', start, false);
+  } else if (doc.attachEvent) {
+    doc.attachEvent('onreadystatechange', start);
   } else {
     global.onload = start;
   }
