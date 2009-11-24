@@ -116,18 +116,23 @@ NW.Dom = (function(global) {
     };
   })(),
 
-  // NOTE: NATIVE_XXXXX check for existance of method only
-  // so through the code read it as "supported", maybe BUGGY
+  // Safari 2 missing document.compatMode property
+  // makes harder to detect Quirks vs. Strict mode
+  isQuirks = doc.compatMode ?
+    doc.compatMode.indexOf('CSS') < 0 :
+    (function() {
+      var div = document.createElement('div'),
+        isStrict = div.style &&
+          (div.style.width = 1) &&
+          div.style.width != '1px';
+      div = null;
+      return !!isStrict ? 'CSS1Compat' : 'BackCompat';
+    })(),
 
-  // supports the new traversal API
-  NATIVE_TRAVERSAL_API =
-    'nextElementSibling' in root && 'previousElementSibling' in root,
+  // XML works in W3C browsers
+  isXML = !!doc.xmlVersion,
 
-  // detect native getAttribute/hasAttribute methods,
-  // frameworks extend these to elements, but it seems
-  // this does not work for XML namespaced attributes,
-  // used to check both getAttribute/hasAttribute in IE
-  NATIVE_HAS_ATTRIBUTE = isNative(root, 'hasAttribute'),
+  // NATIVE_XXXXX method exists and is callable
 
   // detect if DOM methods are native in browsers
   NATIVE_FOCUS = isNative(doc, 'hasFocus'),
@@ -135,6 +140,12 @@ NW.Dom = (function(global) {
   NATIVE_GEBID = isNative(doc, 'getElementById'),
   NATIVE_GEBTN = isNative(root, 'getElementsByTagName'),
   NATIVE_GEBCN = isNative(root, 'getElementsByClassName'),
+
+  // detect native getAttribute/hasAttribute methods,
+  // frameworks extend these to elements, but it seems
+  // this does not work for XML namespaced attributes,
+  // used to check both getAttribute/hasAttribute in IE
+  NATIVE_HAS_ATTRIBUTE = isNative(root, 'hasAttribute'),
 
   // nodeList can be converted by native .slice()
   // Opera 9.27 and an id="length" will fold this
@@ -154,12 +165,16 @@ NW.Dom = (function(global) {
       return !!isSupported;
     })(),
 
+  // supports the new traversal API
+  NATIVE_TRAVERSAL_API =
+    'nextElementSibling' in root && 'previousElementSibling' in root,
+
   // NOTE: BUGGY_XXXXX check both for existance and no known bugs.
 
   BUGGY_GEBID = NATIVE_GEBID ?
     (function() {
       var isBuggy, div = doc.createElement('div');
-      root.insertBefore(div, root.firstChild)
+      root.insertBefore(div, root.firstChild);
       div.appendChild(doc.createElement('a')).setAttribute('id', 'Z');
       isBuggy = doc.getElementsByName &&doc.getElementsByName('Z')[0];
       div.removeChild(div.firstChild);
@@ -221,9 +236,9 @@ NW.Dom = (function(global) {
     // before '.xXx' or the bug may not present itself
     div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
     div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
-    if (compatMode == 'BackCompat' &&
-      div.querySelectorAll('[class~=xxx]').length != 2 ||
-      (div.querySelectorAll('.xXx').length != 2)) {
+    if (isQuirks &&
+      (div.querySelectorAll('[class~=xxx]').length != 2 ||
+      div.querySelectorAll('.xXx').length != 2)) {
       pattern.push('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + encoding + ')');
     }
     div.removeChild(div.firstChild);
@@ -262,27 +277,9 @@ NW.Dom = (function(global) {
   })() :
   true,
 
-  // Safari 2 missing document.compatMode property
-  // makes it harder to detect Quirks vs. Strict
-  compatMode = doc.compatMode ||
-    (function() {
-      var div = document.createElement('div'),
-        isStrict = div.style &&
-          (div.style.width = 1) &&
-          div.style.width != '1px';
-      div = null;
-      return !!isStrict ? 'CSS1Compat' : 'BackCompat';
-    })(),
-
-  // XML works in W3C browsers
-  isXML = !!doc.xmlVersion,
-
-  // detect Quirks/Strict mode
-  isQuirks = compatMode.indexOf('CSS') < 0,
-
   // matches simple id, tagname & classname selectors
   RE_SIMPLE_SELECTOR = BUGGY_GEBTN || BUGGY_GEBCN ?
-    /^#?[-\w]+$/ : /^[.#*]?[-\w]*$/,
+    (/^#?[-\w]+$/) : (/^[.#*]?[-\w]*$/),
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
@@ -811,7 +808,7 @@ NW.Dom = (function(global) {
                 test = b < 1 && a > 1 ? '(' + type + '-(' + b + '))%' + a + '==0' :
                   a > +1 ? type + '>=' + b + '&&(' + type + '-(' + b + '))%' + a + '==0' :
                   a < -1 ? type + '<=' + b + '&&(' + type + '-(' + b + '))%' + a + '==0' :
-                  a == 0 ? type + '==' + expr : a == -1 ? type + '<=' + b : type + '>=' + b;
+                  a === 0 ? type + '==' + expr : a == -1 ? type + '<=' + b : type + '>=' + b;
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
                 source =
@@ -1110,11 +1107,11 @@ NW.Dom = (function(global) {
         // reduce selection context
         if ((parts = selector.match(Optimize.ID))) {
           if ((element = doc.getElementById(parts[1]))) {
-            //from = element.parentNode;
-            if (!/[>+~]/.test(selector)) {
+            if (/[>+~]/.test(selector)) from = element.parentNode;
+            else {
               selector = selector.replace('#' + token, '*');
               from = element;
-            } else from = element.parentNode;
+            }
           }
         }
 
