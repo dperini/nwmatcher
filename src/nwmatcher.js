@@ -292,7 +292,7 @@ NW.Dom = (function(global) {
   // http://www.whatwg.org/specs/web-apps/current-work/#selectors
   HTML_TABLE = {
     // class attribute must be treated case-insensitive in HTML quirks mode
-    'class': isQuirks ? 0 : 1,
+    'class': isQuirks ? 1 : 0,
     'accept': 1, 'accept-charset': 1, 'align': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'checked': 1, 'clear': 1, 'codetype': 1, 'color': 1,
     'compact': 1, 'declare': 1, 'defer': 1, 'dir': 1, 'direction': 1, 'disabled': 1,
@@ -719,14 +719,13 @@ NW.Dom = (function(global) {
           expr = expr.length == 2 ? expr[1] : expr[0] + '';
 
           // check case treatment from INSENSITIVE_TABLE
-          if (match[4] && INSENSITIVE_TABLE[expr.toLowerCase()]) {
-            match[4] = match[4].toLowerCase();
-          }
+          test = INSENSITIVE_TABLE[expr.toLowerCase()];
+          if (match[4] && test) match[4] = match[4].toLowerCase();
 
           source = (match[2] ? 'n=s.getAttribute(e,"' + match[1] + '");' : '') +
-            'if(' + (match[2] ? Operators[match[2]].replace(/\%p/g, 'n' +
-              (expr ? '' : '.toLowerCase()')).replace(/\%m/g, match[4]) :
-              's.hasAttribute(e,"' + match[1] + '")') +
+            'if(' + (match[2] ? Operators[match[2]].
+              replace(/\%p/g, 'n' + (test ? '.toLowerCase()' : '')).
+              replace(/\%m/g, match[4]) : 's.hasAttribute(e,"' + match[1] + '")') +
             '){' + source + '}';
         }
 
