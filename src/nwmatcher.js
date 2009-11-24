@@ -159,9 +159,9 @@ NW.Dom = (function(global) {
   BUGGY_GEBID = NATIVE_GEBID ?
     (function() {
       var isBuggy, div = doc.createElement('div');
-      div.appendChild(doc.createElement('a')).setAttribute('name', 'Z');
-      root.insertBefore(div, root.firstChild);
-      isBuggy = div.ownerDocument.getElementById('Z');
+      root.insertBefore(div, root.firstChild)
+      div.appendChild(doc.createElement('a')).setAttribute('id', 'Z');
+      isBuggy = doc.getElementsByName('Z')[0];
       div.removeChild(div.firstChild);
       root.removeChild(div);
       div = null;
