@@ -211,14 +211,22 @@ NW.Dom = (function(global) {
     var pattern = [ '!=', ':contains', ':selected' ],
       div = doc.createElement('div'), input;
 
-    // WebKit treats case insensitivity correctly with classNames (when no DOCTYPE)
+    // WebKit is correct with className case insensitivity (when no DOCTYPE)
     // obsolete bug https://bugs.webkit.org/show_bug.cgi?id=19047
     // so the bug is in all other browsers code now :-)
-    // new specs http://www.whatwg.org/specs/web-apps/current-work/#selectors
-    div.appendChild(doc.createElement('b')).setAttribute('class', 'X');
-    if (compatMode == 'BackCompat' && div.querySelector('.x') === null) {
-      return { 'test': function() { return true; } };
+    // http://www.whatwg.org/specs/web-apps/current-work/#selectors
+
+    // Safari 3.2 QSA doesn't work with mixedcase on quirksmode
+    // must test the attribute selector '[class~=xxx]'
+    // before '.xXx' or the bug may not present itself
+    div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
+    div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
+    if (compatMode == 'BackCompat' &&
+      (div.querySelectorAll('.xXx').length != 2 ||
+      div.querySelectorAll('[class~=xxx]').length != 2)) {
+      pattern.push('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + encoding + ')');
     }
+    div.removeChild(div.firstChild);
     div.removeChild(div.firstChild);
 
     // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
