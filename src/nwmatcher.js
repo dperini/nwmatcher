@@ -1201,7 +1201,7 @@ NW.Dom = (function(global) {
   // during a selection session
   CSS_ID = 1,
 
-  CSS_INDEX = 'sourceIndex' in root ? 'sourceIndex' : 'CSS_ID',
+  CSS_INDEX = 'uniqueID' in root ? 'uniqueID' : 'CSS_ID',
 
   // ordinal position by nodeType or nodeName
   indexesByNodeType = { },
