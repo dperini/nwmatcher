@@ -161,7 +161,7 @@ NW.Dom = (function(global) {
       var isBuggy, div = doc.createElement('div');
       root.insertBefore(div, root.firstChild)
       div.appendChild(doc.createElement('a')).setAttribute('id', 'Z');
-      isBuggy = doc.getElementsByName('Z')[0];
+      isBuggy = doc.getElementsByName &&doc.getElementsByName('Z')[0];
       div.removeChild(div.firstChild);
       root.removeChild(div);
       div = null;
@@ -270,7 +270,7 @@ NW.Dom = (function(global) {
   isXML = !!doc.xmlVersion,
 
   // detect Quirks/Strict mode
-  isQuirks = compatMode.indexOf('CSS') > -1 ? false : true,
+  isQuirks = compatMode.indexOf('CSS') < 0,
 
   // matches simple id, tagname & classname selectors
   RE_SIMPLE_SELECTOR = BUGGY_GEBTN || BUGGY_GEBCN ?
