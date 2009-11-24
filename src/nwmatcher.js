@@ -222,8 +222,8 @@ NW.Dom = (function(global) {
     div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
     div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
     if (compatMode == 'BackCompat' &&
-      (div.querySelectorAll('.xXx').length != 2 ||
-      div.querySelectorAll('[class~=xxx]').length != 2)) {
+      div.querySelectorAll('[class~=xxx]').length != 2 ||
+      (div.querySelectorAll('.xXx').length != 2)) {
       pattern.push('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + encoding + ')');
     }
     div.removeChild(div.firstChild);
