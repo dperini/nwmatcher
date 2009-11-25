@@ -218,60 +218,61 @@ NW.Dom = (function(global) {
     true,
 
   // check Seletor API implementations
-  RE_BUGGY_QSAPI = NATIVE_QSAPI ? (function() {
-    var pattern = [ '!=', ':contains', ':selected' ],
-      div = doc.createElement('div'), input;
+  RE_BUGGY_QSAPI = NATIVE_QSAPI ?
+    (function() {
+      var pattern = [ '!=', ':contains', ':selected' ],
+        div = doc.createElement('div'), input;
 
-    // WebKit is correct with className case insensitivity (when no DOCTYPE)
-    // obsolete bug https://bugs.webkit.org/show_bug.cgi?id=19047
-    // so the bug is in all other browsers code now :-)
-    // http://www.whatwg.org/specs/web-apps/current-work/#selectors
+      // WebKit is correct with className case insensitivity (when no DOCTYPE)
+      // obsolete bug https://bugs.webkit.org/show_bug.cgi?id=19047
+      // so the bug is in all other browsers code now :-)
+      // http://www.whatwg.org/specs/web-apps/current-work/#selectors
 
-    // Safari 3.2 QSA doesn't work with mixedcase on quirksmode
-    // must test the attribute selector '[class~=xxx]'
-    // before '.xXx' or the bug may not present itself
-    div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
-    div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
-    if (isQuirks &&
-      (div.querySelectorAll('[class~=xxx]').length != 2 ||
-      div.querySelectorAll('.xXx').length != 2)) {
-      pattern.push('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + encoding + ')');
-    }
-    div.removeChild(div.firstChild);
-    div.removeChild(div.firstChild);
+      // Safari 3.2 QSA doesn't work with mixedcase on quirksmode
+      // must test the attribute selector '[class~=xxx]'
+      // before '.xXx' or the bug may not present itself
+      div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
+      div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
+      if (isQuirks &&
+        (div.querySelectorAll('[class~=xxx]').length != 2 ||
+        div.querySelectorAll('.xXx').length != 2)) {
+        pattern.push('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + encoding + ')');
+      }
+      div.removeChild(div.firstChild);
+      div.removeChild(div.firstChild);
 
-    // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
-    // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
-    // IE8 throws error with these pseudos
-    (input = doc.createElement('input')).setAttribute('type', 'hidden');
-    div.appendChild(input);
-    try {
-      div.querySelectorAll(':enabled').length === 1 &&
-        pattern.push(':enabled', ':disabled');
-    } catch(e) { }
-    div.removeChild(div.firstChild);
+      // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
+      // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
+      // IE8 throws error with these pseudos
+      (input = doc.createElement('input')).setAttribute('type', 'hidden');
+      div.appendChild(input);
+      try {
+        div.querySelectorAll(':enabled').length === 1 &&
+          pattern.push(':enabled', ':disabled');
+      } catch(e) { }
+      div.removeChild(div.firstChild);
 
-    // :checked bugs whith checkbox fields (Opera 10beta3 bug)
-    (input = doc.createElement('input')).setAttribute('type', 'hidden');
-    div.appendChild(input);
-    input.setAttribute('checked', 'checked');
-    try {
-      div.querySelectorAll(':checked').length !== 1 &&
-        pattern.push(':checked');
-    } catch(e) { }
-    div.removeChild(div.firstChild);
+      // :checked bugs whith checkbox fields (Opera 10beta3 bug)
+      (input = doc.createElement('input')).setAttribute('type', 'hidden');
+      div.appendChild(input);
+      input.setAttribute('checked', 'checked');
+      try {
+        div.querySelectorAll(':checked').length !== 1 &&
+          pattern.push(':checked');
+      } catch(e) { }
+      div.removeChild(div.firstChild);
 
-    // :link bugs with hyperlinks matching (Firefox/Safari)
-    div.appendChild(doc.createElement('a')).setAttribute('href', 'x');
-    div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
-    div.removeChild(div.firstChild);
+      // :link bugs with hyperlinks matching (Firefox/Safari)
+      div.appendChild(doc.createElement('a')).setAttribute('href', 'x');
+      div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
+      div.removeChild(div.firstChild);
 
-    div = null;
-    return pattern.length ?
-      new RegExp(pattern.join('|')) :
-      { 'test': function() { return false; } };
-  })() :
-  true,
+      div = null;
+      return pattern.length ?
+        new RegExp(pattern.join('|')) :
+        { 'test': function() { return false; } };
+    })() :
+    true,
 
   BUGGY_DOM_LENGTH = NATIVE_GEBTN &&
     typeof doc.getElementsByTagName('*').length == 'number',
