@@ -697,10 +697,14 @@ NW.Dom = (function(global) {
         // *** Type selector
         // Foo Tag (case insensitive)
         else if ((match = selector.match(Patterns.tagName))) {
-          // both tagName and nodeName properties may be upper or lower case
+          // both tagName and nodeName properties may be upper/lower case
           // depending on their creation NAMESPACE in createElementNS()
-          source = 'if(e.nodeName' + TO_UPPER_CASE + '=="' +
-            match[1].toUpperCase() + '"){' + source + '}';
+          source =
+            'if(' +
+              'e.nodeName=="' + match[1].toUpperCase() + '"||' +
+              'e.nodeName=="' + match[1].toLowerCase() + '"){' +
+              source +
+            '}';
         }
 
         // *** Class selector
