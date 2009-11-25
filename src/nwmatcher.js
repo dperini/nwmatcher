@@ -278,7 +278,8 @@ NW.Dom = (function(global) {
 
   // matches simple id, tagname & classname selectors
   RE_SIMPLE_SELECTOR = BUGGY_GEBTN || BUGGY_GEBCN ?
-    (/^#?[-\w]+$/) : (/^[.#*]?[-\w]*$/),
+    new RegExp('^#' + encoding + '$') :
+    new RegExp('^(?:\\*|[.#]?' + encoding + ')$'),
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
