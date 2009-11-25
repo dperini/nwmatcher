@@ -126,7 +126,7 @@ NW.Dom = (function(global) {
           (div.style.width = 1) &&
           div.style.width != '1px';
       div = null;
-      return !!isStrict ? 'CSS1Compat' : 'BackCompat';
+      return !isStrict;
     })(),
 
   // XML works in W3C browsers
