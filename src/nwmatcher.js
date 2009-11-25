@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.0
  * Created: 20070722
- * Release: 20091101
+ * Release: 20091125
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -424,36 +424,38 @@ NW.Dom = (function(global) {
 
   /*------------------------------ DOM METHODS -------------------------------*/
 
+  // concat elements to data
   concatList =
-    function(listout, listin) {
+    function(data, elements) {
       var i = -1, element;
-      if (listout.length === 0 && Array.slice)
-        return Array.slice(listin);
-      while ((element = listin[++i]))
-        listout[listout.length] = element;
-      return listout;
+      if (data.length === 0 && Array.slice)
+        return Array.slice(elements);
+      while ((element = elements[++i]))
+        data[data.length] = element;
+      return data;
     },
 
+  // concat elements to data and callback
   concatCall =
-    function(listout, listin, callback) {
+    function(data, elements, callback) {
       var i = -1, element;
-      while ((element = listin[++i]))
-        callback(listout[listout.length] = element);
-      return listout;
+      while ((element = elements[++i]))
+        callback(data[data.length] = element);
+      return data;
     },
 
   // element by id
   // @return element reference or null
   byId =
     function(id, from) {
-      var i = -1, element, elements, names, node;
+      var i = -1, element, elements, node;
       from || (from = doc);
       id = id.replace(/\\/g, '');
       if (from.getElementById) {
         if ((element = from.getElementById(id)) &&
           id != getAttribute(element, 'id') && from.getElementsByName) {
-          names = from.getElementsByName(id);
-          while ((element = names[++i])) {
+          elements = from.getElementsByName(id);
+          while ((element = elements[++i])) {
             if ((node = element.getAttributeNode('id')) &&
               node.value == id) {
               return element;
@@ -513,16 +515,16 @@ NW.Dom = (function(global) {
   // @return number
   getIndexesByNodeType =
     function(element) {
-      var i = 0, indexes, node,
+      var i = 0, indexes,
         id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
       if (!indexesByNodeType[id]) {
         indexes = { };
-        node = element.firstChild;
-        while (node) {
-          if (node.nodeName.charCodeAt(0) > 64) {
-            indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
+        element = element.firstChild;
+        while (element) {
+          if (element.nodeName.charCodeAt(0) > 64) {
+            indexes[element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID)] = ++i;
           }
-          node = node.nextSibling;
+          element = element.nextSibling;
         }
         indexes.length = i;
         indexesByNodeType[id] = indexes;
@@ -534,16 +536,16 @@ NW.Dom = (function(global) {
   // @return number
   getIndexesByNodeName =
     function(element, name) {
-      var i = 0, indexes, node,
+      var i = 0, indexes,
         id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
       if (!indexesByNodeName[id] || !indexesByNodeName[id][name]) {
         indexes = { };
-        node = element.firstChild;
-        while (node) {
-          if (node.nodeName.toUpperCase() == name) {
-            indexes[node[CSS_INDEX] || (node[CSS_INDEX] = ++CSS_ID)] = ++i;
+        element = element.firstChild;
+        while (element) {
+          if (element.nodeName.toUpperCase() == name) {
+            indexes[element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID)] = ++i;
           }
-          node = node.nextSibling;
+          element = element.nextSibling;
         }
         indexes.length = i;
         indexesByNodeName[id] ||
@@ -564,8 +566,8 @@ NW.Dom = (function(global) {
       if (ATTRIBUTES_URI[attribute.toLowerCase()]) {
         return element.getAttribute(attribute, 2) + '';
       }
-      var node = element.getAttributeNode(attribute);
-      return (node && node.value) + '';
+      element = element.getAttributeNode(attribute);
+      return (element && element.value) + '';
     },
 
   // attribute presence
