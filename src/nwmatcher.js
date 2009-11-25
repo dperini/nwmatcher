@@ -274,7 +274,7 @@ NW.Dom = (function(global) {
   true,
 
   BUGGY_DOM_LENGTH = NATIVE_GEBTN &&
-    typeof doc.getElementsByTagName('*').length == 'number';
+    typeof doc.getElementsByTagName('*').length == 'number',
 
   // matches simple id, tagname & classname selectors
   RE_SIMPLE_SELECTOR = BUGGY_GEBTN || BUGGY_GEBCN ?
