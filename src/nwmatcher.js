@@ -147,22 +147,15 @@ NW.Dom = (function(global) {
   // used to check both getAttribute/hasAttribute in IE
   NATIVE_HAS_ATTRIBUTE = isNative(root, 'hasAttribute'),
 
-  // nodeList can be converted by native .slice()
-  // Opera 9.27 and an id="length" will fold this
+  // check if slice() can convert nodelist to array
+  // see http://yura.thinkweb2.com/cft/
   NATIVE_SLICE_PROTO =
     (function() {
-      var isSupported, div = doc.createElement('div');
       try {
-        div.appendChild(doc.createElement('div')).setAttribute('id', 'length');
-        root.insertBefore(div, root.firstChild);
-        isSupported = slice.call(div.childNodes, 0)[0];
+        return slice.call(doc.childNodes, 0) instanceof Array;
       } catch(e) {
-      } finally {
-        div.removeChild(div.firstChild);
-        root.removeChild(div);
-        div = null;
+        return false;
       }
-      return !!isSupported;
     })(),
 
   // supports the new traversal API
@@ -176,7 +169,7 @@ NW.Dom = (function(global) {
       var isBuggy, div = doc.createElement('div');
       root.insertBefore(div, root.firstChild);
       div.appendChild(doc.createElement('a')).setAttribute('id', 'Z');
-      isBuggy = doc.getElementsByName &&doc.getElementsByName('Z')[0];
+      isBuggy = doc.getElementsByName && doc.getElementsByName('Z')[0];
       div.removeChild(div.firstChild);
       root.removeChild(div);
       div = null;
@@ -204,15 +197,18 @@ NW.Dom = (function(global) {
       var isBuggy, div = doc.createElement('div'), test = '\u53f0\u5317';
 
       // Opera tests
-      div.appendChild(doc.createElement('span')).setAttribute('class', test + 'abc ' + test);
-      div.appendChild(doc.createElement('span')).setAttribute('class', 'x');
+      div.appendChild(doc.createElement('span')).
+        setAttribute('class', test + 'abc ' + test);
+      div.appendChild(doc.createElement('span')).
+        setAttribute('class', 'x');
 
       // Opera tests
       isBuggy = !div.getElementsByClassName(test)[0];
 
       // Safari test
       div.lastChild.className = test;
-      if (!isBuggy) isBuggy = div.getElementsByClassName(test).length !== 2;
+      if (!isBuggy)
+        isBuggy = div.getElementsByClassName(test).length !== 2;
 
       div.removeChild(div.firstChild);
       div.removeChild(div.firstChild);
