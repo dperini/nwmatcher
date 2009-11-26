@@ -105,6 +105,27 @@ NW.Dom = (function(global) {
       }
     },
 
+  // compile selectors to functions resolvers
+  // @selector string
+  // @mode boolean
+  // false = select resolvers
+  // true = match resolvers
+  compile =
+    function(selector, mode) {
+      return compileGroup(selector, '', mode || false);
+    },
+
+  // use internal or QSA engine
+  // @enable boolean
+  // false = disable QSA
+  // true = enable QSA
+  setQSA =
+    function(enable) {
+      select = enable && NATIVE_QSAPI ?
+        select_qsa :
+        client_api;
+    },
+
   /*----------------------------- FEATURE TESTING ----------------------------*/
 
   // detect native methods
@@ -132,7 +153,7 @@ NW.Dom = (function(global) {
   // XML works in W3C browsers
   isXML = !!doc.xmlVersion,
 
-  // NATIVE_XXXXX method exists and is callable
+  // NATIVE_XXXXX true if method exist and is callable
 
   // detect if DOM methods are native in browsers
   NATIVE_FOCUS = isNative(doc, 'hasFocus'),
@@ -162,7 +183,7 @@ NW.Dom = (function(global) {
   NATIVE_TRAVERSAL_API =
     'nextElementSibling' in root && 'previousElementSibling' in root,
 
-  // NOTE: BUGGY_XXXXX check both for existance and no known bugs.
+  // BUGGY_XXXXX true if method is feature tested and has known bugs
 
   BUGGY_GEBID = NATIVE_GEBID ?
     (function() {
@@ -1280,11 +1301,11 @@ NW.Dom = (function(global) {
     // elements matching selector, starting from element
     select: select,
 
-    // for testing purposes !
-    compile:
-      function(selector, mode) {
-        return compileGroup(selector, '', mode || false).toString();
-      },
+    // compile selector into ad-hoc javascript resolver
+    compile: compile,
+
+    // select internal engine or native querySelectorAll
+    setQSA: setQSA,
 
     // add or overwrite user defined operators
     registerOperator:
@@ -1302,14 +1323,6 @@ NW.Dom = (function(global) {
           Selectors[name].Expression = rexp;
           Selectors[name].Callback = func;
         }
-      },
-
-    // for testing purposes only
-    setQSA:
-      function(enable) {
-        this.select = enable && NATIVE_QSAPI ?
-          select_qsa :
-          client_api;
       }
   };
 
