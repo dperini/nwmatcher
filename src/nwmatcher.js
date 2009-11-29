@@ -69,8 +69,12 @@ NW.Dom = (function(global) {
   reIdSelector = /\#([-\w]+)$/,
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
+  // match missing R/L context
   reLeftContext = /^\s*[>+~]+/,
   reRightContext = /[>+~]+\s*$/,
+
+  // match the document type
+  reDocumentType = / [XHTML]+ /,
 
   /*----------------------------- UTILITY METHODS ----------------------------*/
 
