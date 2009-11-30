@@ -365,21 +365,12 @@ NW.Dom = (function(global) {
 
   // attribute operators
   Operators = {
-    // ! is not really in the specs
-    // still unit tests have to pass
-     '=': "%p==='%m'",
-    '!=': "%p!=='%m'",
-    '^=': "%p.indexOf('%m')==0",
-    '*=': "%p.indexOf('%m')>-1",
-    // sensitivity handled by compiler
-    // NOTE: working alternative
-    // '|=': "/%m-/i.test(%p+'-')",
-    '|=': "(%p+'-').indexOf('%m-')==0",
-    '~=': "(' '+%p+' ').indexOf(' %m ')>-1",
-    // precompile in '%m' string length to optimize
-    // NOTE: working alternative
-    // '$=': "%p.lastIndexOf('%m')==%p.length-'%m'.length"
-    '$=': "%p.substr(%p.length - '%m'.length) === '%m'"
+     '=': "n=='%m'",
+    '^=': "n.indexOf('%m')==0",
+    '*=': "n.indexOf('%m')>-1",
+    '|=': "(n+'-').indexOf('%m-')==0",
+    '~=': "(' '+n+' ').indexOf(' %m ')>-1",
+    '$=': "n.substr(n.length-'%m'.length)=='%m'"
   },
 
   TAGS = "(?:^|[>+~\\x20\\t\\n\\r\\f])",
@@ -755,15 +746,20 @@ NW.Dom = (function(global) {
           expr = match[1].split(':');
           expr = expr.length == 2 ? expr[1] : expr[0] + '';
 
-          // check case treatment from INSENSITIVE_TABLE
-          test = INSENSITIVE_TABLE[expr.toLowerCase()];
-          if (match[4] && test) match[4] = match[4].toLowerCase();
+          // replace Operators parameters if needed
+          if ((type = Operators[match[2]])) {
+            // check case treatment in INSENSITIVE_TABLE
+            test = INSENSITIVE_TABLE[expr.toLowerCase()] && type;
+            type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
+          }
 
-          source = (match[2] ? 'n=s.getAttribute(e,"' + match[1] + '");' : '') +
-            'if(' + (match[2] ? Operators[match[2]].
-              replace(/\%p/g, 'n' + (test ? '.toLowerCase()' : '')).
-              replace(/\%m/g, match[4]) : 's.hasAttribute(e,"' + match[1] + '")') +
-            '){' + source + '}';
+          // build expression for has/getAttribute
+          expr = '(n=s.' + (type ? 'get' : 'has') +
+            'Attribute(e,"' + match[1] + '")' +
+            (test ? '.toLowerCase()' : '') +
+            (type ? ')&&' + type : ')');
+
+          source = 'if(' + expr + '){' + source + '}';
         }
 
         // *** Adjacent sibling combinator
