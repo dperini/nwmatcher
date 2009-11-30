@@ -197,7 +197,7 @@
         },
 
         testSelectorWithTagNameAndNegatedAttributeValue: function() {
-          this.assertEnumEqual([], $$('a[href!="#"]'));
+          this.assertEnumEqual([], $$('a:not([href="#"])'));
         },
 
         testSelectorWithBracketAttributeValue: function() {
@@ -214,7 +214,7 @@
         testSelectorWithMultipleConditions: function() {
           this.assertEnumEqual([$('link_3')], $$('a[class~=external][href="#"]'),
            'a[class~=external][href="#"]');
-          this.assertEnumEqual([], $$('a[class~=external][href!="#"]'),
+          this.assertEnumEqual([], $$('a[class~=external]:not([href="#"])'),
            'a[class~=external][href!="#"]');
         },
 
