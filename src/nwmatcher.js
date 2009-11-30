@@ -746,20 +746,19 @@ NW.Dom = (function(global) {
           expr = match[1].split(':');
           expr = expr.length == 2 ? expr[1] : expr[0] + '';
 
-          // replace Operators parameters if needed
+          // replace Operators parameter if needed
           if ((type = Operators[match[2]])) {
             // check case treatment in INSENSITIVE_TABLE
-            test = INSENSITIVE_TABLE[expr.toLowerCase()] && type;
+            test = INSENSITIVE_TABLE[expr.toLowerCase()];
             type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
           }
 
           // build expression for has/getAttribute
-          expr = '(n=s.' + (type ? 'get' : 'has') +
+          expr = 'n=s.' + (type ? 'get' : 'has') +
             'Attribute(e,"' + match[1] + '")' +
-            (test ? '.toLowerCase()' : '') +
-            (type ? ')&&' + type : ')');
+            (test ? '.toLowerCase();' : ';');
 
-          source = 'if(' + expr + '){' + source + '}';
+          source = expr + 'if(' + (type ? type : 'n') + '){' + source + '}';
         }
 
         // *** Adjacent sibling combinator
