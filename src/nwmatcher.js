@@ -1132,30 +1132,21 @@ NW.Dom = (function(global) {
         }
 
         // reduce selection context
-        if ((parts = selector.match(Optimize.ID))) {
-          if ((element = doc.getElementById(parts[1]))) {
+        if (doc.getElementById && (parts = selector.match(Optimize.ID)) && (token = parts[1])) {
+          if ((element = byId(token, doc))) {
             if (/[>+~]/.test(selector)) from = element.parentNode;
-            else {
-              selector = selector.replace('#' + token, '*');
-              from = element;
-            }
-          }
+            else from = element;
+          } else return data || [ ];
         }
 
         // ID optimization RTL
-        if ((parts = lastSlice.match(Optimize.ID)) &&
-          (token = parts[1]) && doc.getElementById) {
+        if (doc.getElementById && (parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
           if ((element = byId(token, doc))) {
             if (match(element, selector)) {
               elements = [ element ];
               done = true;
-            } else {
-              from = element;
-              //elements = concatList([ element ], byTag('*', element));
-              //selector = selector.substr(0, lastIndex) +
-              //  selector.substr(lastIndex).replace('#' + token, '*');
             }
-          }
+          } else return data || [ ];
         }
 
         // CLASS optimization RTL
@@ -1172,17 +1163,6 @@ NW.Dom = (function(global) {
           if (selector == token) done = true;
           else selector = selector.substr(0, lastIndex) +
             selector.substr(lastIndex).replace(token, '*');
-        }
-
-        // ID optimization LTR
-        else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
-          if ((element = byId(token, doc))) {
-            if (/[>+~]/.test(selector)) from = element.parentNode;
-            else {
-              selector = selector.replace('#' + token, '*');
-              from = element;
-            }
-          } else return data || [ ];
         }
 
         //else console.log(selector);
