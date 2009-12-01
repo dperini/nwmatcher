@@ -777,9 +777,9 @@ NW.Dom = (function(global) {
           // both tagName and nodeName properties may be upper/lower case
           // depending on their creation NAMESPACE in createElementNS()
           source =
-            'if(' +
+            'if(' + (isXML(doc) ? 'e.nodeName=="' + match[1] + '"' :
               'e.nodeName=="' + match[1].toUpperCase() + '"||' +
-              'e.nodeName=="' + match[1].toLowerCase() + '"){' +
+              'e.nodeName=="' + match[1].toLowerCase() + '"') + '){' +
               source +
             '}';
         }
