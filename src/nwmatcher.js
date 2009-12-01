@@ -169,6 +169,40 @@ NW.Dom = (function(global) {
         document.documentElement.nodeName != 'HTML';
     },
 
+  // MS: http://msdn.microsoft.com/en-us/library/ms533737(VS.85).aspx
+  // For HTML documents, the doctype property returns null, as defined by the
+  // World Wide Web Consortium (W3C) Document Object Model (DOM) Level 1 standard.
+  getDocumentType =
+    function(document) {
+
+      if (isXML(document)) return 'XML';
+
+      var doctype, parts, publicId, type = 'HTML';
+
+      if ((doctype = document.doctype) != null) {
+        if (doctype.publicId) {
+          publicId = doctype.publicId;
+        }
+      } else {
+        node = document.firstChild;
+        while (node && node.nodeType != 1) {
+          if (node.nodeType == 10 && node.publicId) {
+            publicId = node.publicId;
+          } else if (node.nodeType == 8) {
+            publicId = node.nodeValue.substr(node.nodeValue.indexOf('"') + 1);
+            publicId = publicId.substr(0, publicId.indexOf('"'));
+          } else if (node.nodeType == 7) {
+            if (node.nodeName == 'xml') parts = ['XML'];
+          }
+          node = node.nextSibling;
+        }
+      }
+      if (publicId) parts = publicId.match(reDocumentType);
+      else if (doctype.name == 'html') parts = ['HTML5'];
+      parts && (type = parts[0]);
+      return type;
+    },
+
   // NATIVE_XXXXX true if method exist and is callable
 
   // detect if DOM methods are native in browsers
