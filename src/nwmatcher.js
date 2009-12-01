@@ -557,21 +557,21 @@ NW.Dom = (function(global) {
 
   // elements by class
   byClass = !BUGGY_GEBCN ?
-    // @return nodelist
+    // @return native nodelist
     function(className, from) {
       return (from || doc).getElementsByClassName(className.replace(/\\/g, ''));
     } :
-    // @return array
+    // @return converted array
     function(className, from) {
       var i = -1, j = i, element, elements = [ ],
         nodes = (from || doc).getElementsByTagName('*'),
         n = isQuirks ? className.toLowerCase() : className;
       className = ' ' + n.replace(/\\/g, '') + ' ';
-      // duplicated code to maintain speed
+      // duplicate code to maintain speed
       if (isXML(from || doc)) {
         while ((element = nodes[++i])) {
           n = element.getAttribute('class');
-          if (n && (' ' + (isQuirks ? n.toLowerCase() : n).
+          if (n && n.length && (' ' + (isQuirks ? n.toLowerCase() : n).
             replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
             elements[++j] = element;
           }
@@ -579,7 +579,7 @@ NW.Dom = (function(global) {
       } else {
         while ((element = nodes[++i])) {
           n = element.className;
-          if (n && (' ' + (isQuirks ? n.toLowerCase() : n).
+          if (n && n.length && (' ' + (isQuirks ? n.toLowerCase() : n).
             replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
             elements[++j] = element;
           }
