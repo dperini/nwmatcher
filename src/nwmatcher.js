@@ -1150,6 +1150,9 @@ NW.Dom = (function(global) {
       if (reRightContext.test(selector))
         selector = selector + '*';
 
+      // storage setup
+      data || (data = [ ]);
+
       // ensure context is set
       from || (from = doc);
 
@@ -1169,7 +1172,7 @@ NW.Dom = (function(global) {
           selector = selector.replace(reTrimSpaces, '');
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
-          return data || [ ];
+          return data;
         }
       }
 
@@ -1195,7 +1198,7 @@ NW.Dom = (function(global) {
           if ((element = byId(token, doc))) {
             if (/[>+~]/.test(selector)) from = element.parentNode;
             else from = element;
-          } else return data || [ ];
+          } else return data;
         }
 
         // ID optimization RTL
@@ -1205,12 +1208,12 @@ NW.Dom = (function(global) {
               elements = [ element ];
               done = true;
             }
-          } else return data || [ ];
+          } else return data;
         }
 
         // CLASS optimization RTL
         else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-          if ((elements = byClass(token, from)).length === 0) return data || [ ];
+          if ((elements = byClass(token, from)).length === 0) return data;
           if (selector == '.' + token) done = true;
           else selector = selector.substr(0, lastIndex) +
             selector.substr(lastIndex).replace('.' + token, '*');
@@ -1218,7 +1221,7 @@ NW.Dom = (function(global) {
 
         // TAG optimization RTL
         else if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
-          if ((elements = byTag(token, from)).length === 0) return data || [ ];
+          if ((elements = byTag(token, from)).length === 0) return data;
           if (selector == token) done = true;
           else selector = selector.substr(0, lastIndex) +
             selector.substr(lastIndex).replace(token, '*');
@@ -1253,8 +1256,8 @@ NW.Dom = (function(global) {
       }
 
       return done ?
-        callback ? concatCall(data || [ ], elements, callback) : concatList(data || [ ], elements) :
-        compiledSelectors[selector](elements, snap, data || [ ], doc, root, from, callback);
+        callback ? concatCall(data, elements, callback) : concatList(data, elements) :
+        compiledSelectors[selector](elements, snap, data, doc, root, from, callback);
     },
 
   // use the new native Selector API if available,
