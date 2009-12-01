@@ -790,7 +790,10 @@ NW.Dom = (function(global) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a
           // list of whitespace-separated values, see section 6.4 Class selectors
           // and notes at the bottom; explicitly non-normative in this specification.
-          expr = 'd.xmlVersion?e.getAttribute("class"):e.className';
+          expr = 'xmlVersion' in doc ?
+            'd.xmlVersion?e.getAttribute("class"):e.className' :
+            'h.nodeName.toUpperCase()!="HTML"?e.getAttribute("class"):e.className';
+
           source = 'if((n=' + expr + ')&&(" "+' +
             (isQuirks ? 'n.toLowerCase()' : 'n') +
             '.replace(' + reWhiteSpace +'," ")+" ").indexOf(" ' +
