@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.0
  * Created: 20070722
- * Release: 20091125
+ * Release: 20091201
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -154,12 +154,12 @@ NW.Dom = (function(global) {
       return !isStrict;
     })(),
 
-  // XML mostly works in W3C browsers
+  // XML is functional in W3C browsers
   isXML = 'xmlVersion' in doc ?
     function(element) {
       var document = element.ownerDocument || element;
       return !!document.xmlVersion ||
-        /xml$/.test(document.contentType) ||
+        (/xml$/).test(document.contentType) ||
         document.documentElement.nodeName != 'HTML';
     } :
     function(element) {
@@ -179,7 +179,7 @@ NW.Dom = (function(global) {
 
       var doctype, parts, publicId, type = 'HTML';
 
-      if ((doctype = document.doctype) != null) {
+      if ((doctype = document.doctype) !== null) {
         if (doctype.publicId) {
           publicId = doctype.publicId;
         }
@@ -947,11 +947,11 @@ NW.Dom = (function(global) {
               break;
             case 'enabled':
               // does not consider hidden input fields
-              source = 'if((("form" in e&&e.type.toLowerCase()!=="hidden")||s.isLink(e))&&!e.disabled){' + source + '}';
+              source = 'if(((e.type&&"form" in e&&e.type.toLowerCase()!=="hidden")||s.isLink(e))&&!e.disabled){' + source + '}';
               break;
             case 'disabled':
               // does not consider hidden input fields
-              source = 'if((("form" in e&&e.type.toLowerCase()!=="hidden")||s.isLink(e))&&e.disabled){' + source + '}';
+              source = 'if(((e.type&&"form" in e&&e.type.toLowerCase()!=="hidden")||s.isLink(e))&&e.disabled){' + source + '}';
               break;
 
             // CSS3 target pseudo-class
