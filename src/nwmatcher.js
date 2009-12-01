@@ -154,8 +154,20 @@ NW.Dom = (function(global) {
       return !isStrict;
     })(),
 
-  // XML works in W3C browsers
-  isXML = !!doc.xmlVersion,
+  // XML mostly works in W3C browsers
+  isXML = 'xmlVersion' in doc ?
+    function(element) {
+      var document = element.ownerDocument || element;
+      return !!document.xmlVersion ||
+        /xml$/.test(document.contentType) ||
+        document.documentElement.nodeName != 'HTML';
+    } :
+    function(element) {
+      var document = element.ownerDocument || element;
+      return (document.firstChild.nodeType == 7 &&
+        document.firstChild.nodeName == 'xml') ||
+        document.documentElement.nodeName != 'HTML';
+    },
 
   // NATIVE_XXXXX true if method exist and is callable
 
@@ -510,24 +522,36 @@ NW.Dom = (function(global) {
     },
 
   // elements by class
-  // @return array
   byClass = !BUGGY_GEBCN ?
+    // @return nodelist
     function(className, from) {
       return (from || doc).getElementsByClassName(className.replace(/\\/g, ''));
     } :
+    // @return array
     function(className, from) {
-      var i = -1, j = i, results = [ ], element,
-        elements = (from || doc).getElementsByTagName('*'),
-        cn = isQuirks ? className.toLowerCase() : className;
-      className = ' ' + cn.replace(/\\/g, '') + ' ';
-      while ((element = elements[++i])) {
-        cn = isXML ? element.getAttribute('class') : element.className;
-        if (cn && (' ' + (isQuirks ? cn.toLowerCase() : cn).
-          replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
-          results[++j] = element;
+      var i = -1, j = i, element, elements = [ ],
+        nodes = (from || doc).getElementsByTagName('*'),
+        n = isQuirks ? className.toLowerCase() : className;
+      className = ' ' + n.replace(/\\/g, '') + ' ';
+      // duplicated code to maintain speed
+      if (isXML(from || doc)) {
+        while ((element = nodes[++i])) {
+          n = element.getAttribute('class');
+          if (n && (' ' + (isQuirks ? n.toLowerCase() : n).
+            replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
+            elements[++j] = element;
+          }
+        }
+      } else {
+        while ((element = nodes[++i])) {
+          n = element.className;
+          if (n && (' ' + (isQuirks ? n.toLowerCase() : n).
+            replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
+            elements[++j] = element;
+          }
         }
       }
-      return results;
+      return elements;
     },
 
   // children position by nodeType
@@ -1036,7 +1060,7 @@ NW.Dom = (function(global) {
       if (RE_SIMPLE_SELECTOR.test(selector))
         return native_api(selector, from, data || [ ], callback);
 
-      if (!isXML &&
+      if (!isXML(from || doc) &&
         !compiledSelectors[selector] &&
         !RE_BUGGY_QSAPI.test(selector) &&
         (!from || QSA_NODE_TYPES[from.nodeType])) {
@@ -1101,7 +1125,6 @@ NW.Dom = (function(global) {
         lastContext = from;
         // reference context ownerDocument and document root (HTML)
         root = (doc = from.ownerDocument || from).documentElement;
-        isXML = !!doc.xmlVersion;
       }
 
       if (hasChanged = lastSelector != selector) {
