@@ -769,8 +769,10 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.id))) {
           // document can contain conflicting elements (id/name)
           // prototype selector unit need this method to recover bad HTML forms
-          source = 'if((e.submit?s.getAttribute(e,"id"):e.id)=="' +
-            match[1] + '"){' + source + '}';
+          source = (isXML(doc) ?
+            'if(s.getAttribute(e, "id")=="' + match[1] + '")' :
+            'if((e.submit?s.getAttribute(e,"id"):e.id)=="' + match[1] + '")') +
+            '{' + source + '}';
         }
 
         // *** Type selector
