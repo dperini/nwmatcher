@@ -958,10 +958,15 @@ NW.Dom = (function(global) {
               source = 'if(((e.type&&"form" in e&&e.type.toLowerCase()!=="hidden")||s.isLink(e))&&e.disabled){' + source + '}';
               break;
 
+            // CSS3 lang pseudo-class
+            case 'lang':
+              source = 'if((e.lang&&e.lang=="' + match[3] + '")||h.lang=="' + match[3] + '"){' + source + '}';
+              break;
+
             // CSS3 target pseudo-class
             case 'target':
-              n = doc.location.hash;
-              source = 'if(e.id=="' + n + '"&&e.href!=void 0){' + source + '}';
+              n = doc.location ? doc.location.hash : '';
+              source = 'if(e.id=="' + n + '"&&"href" in e){' + source + '}';
               break;
 
             // CSS3 dynamic pseudo-classes
@@ -969,15 +974,17 @@ NW.Dom = (function(global) {
               source = 'if(s.isLink(e)&&!e.visited){' + source + '}';
               break;
             case 'visited':
-              source = 'if(s.isLink(e)&&!!e.visited){' + source + '}';
+              source = 'if(s.isLink(e)&&e.visited){' + source + '}';
               break;
 
             // CSS3 user action pseudo-classes IE & FF3 have native support
             // these capabilities may be emulated by some event managers
             case 'active':
+              if (isXML(doc)) break;
               source = 'if(e===d.activeElement){' + source + '}';
               break;
             case 'hover':
+              if (isXML(doc)) break;
               source = 'if(e===d.hoverElement){' + source + '}';
               break;
             case 'focus':
