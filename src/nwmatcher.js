@@ -341,8 +341,8 @@ NW.Dom = (function(global) {
   },
 
   INSENSITIVE_TABLE =
-    docType && (docType.publicId == '' ||
-    / XHTML /.test(docType.publicId)) ?
+    docType && (docType.publicId === '' ||
+    (/ XHTML /).test(docType.publicId)) ?
       XHTML_TABLE : HTML_TABLE,
 
   // placeholder to add functionalities
