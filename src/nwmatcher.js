@@ -637,27 +637,27 @@ NW.Dom = (function(global) {
   // attribute value
   // @return string
   getAttribute = NATIVE_HAS_ATTRIBUTE ?
-    function(element, attribute) {
-      return element.getAttribute(attribute) + '';
+    function(node, attribute) {
+      return node.getAttribute(attribute) + '';
     } :
-    function(element, attribute) {
+    function(node, attribute) {
       // specific URI attributes (parameter 2 to fix IE bug)
-      if (ATTRIBUTES_URI[attribute.toLowerCase()]) {
-        return element.getAttribute(attribute, 2) + '';
+      if (ATTRIBUTES_URI[attribute]) {
+        return node.getAttribute(attribute, 2) + '';
       }
-      element = element.getAttributeNode(attribute);
-      return (element && element.value) + '';
+      node = node.getAttributeNode(attribute);
+      return (node && node.value) + '';
     },
 
   // attribute presence
   // @return boolean
   hasAttribute = NATIVE_HAS_ATTRIBUTE ?
-    function(element, attribute) {
-      return element.hasAttribute(attribute);
+    function(node, attribute) {
+      return node.hasAttribute(attribute);
     } :
-    function(element, attribute) {
+    function(node, attribute) {
       // need to get at AttributeNode first on IE
-      var node = element.getAttributeNode(attribute);
+      node = node.getAttributeNode(attribute);
       // use both "specified" & "nodeValue" properties
       return !!(node && (node.specified || node.nodeValue));
     },
