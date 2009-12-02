@@ -116,15 +116,15 @@ NW.Dom = (function(global) {
       return compileGroup(selector, '', mode || false);
     },
 
+  USE_QSA = true,
+
   // use internal or QSA engine
   // @enable boolean
   // false = disable QSA
   // true = enable QSA
   setQSA =
     function(enable) {
-      select = enable && NATIVE_QSAPI ?
-        select_qsa :
-        client_api;
+      USE_QSA = enable && NATIVE_QSAPI ? true : false;
     },
 
   /*----------------------------- FEATURE TESTING ----------------------------*/
@@ -1029,33 +1029,35 @@ NW.Dom = (function(global) {
   select_qsa =
     function(selector, from, data, callback) {
 
-      if (RE_SIMPLE_SELECTOR.test(selector))
-        return native_api(selector, from, data || [ ], callback);
+      if (USE_QSA) { 
 
-      if (!compiledSelectors[selector] &&
-        !RE_BUGGY_QSAPI.test(selector) &&
-        (!from || QSA_NODE_TYPES[from.nodeType])) {
+        if (RE_SIMPLE_SELECTOR.test(selector))
+          return native_api(selector, from, data || [ ], callback);
 
-        var elements;
-        try {
-          elements = (from || doc).querySelectorAll(selector);
-        } catch(e) { }
+        if (!compiledSelectors[selector] &&
+          !RE_BUGGY_QSAPI.test(selector) &&
+          (!from || QSA_NODE_TYPES[from.nodeType])) {
 
-        if (elements) {
-          switch (elements.length) {
-            case 0:
-              return data || [ ];
-            case 1:
-              callback && callback(elements[0]);
-              if (data) data[data.length] = elements[0];
-              else data = [ elements[0] ];
-              return data;
-            default:
-              return callback ?
-                concatCall(data || [ ], elements, callback) :
-                data || !NATIVE_SLICE_PROTO ?
-                  concatList(data || [ ], elements) :
-                  slice.call(elements);
+          try {
+            var elements = (from || doc).querySelectorAll(selector);
+          } catch(e) { }
+
+          if (elements) {
+            switch (elements.length) {
+              case 0:
+                return data || [ ];
+              case 1:
+                callback && callback(elements.item(0));
+                if (data) data.push(elements.item(0));
+                else return [ elements.item(0) ];
+                return data;
+              default:
+                return callback ?
+                  concatCall(data || [ ], elements, callback) :
+                  data || !NATIVE_SLICE_PROTO ?
+                    concatList(data || [ ], elements) :
+                    slice.call(elements);
+            }
           }
         }
       }
