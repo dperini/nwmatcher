@@ -512,29 +512,19 @@ NW.Dom = (function(global) {
     } :
     // @return converted array
     function(className, from) {
-      var i = -1, j = i, element, elements = [ ],
-        nodes = (from || doc).getElementsByTagName('*'),
+      var i = -1, j = i,
+        data = [ ], element, xml = isXML(from || doc),
+        elements = (from || doc).getElementsByTagName('*'),
         n = isQuirks ? className.toLowerCase() : className;
       className = ' ' + n.replace(/\\/g, '') + ' ';
-      // duplicate code to maintain speed
-      if (isXML(from || doc)) {
-        while ((element = nodes[++i])) {
-          n = element.getAttribute('class');
-          if (n && n.length && (' ' + (isQuirks ? n.toLowerCase() : n).
-            replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
-            elements[++j] = element;
-          }
-        }
-      } else {
-        while ((element = nodes[++i])) {
-          n = element.className;
-          if (n && n.length && (' ' + (isQuirks ? n.toLowerCase() : n).
-            replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
-            elements[++j] = element;
-          }
+      while ((element = elements[++i])) {
+        n = xml ? element.getAttribute('class') : element.className;
+        if (n && n.length && (' ' + (isQuirks ? n.toLowerCase() : n).
+          replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
+          data[++j] = element;
         }
       }
-      return elements;
+      return data;
     },
 
   // children position by nodeType
@@ -893,7 +883,7 @@ NW.Dom = (function(global) {
 
             // CSS3 lang pseudo-class
             case 'lang':
-              source = 'if((e.lang=="' + match[3] + '")||h.lang=="' + match[3] + '"){' + source + '}' + 
+              source = 'if((e.lang=="' + match[3] + '")||h.lang=="' + match[3] + '"){' + source + '}' +
                 'else{while(e!==g&&(e=e.parentNode)){if(e.lang=="' + match[3] + '"){' + source + 'break;}}}';
               break;
 
