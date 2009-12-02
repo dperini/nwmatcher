@@ -35,7 +35,7 @@ NW.Dom = (function(global) {
   view = doc.defaultView || doc.parentWindow,
 
   // persist last selector parsing data
-  lastIndex, lastSelector, lastSlice,
+  lastSelector, lastSlice,
 
   // initialize to current loading context
   lastContext = doc,
@@ -1133,9 +1133,6 @@ NW.Dom = (function(global) {
 
           // only last slice before :not rules
           lastSlice = token.split(':not')[0];
-
-          // position where the last token was found
-          lastIndex = selector.length - token.length;
         }
 
         // reduce selection context
@@ -1160,19 +1157,13 @@ NW.Dom = (function(global) {
         else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
           if ((elements = byClass(token, from)).length === 0) return data;
           if (selector == '.' + token) done = true;
-          else selector = selector.substr(0, lastIndex) +
-            selector.substr(lastIndex).replace('.' + token, '*');
         }
 
         // TAG optimization RTL
         else if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
           if ((elements = byTag(token, from)).length === 0) return data;
           if (selector == token) done = true;
-          else selector = selector.substr(0, lastIndex) +
-            selector.substr(lastIndex).replace(token, '*');
         }
-
-        //else console.log(selector);
 
       }
 
