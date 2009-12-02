@@ -393,8 +393,10 @@ NW.Dom = (function(global) {
     'rev': 1, 'target': 1, 'text': 1, 'type': 1, 'vlink': 1
   },
 
-  INSENSITIVE_TABLE = docType && docType.systemId && docType.systemId.indexOf('xhtml') > -1 ?
-    XHTML_TABLE : HTML_TABLE,
+  INSENSITIVE_TABLE =
+    docType && (docType.publicId == '' ||
+    / XHTML /.test(docType.publicId)) ?
+      XHTML_TABLE : HTML_TABLE,
 
   // placeholder to add functionalities
   Selectors = {
