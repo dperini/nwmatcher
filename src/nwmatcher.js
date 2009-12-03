@@ -978,7 +978,7 @@ NW.Dom = (function(global) {
   // match element with selector
   // @return boolean
   match =
-    function(element, selector, from, data, callback) {
+    function(element, selector, from, callback, data) {
       // make sure an element node was passed
       if (element && element.nodeType == 1 &&
         element.nodeName.charCodeAt(0)>64) {
@@ -998,7 +998,7 @@ NW.Dom = (function(global) {
     },
 
   native_api =
-    function(selector, from, data, callback) {
+    function(selector, from, callback, data) {
       var element, elements;
       switch (selector.charAt(0)) {
         case '#':
@@ -1025,12 +1025,12 @@ NW.Dom = (function(global) {
   // using new Query Selector API
   // @return array
   select_qsa =
-    function(selector, from, data, callback) {
+    function(selector, from, callback, data) {
 
       if (USE_QSA) { 
 
         if (RE_SIMPLE_SELECTOR.test(selector))
-          return native_api(selector, from, data || [ ], callback);
+          return native_api(selector, from, callback, data || [ ]);
 
         if (!compiledSelectors[selector] &&
           !RE_BUGGY_QSAPI.test(selector) &&
@@ -1061,19 +1061,19 @@ NW.Dom = (function(global) {
       }
 
       // fall back to NWMatcher select
-      return client_api(selector, from, data, callback);
+      return client_api(selector, from, callback, data);
     },
 
   // select elements matching selector
   // using cross-browser client API
   // @return array
   client_api =
-    function(selector, from, data, callback) {
+    function(selector, from, callback, data) {
 
       var i, done, element, elements, parts, token, hasChanged, isSingle;
 
       if (RE_SIMPLE_SELECTOR.test(selector))
-        return native_api(selector, from, data || [ ], callback);
+        return native_api(selector, from, callback, data || [ ]);
 
       // add left context if missing
       if (reLeftContext.test(selector))
