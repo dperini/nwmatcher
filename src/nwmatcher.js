@@ -1030,7 +1030,7 @@ NW.Dom = (function(global) {
   select_qsa =
     function(selector, from, callback, data) {
 
-      if (USE_QSA) { 
+      if (USE_QSA) {
 
         if (RE_SIMPLE_SELECTOR.test(selector))
           return native_api(selector, from, callback, data || [ ]);
@@ -1192,7 +1192,7 @@ NW.Dom = (function(global) {
 
       return callback ?
         concatCall(data, elements, callback) :
-        data.length ? concatList(data, elements) : elements;
+        concatList(data, elements);
     },
 
   // use the new native Selector API if available,
