@@ -241,8 +241,7 @@ NW.Dom = (function(global) {
   // check Seletor API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
-      var pattern = [ '!=', ':contains', ':selected' ],
-        div = doc.createElement('div'), input;
+      var pattern = [ ], div = doc.createElement('div'), input;
 
       // WebKit is correct with className case insensitivity (when no DOCTYPE)
       // obsolete bug https://bugs.webkit.org/show_bug.cgi?id=19047
@@ -287,6 +286,8 @@ NW.Dom = (function(global) {
       div.appendChild(doc.createElement('a')).setAttribute('href', 'x');
       div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
       div.removeChild(div.firstChild);
+
+      pattern.push(':selected', ':contains');
 
       div = null;
       return pattern.length ?
