@@ -693,10 +693,10 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.id))) {
           // document can contain conflicting elements (id/name)
           // prototype selector unit need this method to recover bad HTML forms
-          source = (isXML(doc) ?
-            'if(s.getAttribute(e, "id")=="' + match[1] + '")' :
-            'if((e.submit?s.getAttribute(e,"id"):e.id)=="' + match[1] + '")') +
-            '{' + source + '}';
+          source = 'if(' + (isXML(doc) ?
+            's.getAttribute(e, "id")=="' + match[1] + '"' :
+            '(e.submit?s.getAttribute(e,"id"):e.id)=="' + match[1] + '"') +
+            '){' + source + '}';
         }
 
         // *** Type selector
@@ -704,12 +704,10 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.tagName))) {
           // both tagName and nodeName properties may be upper/lower case
           // depending on their creation NAMESPACE in createElementNS()
-          source =
-            'if(' + (isXML(doc) ? 'e.nodeName=="' + match[1] + '"' :
-              'e.nodeName=="' + match[1].toUpperCase() + '"||' +
-              'e.nodeName=="' + match[1].toLowerCase() + '"') + '){' +
-              source +
-            '}';
+          source = 'if(' + (isXML(doc) ?
+            'e.nodeName=="' + match[1] + '"' :
+            'e.nodeName' + TO_UPPER_CASE + '=="' + match[1].toUpperCase() + '"') +
+            '){' + source + '}';
         }
 
         // *** Class selector
@@ -725,8 +723,8 @@ NW.Dom = (function(global) {
           source = 'if((n=' + expr + ')&&(" "+' +
             (isQuirks ? 'n.toLowerCase()' : 'n') +
             '.replace(' + reWhiteSpace +'," ")+" ").indexOf(" ' +
-            (isQuirks ? match[1].toLowerCase() : match[1]) +
-            ' ")>-1){' + source + '}';
+            (isQuirks ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
+            '){' + source + '}';
         }
 
         // *** Attribute selector
