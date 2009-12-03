@@ -24,9 +24,6 @@ NW.Dom = (function(global) {
   // processing context
   doc = global.document,
 
-  // document type node
-  docType = doc.doctype,
-
   // context root element
   root = doc.documentElement,
 
@@ -341,10 +338,16 @@ NW.Dom = (function(global) {
     'rev': 1, 'target': 1, 'text': 1, 'type': 1, 'vlink': 1
   },
 
-  INSENSITIVE_TABLE =
-    docType && (docType.publicId === '' ||
-    (/ XHTML /).test(docType.publicId)) ?
-      XHTML_TABLE : HTML_TABLE,
+  getAttributeCaseMap =
+    function(document) {
+      // document type node
+      var docType = document.doctype;
+      return docType && (docType.publicId === '' ||
+        (/ XHTML /).test(docType.publicId)) ?
+        XHTML_TABLE : HTML_TABLE;
+    },
+
+  /*-------------------------- REGULAR EXPRESSIONS ---------------------------*/
 
   // placeholder to add functionalities
   Selectors = {
@@ -737,8 +740,8 @@ NW.Dom = (function(global) {
 
           // replace Operators parameter if needed
           if ((type = Operators[match[2]])) {
-            // check case treatment in INSENSITIVE_TABLE
-            test = INSENSITIVE_TABLE[expr.toLowerCase()];
+            // case treatment depends on document type
+            test = getAttributeCaseMap(doc)[expr.toLowerCase()];
             type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
           }
 
