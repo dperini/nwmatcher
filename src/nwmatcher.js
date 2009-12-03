@@ -983,9 +983,8 @@ NW.Dom = (function(global) {
       if (element && element.nodeType == 1 &&
         element.nodeName.charCodeAt(0)>64) {
         if (typeof selector == 'string' && selector.length) {
-          doc = element.ownerDocument;
-          root = doc.documentElement;
-          // save compiled matchers
+          root = (doc = element.ownerDocument).documentElement;
+          // save compiled matcher
           if (!compiledMatchers[selector]) {
             compiledMatchers[selector] = compileGroup(selector, '', false);
           }
