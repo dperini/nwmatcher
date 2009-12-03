@@ -1167,28 +1167,32 @@ NW.Dom = (function(global) {
       }
       // end of prefiltering pass
 
-      // save compiled selectors
-      if (!done && !compiledSelectors[selector]) {
-        if (isSingle) {
-          compiledSelectors[selector] =
-            new Function('c,s,r,d,h,g,f',
-              'var n,x=0,N,k=0,e;main:while(N=e=c[k++]){' +
-              SKIP_NON_ELEMENTS + compileSelector(selector, ACCEPT_NODE) +
-              '}return r;');
-        } else {
-          compiledSelectors[selector] = compileGroup(selector, '', true);
-        }
-      }
-
+      // compile the selector if necessary
       if (!done) {
+
+        if (!compiledSelectors[selector]) {
+          if (isSingle) {
+            compiledSelectors[selector] =
+              new Function('c,s,r,d,h,g,f',
+                'var n,x=0,N,k=0,e;main:while(N=e=c[k++]){' +
+                SKIP_NON_ELEMENTS + compileSelector(selector, ACCEPT_NODE) +
+                '}return r;');
+          } else {
+            compiledSelectors[selector] = compileGroup(selector, '', true);
+          }
+        }
+
         // reinitialize indexes
         indexesByNodeType = { };
         indexesByNodeName = { };
+
+        return compiledSelectors[selector](elements, snap, data, doc, root, from, callback);
+
       }
 
-      return done ?
-        callback ? concatCall(data, elements, callback) : concatList(data, elements) :
-        compiledSelectors[selector](elements, snap, data, doc, root, from, callback);
+      return callback ?
+        concatCall(data, elements, callback) :
+        data.length ? concatList(data, elements) : elements;
     },
 
   // use the new native Selector API if available,
