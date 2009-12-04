@@ -529,8 +529,9 @@ NW.Dom = (function(global) {
     } :
     // @return converted array
     function(className, from) {
-      var i = -1, j = i, data = [ ],
-        element, from = from || doc,
+      from || (from = doc);
+      var i = -1, j = i,
+        data = [ ], element,
         host = from.ownerDocument || from,
         elements = from.getElementsByTagName('*'),
         quirks = isQuirks(host), xml = isXML(host),
@@ -753,10 +754,9 @@ NW.Dom = (function(global) {
 
           // replace Operators parameter if needed
           if ((type = Operators[match[2]])) {
-            // case treatment depends on document type
-            test = attributeCaseMap[expr.toLowerCase()] ? 
-              match[4].toLowerCase() : match[4];
-            type = type.replace(/\%m/g, test);
+            // case treatment depends on document
+            test = attributeCaseMap[expr.toLowerCase()];
+            type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
           }
 
           // build expression for has/getAttribute
@@ -1209,7 +1209,9 @@ NW.Dom = (function(global) {
 
       return callback ?
         concatCall(data, elements, callback) :
-        concatList(data, elements);
+        data.length || !elements.slice ?
+        concatList(data, elements) :
+        elements;
     },
 
   // use the new native Selector API if available,
