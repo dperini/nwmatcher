@@ -482,7 +482,7 @@ NW.Dom = (function(global) {
       var i = -1, element, elements, node;
       from || (from = doc);
       id = id.replace(/\\/g, '');
-      if (from.getElementById) {
+      if (!isXMLDocument && from.getElementById) {
         if ((element = from.getElementById(id)) &&
           id != getAttribute(element, 'id') && from.getElementsByName) {
           elements = from.getElementsByName(id);
