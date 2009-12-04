@@ -137,31 +137,38 @@ NW.Dom = (function(global) {
 
   // Safari 2 missing document.compatMode property
   // makes harder to detect Quirks vs. Strict mode
-  isQuirks = doc.compatMode ?
-    doc.compatMode.indexOf('CSS') < 0 :
-    (function() {
-      var div = document.createElement('div'),
-        isStrict = div.style &&
-          (div.style.width = 1) &&
-          div.style.width != '1px';
-      div = null;
-      return !isStrict;
-    })(),
+  isQuirks =
+    function(document) {
+      return (document.compatMode ?
+        (document.compatMode.indexOf('CSS') < 0) :
+        (function() {
+          var div = document.createElement('div'),
+            isStrict = div.style &&
+              (div.style.width = 1) &&
+              div.style.width != '1px';
+          div = null;
+          return !isStrict;
+        })());
+    },
 
   // XML is functional in W3C browsers
   isXML = 'xmlVersion' in doc ?
-    function(element) {
-      var document = element.ownerDocument || element;
+    function(document) {
       return !!document.xmlVersion ||
         (/xml$/).test(document.contentType) ||
         document.documentElement.nodeName != 'HTML';
     } :
-    function(element) {
-      var document = element.ownerDocument || element;
+    function(document) {
       return (document.firstChild.nodeType == 7 &&
         document.firstChild.nodeName == 'xml') ||
         document.documentElement.nodeName != 'HTML';
     },
+
+  // reset and reused dynamically for each selection
+  isQuirksMode = isQuirks(doc),
+
+  // reset and reused dynamically for each selection
+  isXMLDocument = isXML(doc),
 
   // NATIVE_XXXXX true if method exist and is callable
 
@@ -250,7 +257,7 @@ NW.Dom = (function(global) {
       // before '.xXx' or the bug may not present itself
       div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
       div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
-      if (isQuirks &&
+      if (isQuirks(doc) &&
         (div.querySelectorAll('[class~=xxx]').length != 2 ||
         div.querySelectorAll('.xXx').length != 2)) {
         pattern.push('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + encoding + ')');
@@ -316,7 +323,9 @@ NW.Dom = (function(global) {
   // http://www.whatwg.org/specs/web-apps/current-work/#selectors
   HTML_TABLE = {
     // class attribute must be treated case-insensitive in HTML quirks mode
-    'class': isQuirks ? 1 : 0,
+    // initialized by default to Standard Mode (case-sensitive),
+    // it will be set dynamically by getAttributeCaseMap
+    'class': 0,
     'accept': 1, 'accept-charset': 1, 'align': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'checked': 1, 'clear': 1, 'codetype': 1, 'color': 1,
     'compact': 1, 'declare': 1, 'defer': 1, 'dir': 1, 'direction': 1, 'disabled': 1,
@@ -327,9 +336,8 @@ NW.Dom = (function(global) {
     'text': 1, 'type': 1, 'valign': 1, 'valuetype': 1, 'vlink': 1
   },
 
-  // the following attributes must be treated case insensitive in XHTML
-  // See Niels Leenheer blog
-  // http://rakaz.nl/item/css_selector_bugs_case_sensitivity
+  // the following attributes must be treated case-insensitive in XHTML mode
+  // Niels Leenheer http://rakaz.nl/item/css_selector_bugs_case_sensitivity
   XHTML_TABLE = {
     'accept': 1, 'accept-charset': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'codetype': 1, 'color': 1,
@@ -338,14 +346,19 @@ NW.Dom = (function(global) {
     'rev': 1, 'target': 1, 'text': 1, 'type': 1, 'vlink': 1
   },
 
+  // setup and return the correct HTML/XHTML
+  // table depending on document type and mode
   getAttributeCaseMap =
     function(document) {
       // document type node
       var docType = document.doctype;
+      HTML_TABLE['class'] = isQuirks(document) ? 1 : 0;
       return docType && (docType.publicId === '' ||
         (/ XHTML /).test(docType.publicId)) ?
         XHTML_TABLE : HTML_TABLE;
     },
+
+  attributeCaseMap = getAttributeCaseMap(doc),
 
   /*-------------------------- REGULAR EXPRESSIONS ---------------------------*/
 
@@ -516,14 +529,16 @@ NW.Dom = (function(global) {
     } :
     // @return converted array
     function(className, from) {
-      var i = -1, j = i,
-        data = [ ], element, xml = isXML(from || doc),
-        elements = (from || doc).getElementsByTagName('*'),
-        n = isQuirks ? className.toLowerCase() : className;
+      var i = -1, j = i, data = [ ],
+        element, from = from || doc,
+        host = from.ownerDocument || from,
+        elements = from.getElementsByTagName('*'),
+        quirks = isQuirks(host), xml = isXML(host),
+        n = quirks ? className.toLowerCase() : className;
       className = ' ' + n.replace(/\\/g, '') + ' ';
       while ((element = elements[++i])) {
         n = xml ? element.getAttribute('class') : element.className;
-        if (n && n.length && (' ' + (isQuirks ? n.toLowerCase() : n).
+        if (n && n.length && (' ' + (quirks ? n.toLowerCase() : n).
           replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
           data[++j] = element;
         }
@@ -696,9 +711,10 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.id))) {
           // document can contain conflicting elements (id/name)
           // prototype selector unit need this method to recover bad HTML forms
-          source = 'if(' + (isXML(doc) ?
-            's.getAttribute(e, "id")=="' + match[1] + '"' :
-            '(e.submit?s.getAttribute(e,"id"):e.id)=="' + match[1] + '"') +
+          source = 'if(' + (isXMLDocument ?
+            's.getAttribute(e,"id")' :
+            '(e.submit?s.getAttribute(e,"id"):e.id)') +
+            '=="' + match[1] + '"' +
             '){' + source + '}';
         }
 
@@ -707,9 +723,9 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.tagName))) {
           // both tagName and nodeName properties may be upper/lower case
           // depending on their creation NAMESPACE in createElementNS()
-          source = 'if(' + (isXML(doc) ?
-            'e.nodeName=="' + match[1] + '"' :
-            'e.nodeName' + TO_UPPER_CASE + '=="' + match[1].toUpperCase() + '"') +
+          source = 'if(e.nodeName' + (isXMLDocument ?
+            '=="' + match[1] + '"' : TO_UPPER_CASE +
+            '=="' + match[1].toUpperCase() + '"') +
             '){' + source + '}';
         }
 
@@ -719,14 +735,11 @@ NW.Dom = (function(global) {
           // W3C CSS3 specs: element whose "class" attribute has been assigned a
           // list of whitespace-separated values, see section 6.4 Class selectors
           // and notes at the bottom; explicitly non-normative in this specification.
-          expr = 'xmlVersion' in doc ?
-            'd.xmlVersion?e.getAttribute("class"):e.className' :
-            'h.nodeName.toUpperCase()!="HTML"?e.getAttribute("class"):e.className';
-
-          source = 'if((n=' + expr + ')&&(" "+' +
-            (isQuirks ? 'n.toLowerCase()' : 'n') +
+          source = 'if((n=' + (isXMLDocument ?
+            's.getAttribute(e,"class")' : 'e.className') +
+            ')&&(" "+' + (isQuirksMode ? 'n.toLowerCase()' : 'n') +
             '.replace(' + reWhiteSpace +'," ")+" ").indexOf(" ' +
-            (isQuirks ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
+            (isQuirksMode ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
             '){' + source + '}';
         }
 
@@ -741,8 +754,9 @@ NW.Dom = (function(global) {
           // replace Operators parameter if needed
           if ((type = Operators[match[2]])) {
             // case treatment depends on document type
-            test = getAttributeCaseMap(doc)[expr.toLowerCase()];
-            type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
+            test = attributeCaseMap[expr.toLowerCase()] ? 
+              match[4].toLowerCase() : match[4];
+            type = type.replace(/\%m/g, test);
           }
 
           // build expression for has/getAttribute
@@ -772,13 +786,13 @@ NW.Dom = (function(global) {
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'if(e!==g&&(e=e.parentNode)){' + source + '}';
+          source = 'if(e!==h&&e!==g&&(e=e.parentNode)){' + source + '}';
         }
 
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'while(e!==g&&(e=e.parentNode)){' + source + '}';
+          source = 'while(e!==h&&e!==g&&(e=e.parentNode)){' + source + '}';
         }
 
         // *** Structural pseudo-classes
@@ -906,11 +920,11 @@ NW.Dom = (function(global) {
             // CSS3 user action pseudo-classes IE & FF3 have native support
             // these capabilities may be emulated by some event managers
             case 'active':
-              if (isXML(doc)) break;
+              if (isXMLDocument) break;
               source = 'if(e===d.activeElement){' + source + '}';
               break;
             case 'hover':
-              if (isXML(doc)) break;
+              if (isXMLDocument) break;
               source = 'if(e===d.hoverElement){' + source + '}';
               break;
             case 'focus':
@@ -1102,6 +1116,9 @@ NW.Dom = (function(global) {
         lastContext = from;
         // reference context ownerDocument and document root (HTML)
         root = (doc = from.ownerDocument || from).documentElement;
+        attributeCaseMap = getAttributeCaseMap(doc);
+        isQuirksMode = isQuirks(doc);
+        isXMLDocument = isXML(doc);
       }
 
       if (hasChanged = lastSelector != selector) {
@@ -1170,7 +1187,7 @@ NW.Dom = (function(global) {
       // compile the selector if necessary
       if (!done) {
 
-        if (!compiledSelectors[selector]) {
+        if (!compiledSelectors[selector] || isXMLDocument) {
           if (isSingle) {
             compiledSelectors[selector] =
               new Function('c,s,r,d,h,g,f',
