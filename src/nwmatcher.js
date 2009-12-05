@@ -667,10 +667,10 @@ NW.Dom = (function(global) {
           token = token.replace(reTrimSpaces, '');
           // avoid repeating the same token in comma separated group (p, p)
           if (!seen[token]) {
+            seen[token] = true;
             source += i > 0 ? 'e=N;' : '';
             source += compileSelector(token, mode ? ACCEPT_NODE : 'return true;');
           }
-          seen[token] = true;
         }
       }
       if (mode) {
