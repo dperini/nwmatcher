@@ -156,12 +156,12 @@ NW.Dom = (function(global) {
     function(document) {
       return !!document.xmlVersion ||
         (/xml$/).test(document.contentType) ||
-        document.documentElement.nodeName != 'HTML';
+        !(/html/i).test(document.documentElement.nodeName);
     } :
     function(document) {
-      return (document.firstChild.nodeType == 7 &&
-        document.firstChild.nodeName == 'xml') ||
-        document.documentElement.nodeName != 'HTML';
+      return document.firstChild.nodeType == 7 &&
+        (/xml/i).test(document.firstChild.nodeName) ||
+        !(/html/i).test(document.documentElement.nodeName);
     },
 
   // reset and reused dynamically for each selection
