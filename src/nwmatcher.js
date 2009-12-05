@@ -486,16 +486,10 @@ NW.Dom = (function(global) {
         if ((element = from.getElementById(id)) &&
           element.name == id && from.getElementsByName) {
           elements = from.getElementsByName(id);
-          while ((element = elements[++i])) {
-            if (element.getAttribute('id') == id) return element;
-          }
-          return null;
-        }
-        return element;
-      }
+        } else return element; 
+      } else elements = from.getElementsByTagName('*');
 
       // fallback to manual
-      elements = byTag('*', from);
       while ((element = elements[++i])) {
         if (element.getAttribute('id') == id) {
           return element;
