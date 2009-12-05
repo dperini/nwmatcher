@@ -627,7 +627,7 @@ NW.Dom = (function(global) {
 
   // do not change this, it is searched & replaced
   // in multiple places to build compiled functions
-  ACCEPT_NODE = 'f&&f(N);r[r.length]=N;continue main;',
+  ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
 
   // conditionals optimizers used internally by compiler
 
@@ -668,7 +668,7 @@ NW.Dom = (function(global) {
           // avoid repeating the same token in comma separated group (p, p)
           if (!seen[token]) {
             seen[token] = true;
-            source += i > 0 ? 'e=N;' : '';
+            source += i > 0 ? (mode ? 'e=c[k];': 'e=k;') : '';
             source += compileSelector(token, mode ? ACCEPT_NODE : 'return true;');
           }
         }
@@ -676,12 +676,12 @@ NW.Dom = (function(global) {
       if (mode) {
         // for select method
         return new Function('c,s,r,d,h,g,f',
-          'var n,x=0,N,k=0,e;main:while(N=e=c[k++]){' +
+          'var n,x=0,k=0,e;main:for(;e=c[k];++k){' +
           SKIP_NON_ELEMENTS + source + '}return r;');
       } else {
         // for match method
         return new Function('e,s,r,d,h,g,f',
-          'var n,x=0,N=e;' + source + 'return false;');
+          'var n,x=0,k=e;' + source + 'return false;');
       }
     },
 
@@ -1188,7 +1188,7 @@ NW.Dom = (function(global) {
           if (isSingle) {
             compiledSelectors[selector] =
               new Function('c,s,r,d,h,g,f',
-                'var n,x=0,N,k=0,e;main:while(N=e=c[k++]){' +
+                'var n,x=0,k=0,e;main:for(;e=c[k];++k){' +
                 SKIP_NON_ELEMENTS + compileSelector(selector, ACCEPT_NODE) +
                 '}return r;');
           } else {
