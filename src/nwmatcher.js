@@ -1044,7 +1044,7 @@ NW.Dom = (function(global) {
       if (USE_QSA) {
 
         if (RE_SIMPLE_SELECTOR.test(selector))
-          return native_api(selector, from, callback, data || [ ]);
+          return native_api(selector, from || doc, callback, data || [ ]);
 
         if (!compiledSelectors[selector] &&
           !RE_BUGGY_QSAPI.test(selector) &&
@@ -1087,7 +1087,7 @@ NW.Dom = (function(global) {
       var i, done, element, elements, parts, token, hasChanged, isSingle;
 
       if (RE_SIMPLE_SELECTOR.test(selector))
-        return native_api(selector, from, callback, data || [ ]);
+        return native_api(selector, from || doc, callback, data || [ ]);
 
       // add left context if missing
       if (reLeftContext.test(selector))
