@@ -479,18 +479,15 @@ NW.Dom = (function(global) {
   // @return element reference or null
   byId =
     function(id, from) {
-      var i = -1, element, elements, node;
+      var i = -1, element, elements;
       from || (from = doc);
       id = id.replace(/\\/g, '');
       if (!isXMLDocument && from.getElementById) {
         if ((element = from.getElementById(id)) &&
-          id != getAttribute(element, 'id') && from.getElementsByName) {
+          element.name == id && from.getElementsByName) {
           elements = from.getElementsByName(id);
           while ((element = elements[++i])) {
-            if ((node = element.getAttributeNode('id')) &&
-              node.value == id) {
-              return element;
-            }
+            if (element.getAttribute('id') == id) return element;
           }
           return null;
         }
