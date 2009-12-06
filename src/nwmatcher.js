@@ -548,7 +548,7 @@ NW.Dom = (function(global) {
         indexes = { };
         element = element.firstChild;
         while (element) {
-          if (element.nodeName.charCodeAt(0) > 64) {
+          if (element.nodeName > '@') {
             indexes[element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID)] = ++i;
           }
           element = element.nextSibling;
@@ -631,7 +631,7 @@ NW.Dom = (function(global) {
 
   // filter IE gEBTN('*') results containing non-elements
   SKIP_NON_ELEMENTS = BUGGY_GEBTN ?
-    'if(e.nodeName.charCodeAt(0)<65){continue;}' : '',
+    'if(e.nodeName<"@"){continue;}' : '',
 
   // use the textContent or innerText property to check CSS3 :contains
   // Safari 2 has a bug with innerText and hidden content, using an
@@ -763,7 +763,7 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.adjacent))) {
           source = NATIVE_TRAVERSAL_API ?
             'if((e=e.previousElementSibling)){' + source + '}' :
-            'while((e=e.previousSibling)){if(e.nodeName.charCodeAt(0)>64){' + source + 'break;}}';
+            'while((e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}';
         }
 
         // *** General sibling combinator
@@ -771,7 +771,7 @@ NW.Dom = (function(global) {
         else if ((match = selector.match(Patterns.relative))) {
           source = NATIVE_TRAVERSAL_API ?
             'while((e=e.previousElementSibling)){' + source + '}' :
-            'while((e=e.previousSibling)){if(e.nodeName.charCodeAt(0)>64){' + source + '}}';
+            'while((e=e.previousSibling)){if(e.nodeName>"@"){' + source + '}}';
         }
 
         // *** Child combinator
@@ -848,7 +848,7 @@ NW.Dom = (function(global) {
                 n = match[2] == 'only' ? 'previous' : 'next';
                 b = match[2] == 'first' || match[2] == 'last';
 
-                type = match[4] ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName.charCodeAt(0)<65';
+                type = match[4] ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
 
                 source = 'if(e!==h){' +
                   ( 'n=e;while((n=n.' + a + 'Sibling)' + type + ');if(!n){' + (b ? source :
@@ -989,7 +989,7 @@ NW.Dom = (function(global) {
     function(element, selector, from, callback, data) {
       // make sure an element node was passed
       if (element && element.nodeType == 1 &&
-        element.nodeName.charCodeAt(0)>64) {
+        element.nodeName > '@') {
         if (typeof selector == 'string' && selector.length) {
           root = (doc = element.ownerDocument).documentElement;
           // save compiled matcher
