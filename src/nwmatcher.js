@@ -499,10 +499,25 @@ NW.Dom = (function(global) {
     },
 
   // elements by tag
-  // @return nodeList (live)
-  byTag =
+  // @return array
+  byTag = !BUGGY_GEBTN ?
     function(tag, from) {
-      return (from || doc).getElementsByTagName(tag);
+      return slice.call((from || doc).getElementsByTagName(tag), 0);
+    } :
+    function(tag, from) {
+      var elements = (from || doc).getElementsByTagName(tag);
+      if (tag != '*') {
+        while ((element = elements[++i])) {
+          data.push(element);
+        }
+        return elements;
+      }
+      var i = -1, j = i, element, data = [ ];
+      while ((element = elements[++i])) {
+        if (element.nodeName > '@')
+          data.push(element);
+      }
+      return data;
     },
 
   // elements by name
@@ -513,12 +528,11 @@ NW.Dom = (function(global) {
     },
 
   // elements by class
+  // @return array
   byClass = !BUGGY_GEBCN ?
-    // @return native nodelist
     function(className, from) {
-      return (from || doc).getElementsByClassName(className.replace(/\\/g, ''));
+      return slice.call((from || doc).getElementsByClassName(className.replace(/\\/g, '')), 0);
     } :
-    // @return converted array
     function(className, from) {
       from || (from = doc);
       var i = -1, j = i,
@@ -629,10 +643,6 @@ NW.Dom = (function(global) {
   TO_UPPER_CASE = typeof doc.createElementNS == 'function' ?
     '.toUpperCase()' : '',
 
-  // filter IE gEBTN('*') results containing non-elements
-  SKIP_NON_ELEMENTS = BUGGY_GEBTN ?
-    'if(e.nodeName<"@"){continue;}' : '',
-
   // use the textContent or innerText property to check CSS3 :contains
   // Safari 2 has a bug with innerText and hidden content, using an
   // internal replace on the innerHTML property avoids trashing it
@@ -670,8 +680,7 @@ NW.Dom = (function(global) {
       if (mode) {
         // for select method
         return new Function('c,s,r,d,h,g,f',
-          'var n,x=0,k=0,e;main:for(;e=c[k];++k){' +
-          SKIP_NON_ELEMENTS + source + '}return r;');
+          'var n,x=0,k=0,e;main:for(;e=c[k];++k){' + source + '}return r;');
       } else {
         // for match method
         return new Function('e,s,r,d,h,g,f',
@@ -1024,9 +1033,9 @@ NW.Dom = (function(global) {
       }
       return callback ?
         concatCall(data, elements, callback) :
-        data || !NATIVE_SLICE_PROTO ?
+        data.length ?
           concatList(data, elements) :
-          slice.call(elements);
+          elements;
     },
 
   // select elements matching selector
@@ -1171,7 +1180,7 @@ NW.Dom = (function(global) {
       }
 
       if (!elements) {
-        elements = from.getElementsByTagName('*');
+        elements = byTag('*', from);
       }
       // end of prefiltering pass
 
@@ -1183,7 +1192,7 @@ NW.Dom = (function(global) {
             compiledSelectors[selector] =
               new Function('c,s,r,d,h,g,f',
                 'var n,x=0,k=0,e;main:for(;e=c[k];++k){' +
-                SKIP_NON_ELEMENTS + compileSelector(selector, ACCEPT_NODE) +
+                compileSelector(selector, ACCEPT_NODE) +
                 '}return r;');
           } else {
             compiledSelectors[selector] = compileGroup(selector, '', true);
@@ -1200,9 +1209,9 @@ NW.Dom = (function(global) {
 
       return callback ?
         concatCall(data, elements, callback) :
-        data.length || !elements.slice ?
-        concatList(data, elements) :
-        elements;
+        data.length ?
+          concatList(data, elements) :
+          elements;
     },
 
   // use the new native Selector API if available,
