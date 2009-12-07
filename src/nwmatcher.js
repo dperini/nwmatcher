@@ -509,13 +509,13 @@ NW.Dom = (function(global) {
         elements = (from || doc).getElementsByTagName(tag);
       if (tag != '*') {
         while ((element = elements[++i])) {
-          data.push(element);
+          data[i] = element;
         }
-        return data;
-      }
-      while ((element = elements[++i])) {
-        if (element.nodeName > '@')
-          data.push(element);
+      } else {
+        while ((element = elements[++i])) {
+          if (element.nodeName > '@')
+            data[++j] = element;
+        }
       }
       return data;
     },
