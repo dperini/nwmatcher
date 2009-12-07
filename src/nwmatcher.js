@@ -778,9 +778,13 @@ NW.Dom = (function(global) {
         // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
+          k++;
+          // previousSibling particularly slow on Gecko based browsers prior to FF3.1
           source = NATIVE_TRAVERSAL_API ?
-            'while((e=e.previousElementSibling)){' + source + '}' :
-            'while((e=e.previousSibling)){if(e.nodeName>"@"){' + source + '}}';
+            ('var N' + k + '=e;e=e.parentNode.firstElementChild;' +
+            'while(e&&e!=N' + k +'){' + source + 'e=e.nextElementSibling;}') :
+            ('var N' + k + '=e;e=e.parentNode.firstChild;' +
+            'while(e&&e!=N' + k +'){' + source + 'e=e.nextSibling;}');
         }
 
         // *** Child combinator
@@ -1209,7 +1213,7 @@ NW.Dom = (function(global) {
 
       return callback ?
         concatCall(data, elements, callback) :
-        data.length ?
+        data.length || !elements.slice ?
           concatList(data, elements) :
           elements;
     },
