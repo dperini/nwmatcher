@@ -783,8 +783,8 @@ NW.Dom = (function(global) {
           source = NATIVE_TRAVERSAL_API ?
             ('var N' + k + '=e;e=e.parentNode.firstElementChild;' +
             'while(e&&e!=N' + k +'){' + source + 'e=e.nextElementSibling;}') :
-            ('var N' + k + '=e;e=e.parentNode.firstChild;' +
-            'while(e&&e!=N' + k +'){' + source + 'e=e.nextSibling;}');
+            ('var N' + k + '=e;e=e.parentNode.firstChild;' + 
+            'while(e&&e!=N' + k +'){if(e.nodeName>"@"){' + source + '}e=e.nextSibling;}');
         }
 
         // *** Child combinator
