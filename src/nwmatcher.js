@@ -1087,7 +1087,7 @@ NW.Dom = (function(global) {
   client_api =
     function(selector, from, callback, data) {
 
-      var i, done, element, elements, parts, token, hasChanged, isSingle;
+      var i, element, elements, parts, token, hasChanged, isSingle;
 
       if (RE_SIMPLE_SELECTOR.test(selector))
         return native_api(selector, from || doc, callback, data || [ ]);
@@ -1170,13 +1170,11 @@ NW.Dom = (function(global) {
         // TAG optimization RTL
         if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
           if ((elements = byTag(token, from)).length === 0) return data;
-          if (selector == token) done = true;
         }
 
         // CLASS optimization RTL
         else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
           if ((elements = byClass(token, from)).length === 0) return data;
-          if (selector == '.' + token) done = true;
         }
 
       }
@@ -1187,32 +1185,23 @@ NW.Dom = (function(global) {
       // end of prefiltering pass
 
       // compile the selector if necessary
-      if (!done) {
-
-        if (!compiledSelectors[selector] || isXMLDocument) {
-          if (isSingle) {
-            compiledSelectors[selector] =
-              new Function('c,s,r,d,h,g,f',
-                'var n,x=0,k=0,e;main:for(;e=c[k];++k){' +
-                compileSelector(selector, ACCEPT_NODE) +
-                '}return r;');
-          } else {
-            compiledSelectors[selector] = compileGroup(selector, '', true);
-          }
+      if (!compiledSelectors[selector] || isXMLDocument) {
+        if (isSingle) {
+          compiledSelectors[selector] =
+            new Function('c,s,r,d,h,g,f',
+              'var n,x=0,k=0,e;main:for(;e=c[k];++k){' +
+              compileSelector(selector, ACCEPT_NODE) +
+              '}return r;');
+        } else {
+          compiledSelectors[selector] = compileGroup(selector, '', true);
         }
-
-        // reinitialize indexes
-        indexesByNodeType = { };
-        indexesByNodeName = { };
-
-        return compiledSelectors[selector](elements, snap, data, doc, root, from, callback);
       }
 
-      return callback ?
-        concatCall(data, elements, callback) :
-        data.length || !elements.slice ?
-          concatList(data, elements) :
-          elements;
+      // reinitialize indexes
+      indexesByNodeType = { };
+      indexesByNodeName = { };
+
+      return compiledSelectors[selector](elements, snap, data, doc, root, from, callback);
     },
 
   // use the new native Selector API if available,
