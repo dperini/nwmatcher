@@ -505,14 +505,14 @@ NW.Dom = (function(global) {
       return slice.call((from || doc).getElementsByTagName(tag), 0);
     } :
     function(tag, from) {
-      var elements = (from || doc).getElementsByTagName(tag);
+      var i = -1, j = i, data = [ ], element,
+        elements = (from || doc).getElementsByTagName(tag);
       if (tag != '*') {
         while ((element = elements[++i])) {
           data.push(element);
         }
-        return elements;
+        return data;
       }
-      var i = -1, j = i, element, data = [ ];
       while ((element = elements[++i])) {
         if (element.nodeName > '@')
           data.push(element);
