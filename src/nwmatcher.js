@@ -1169,16 +1169,16 @@ NW.Dom = (function(global) {
           } else return data;
         }
 
-        // CLASS optimization RTL
-        else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-          if ((elements = byClass(token, from)).length === 0) return data;
-          if (selector == '.' + token) done = true;
-        }
-
         // TAG optimization RTL
         else if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
           if ((elements = byTag(token, from)).length === 0) return data;
           if (selector == token) done = true;
+        }
+
+        // CLASS optimization RTL
+        else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
+          if ((elements = byClass(token, from)).length === 0) return data;
+          if (selector == '.' + token) done = true;
         }
 
       }
