@@ -1151,26 +1151,28 @@ NW.Dom = (function(global) {
           lastSlice = token.split(':not')[0];
         }
 
-        // reduce selection context
-        if (doc.getElementById && (parts = selector.match(Optimize.ID)) && (token = parts[1])) {
-          if ((element = byId(token, doc))) {
-            if (/[>+~]/.test(selector)) from = element.parentNode;
-            else from = element;
-          } else return data;
-        }
-
-        // ID optimization RTL
-        if (doc.getElementById && (parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
-          if ((element = byId(token, doc))) {
-            if (match(element, selector)) {
-              elements = [ element ];
-              done = true;
+        if (doc.getElementById) {
+          // ID optimization RTL
+          if ((parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
+            if ((element = byId(token, doc))) {
+              if (match(element, selector)) {
+                callback && callback(element);
+                data[data.length] = element;
+              }
             }
-          } else return data;
+            return data;
+          }
+          // ID optimization LTR to reduce selection context
+          else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
+            if ((element = byId(token, doc))) {
+              if (/[>+~]/.test(selector)) from = element.parentNode;
+              else from = element;
+            } else return data;
+          }
         }
 
         // TAG optimization RTL
-        else if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
+        if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
           if ((elements = byTag(token, from)).length === 0) return data;
           if (selector == token) done = true;
         }
@@ -1208,7 +1210,6 @@ NW.Dom = (function(global) {
         indexesByNodeName = { };
 
         return compiledSelectors[selector](elements, snap, data, doc, root, from, callback);
-
       }
 
       return callback ?
