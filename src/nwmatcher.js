@@ -27,10 +27,6 @@ NW.Dom = (function(global) {
   // context root element
   root = doc.documentElement,
 
-  // current DOM viewport/window, also used to
-  // detect Safari 2.0.x [object AbstractView]
-  view = doc.defaultView || doc.parentWindow,
-
   // persist last selector parsing data
   lastSelector, lastSlice,
 
@@ -50,7 +46,7 @@ NW.Dom = (function(global) {
   // discard invalid chars found in passed selector
   reValidator = /^([.:#*]|[>+~a-zA-Z]|[^\x00-\xa0]|\[.*\])/,
 
-  // Only five chars can occur in whitespace, they are:
+  // only five chars can occur in whitespace, they are:
   // \x20 \t \n \r \f, checks now uniformed in the code
   // http://www.w3.org/TR/css3-selectors/#selector-syntax
   reTrimSpaces = /^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g,
@@ -1148,7 +1144,7 @@ NW.Dom = (function(global) {
         }
 
         if (doc.getElementById) {
-          // ID optimization RTL
+          // ID optimization RTL, to reduce number of elements to visit
           if ((parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
             if ((element = byId(token, doc))) {
               if (match(element, selector)) {
@@ -1158,7 +1154,7 @@ NW.Dom = (function(global) {
             }
             return data;
           }
-          // ID optimization LTR to reduce selection context
+          // ID optimization LTR, to reduce selection context searches
           else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
             if ((element = byId(token, doc))) {
               if (/[>+~]/.test(selector)) from = element.parentNode;
