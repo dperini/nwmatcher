@@ -186,7 +186,7 @@ NW.Dom = (function(global) {
   NATIVE_SLICE_PROTO =
     (function() {
       try {
-        return slice.call(doc.childNodes, 0) instanceof Array;
+        return !!slice.call(doc.childNodes, 0)[0];
       } catch(e) {
         return false;
       }
@@ -492,7 +492,7 @@ NW.Dom = (function(global) {
 
   // elements by tag
   // @return array
-  byTag = !BUGGY_GEBTN ?
+  byTag = !BUGGY_GEBTN && NATIVE_SLICE_PROTO ?
     function(tag, from) {
       return slice.call((from || doc).getElementsByTagName(tag), 0);
     } :
@@ -521,7 +521,7 @@ NW.Dom = (function(global) {
 
   // elements by class
   // @return array
-  byClass = !BUGGY_GEBCN ?
+  byClass = !BUGGY_GEBCN && NATIVE_SLICE_PROTO ?
     function(className, from) {
       return slice.call((from || doc).getElementsByClassName(className.replace(/\\/g, '')), 0);
     } :
