@@ -215,7 +215,7 @@
           this.assertEnumEqual([$('link_3')], $$('a[class~=external][href="#"]'),
            'a[class~=external][href="#"]');
           this.assertEnumEqual([], $$('a[class~=external]:not([href="#"])'),
-           'a[class~=external][href!="#"]');
+           'a[class~=external]:not([href="#"])');
         },
 
         testSelectorMatchElements: function() {
