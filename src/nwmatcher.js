@@ -775,7 +775,7 @@ NW.Dom = (function(global) {
           source = NATIVE_TRAVERSAL_API ?
             ('var N' + k + '=e;e=e.parentNode.firstElementChild;' +
             'while(e&&e!=N' + k +'){' + source + 'e=e.nextElementSibling;}') :
-            ('var N' + k + '=e;e=e.parentNode.firstChild;' + 
+            ('var N' + k + '=e;e=e.parentNode.firstChild;' +
             'while(e&&e!=N' + k +'){if(e.nodeName>"@"){' + source + '}e=e.nextSibling;}');
         }
 
@@ -897,7 +897,8 @@ NW.Dom = (function(global) {
             case 'lang':
               test = '';
               if (match[3]) test = match[3].substr(0, 2) + '-';
-              source = 'do{if(e.lang=="' + match[3] + '"||e.lang=="' + test + '")' +
+              source = 'do{n=e.lang;' +
+                'if(n&&(n=="' + match[3] + '"||n.substr(0,3)=="' + test + '"))' +
                 '{' + source + 'break;}}while((e=e.parentNode)&&e!==g);';
               break;
 
