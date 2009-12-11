@@ -895,8 +895,10 @@ NW.Dom = (function(global) {
 
             // CSS3 lang pseudo-class
             case 'lang':
-              source = 'if((e.lang=="' + match[3] + '")||h.lang=="' + match[3] + '"){' + source + '}' +
-                'else{while(e!==g&&(e=e.parentNode)){if(e.lang=="' + match[3] + '"){' + source + 'break;}}}';
+              test = '';
+              if (match[3]) test = match[3].substr(0, 2) + '-';
+              source = 'do{if(e.lang=="' + match[3] + '"||e.lang=="' + test + '")' +
+                '{' + source + 'break;}}while((e=e.parentNode)&&e!==g);';
               break;
 
             // CSS3 target pseudo-class
