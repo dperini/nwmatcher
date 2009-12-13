@@ -350,8 +350,6 @@ NW.Dom = (function(global) {
         XHTML_TABLE : HTML_TABLE;
     },
 
-  attributeCaseMap = getAttributeCaseMap(doc),
-
   /*-------------------------- REGULAR EXPRESSIONS ---------------------------*/
 
   // placeholder to add functionalities
@@ -478,7 +476,7 @@ NW.Dom = (function(global) {
         if ((element = from.getElementById(id)) &&
           element.name == id && from.getElementsByName) {
           elements = from.getElementsByName(id);
-        } else return element; 
+        } else return element;
       } else elements = from.getElementsByTagName('*');
 
       // fallback to manual
@@ -620,7 +618,7 @@ NW.Dom = (function(global) {
   // @return boolean
   isLink =
     function(element) {
-        return hasAttribute(element,'href') && LINK_NODES[element.nodeName];
+      return hasAttribute(element,'href') && LINK_NODES[element.nodeName];
     },
 
   /*---------------------------- COMPILER METHODS ----------------------------*/
@@ -747,7 +745,7 @@ NW.Dom = (function(global) {
           // replace Operators parameter if needed
           if ((type = Operators[match[2]])) {
             // case treatment depends on document
-            test = attributeCaseMap[expr.toLowerCase()];
+            test = getAttributeCaseMap(doc)[expr.toLowerCase()];
             type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
           }
 
@@ -1115,7 +1113,6 @@ NW.Dom = (function(global) {
         lastContext = from;
         // reference context ownerDocument and document root (HTML)
         root = (doc = from.ownerDocument || from).documentElement;
-        attributeCaseMap = getAttributeCaseMap(doc);
         isQuirksMode = isQuirks(doc);
         isXMLDocument = isXML(doc);
       }
