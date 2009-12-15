@@ -338,18 +338,6 @@ NW.Dom = (function(global) {
     'rev': 1, 'target': 1, 'text': 1, 'type': 1, 'vlink': 1
   },
 
-  // setup and return the correct HTML/XHTML
-  // table depending on document type and mode
-  getAttributeCaseMap =
-    function(document) {
-      // document type node
-      var docType = document.doctype;
-      HTML_TABLE['class'] = isQuirks(document) ? 1 : 0;
-      return docType && (docType.publicId === '' ||
-        (/ XHTML /).test(docType.publicId)) ?
-        XHTML_TABLE : HTML_TABLE;
-    },
-
   /*-------------------------- REGULAR EXPRESSIONS ---------------------------*/
 
   // placeholder to add functionalities
@@ -1178,7 +1166,7 @@ NW.Dom = (function(global) {
             if ((elements = byTag(token, from)).length === 0) return data;
           } else
           if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-            if ((elements = byClass(token, from)).length === 0) return data; 
+            if ((elements = byClass(token, from)).length === 0) return data;
           }
         }
 
