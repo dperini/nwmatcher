@@ -316,7 +316,7 @@ NW.Dom = (function(global) {
   HTML_TABLE = {
     // class attribute must be treated case-insensitive in HTML quirks mode
     // initialized by default to Standard Mode (case-sensitive),
-    // it will be set dynamically by getAttributeCaseMap
+    // set dynamically by the attribute resolver
     'class': 0,
     'accept': 1, 'accept-charset': 1, 'align': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'checked': 1, 'clear': 1, 'codetype': 1, 'color': 1,
@@ -745,7 +745,8 @@ NW.Dom = (function(global) {
           // replace Operators parameter if needed
           if ((type = Operators[match[2]])) {
             // case treatment depends on document
-            test = getAttributeCaseMap(doc)[expr.toLowerCase()];
+            HTML_TABLE['class'] = isQuirksMode ? 1 : 0;
+            test = (isXMLDocument ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
             type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
           }
 
