@@ -76,50 +76,6 @@ NW.Dom = (function(global) {
     return s.replace(/<\/?("[^\"]*"|'[^\']*'|[^>])+>/gi, '');
   },
 
-  /*------------------------------- DEBUGGING --------------------------------*/
-
-  // enable/disable notifications
-  VERBOSE = false,
-
-  // a way to control user notification
-  emit =
-    function(message) {
-      if (VERBOSE) {
-        var console = global.console;
-        if (console && console.log) {
-          console.log(message);
-        } else {
-          if (/exception/i.test(message)) {
-            global.status = message;
-            global.defaultStatus = message;
-          } else {
-            global.status += message;
-          }
-        }
-      }
-    },
-
-  // compile selectors to functions resolvers
-  // @selector string
-  // @mode boolean
-  // false = select resolvers
-  // true = match resolvers
-  compile =
-    function(selector, mode) {
-      return compileGroup(selector, '', mode || false);
-    },
-
-  USE_QSA = true,
-
-  // use internal or QSA engine
-  // @enable boolean
-  // false = disable QSA
-  // true = enable QSA
-  setQSA =
-    function(enable) {
-      USE_QSA = enable && NATIVE_QSAPI ? true : false;
-    },
-
   /*----------------------------- FEATURE TESTING ----------------------------*/
 
   // detect native methods
@@ -608,6 +564,50 @@ NW.Dom = (function(global) {
     function(element) {
       return hasAttribute(element,'href') && LINK_NODES[element.nodeName];
     },
+
+  /*------------------------------- DEBUGGING --------------------------------*/
+
+  // enable/disable notifications
+  VERBOSE = false,
+
+  // a way to control user notification
+  emit =
+    function(message) {
+      if (VERBOSE) {
+        var console = global.console;
+        if (console && console.log) {
+          console.log(message);
+        } else {
+          if (/exception/i.test(message)) {
+            global.status = message;
+            global.defaultStatus = message;
+          } else {
+            global.status += message;
+          }
+        }
+      }
+    },
+
+  // compile selectors to ad-hoc functions resolvers
+  // @selector string
+  // @mode boolean
+  // false = select resolvers
+  // true = match resolvers
+  compile =
+    function(selector, mode) {
+      return compileGroup(selector, '', mode || false);
+    },
+
+  // use internal or QSA engine
+  // @enable boolean
+  // false = disable QSA
+  // true = enable QSA
+  setQSA =
+    function(enable) {
+      return (USE_QSA = enable && NATIVE_QSAPI ? true : false);
+    },
+
+  USE_QSA = setQSA(true),
 
   /*---------------------------- COMPILER METHODS ----------------------------*/
 
