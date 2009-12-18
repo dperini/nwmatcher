@@ -915,8 +915,8 @@ NW.Dom = (function(global) {
               break;
             case 'focus':
               source = NATIVE_FOCUS ?
-                'if(e.type&&e===d.activeElement&&d.hasFocus()){' + source + '}' :
-                'if(e.type&&e===d.activeElement){' + source + '}';
+                'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href)){' + source + '}' :
+                'if(e===d.activeElement&&(e.type||e.href)){' + source + '}';
               break;
 
             // CSS2 :contains and :selected pseudo-classes
