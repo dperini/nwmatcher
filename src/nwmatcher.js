@@ -1157,16 +1157,14 @@ NW.Dom = (function(global) {
           // RTL optimization for browsers with GEBCN, CLASS first TAG second
           if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
             if ((elements = byClass(token, from)).length === 0) return data;
-          } else
-          if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
+          } else if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
             if ((elements = byTag(token, from)).length === 0) return data;
           }
         } else {
           // RTL optimization for browser without GEBCN, TAG first CLASS second
           if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
             if ((elements = byTag(token, from)).length === 0) return data;
-          } else
-          if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
+          } else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
             if ((elements = byClass(token, from)).length === 0) return data;
           }
         }
