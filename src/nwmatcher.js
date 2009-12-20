@@ -947,7 +947,8 @@ NW.Dom = (function(global) {
             if ((match = selector.match(Selectors[expr].Expression))) {
               result = Selectors[expr].Callback(match, source);
               source = result.source;
-              status |= result.status;
+              status = result.status;
+              if (status) break;
             }
           }
 
@@ -957,13 +958,13 @@ NW.Dom = (function(global) {
             // log error but continue execution, don't throw real exceptions
             // because blocking following processes maybe is not a good idea
             emit('DOMException: unknown pseudo selector "' + selector + '"');
-            return source;
+            return '';
           }
 
           if (!expr) {
             // see above, log error but continue execution
             emit('DOMException: unknown token in selector "' + selector + '"');
-            return source;
+            return '';
           }
 
         }
