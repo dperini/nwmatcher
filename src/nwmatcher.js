@@ -567,6 +567,12 @@ NW.Dom = (function(global) {
 
   /*------------------------------- DEBUGGING --------------------------------*/
 
+  // error control
+  setERR =
+    function(enable) {
+      VERBOSE = enable ? true : false;
+    },
+
   // enable/disable notifications
   VERBOSE = false,
 
@@ -604,10 +610,10 @@ NW.Dom = (function(global) {
   // true = enable QSA
   setQSA =
     function(enable) {
-      return (USE_QSA = enable && NATIVE_QSAPI ? true : false);
+      USE_QSA = enable && NATIVE_QSAPI ? true : false;
     },
 
-  USE_QSA = setQSA(true),
+  USE_QSA = NATIVE_QSAPI ? true : false,
 
   /*---------------------------- COMPILER METHODS ----------------------------*/
 
@@ -1280,6 +1286,9 @@ NW.Dom = (function(global) {
 
     // compile selector into ad-hoc javascript resolver
     compile: compile,
+
+    // enable/disable error notification console logging
+    setERR: setERR,
 
     // select internal engine or native querySelectorAll
     setQSA: setQSA,
