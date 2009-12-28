@@ -988,7 +988,7 @@ NW.Dom = (function(global) {
   // match element with selector
   // @return boolean
   match =
-    function(element, selector, from, callback, data) {
+    function(element, selector, from, callback) {
       // make sure an element node was passed
       if (element && element.nodeType == 1 &&
         element.nodeName > '@') {
@@ -999,7 +999,7 @@ NW.Dom = (function(global) {
             compiledMatchers[selector] = compileGroup(selector, '', false);
           }
           // result of compiled matcher
-          return compiledMatchers[selector](element, snap, data, doc, root, from || doc, callback);
+          return compiledMatchers[selector](element, snap, [ ], doc, root, from || doc, callback);
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
         }
@@ -1008,15 +1008,15 @@ NW.Dom = (function(global) {
     },
 
   native_api =
-    function(selector, from, callback, data) {
+    function(selector, from, callback) {
       var element, elements;
       switch (selector.charAt(0)) {
         case '#':
           if ((element = byId(selector.slice(1), from))) {
             callback && callback(element);
-            data[data.length] = element;
+            return [ element ];
           }
-          return data;
+          return [ ];
         case '.':
           elements = byClass(selector.slice(1), from);
           break;
@@ -1025,22 +1025,20 @@ NW.Dom = (function(global) {
           break;
       }
       return callback ?
-        concatCall(data, elements, callback) :
-        data.length ?
-          concatList(data, elements) :
-          elements;
+        concatCall([ ], elements, callback) :
+        elements;
     },
 
   // select elements matching selector
   // using new Query Selector API
   // @return array
   select_qsa =
-    function(selector, from, callback, data) {
+    function(selector, from, callback) {
 
       if (USE_QSA) {
 
         if (RE_SIMPLE_SELECTOR.test(selector))
-          return native_api(selector, from || doc, callback, data || [ ]);
+          return native_api(selector, from || doc, callback);
 
         if (!compiledSelectors[selector] &&
           !RE_BUGGY_QSAPI.test(selector) &&
@@ -1053,37 +1051,36 @@ NW.Dom = (function(global) {
           if (elements) {
             switch (elements.length) {
               case 0:
-                return data || [ ];
+                return [ ];
               case 1:
-                callback && callback(elements.item(0));
-                if (data) data.push(elements.item(0));
-                else return [ elements.item(0) ];
-                return data;
+                element = elements.item(0); 
+                callback && callback(element);
+                return [ element ];
               default:
                 return callback ?
-                  concatCall(data || [ ], elements, callback) :
-                  data || !NATIVE_SLICE_PROTO ?
-                    concatList(data || [ ], elements) :
-                    slice.call(elements);
+                  concatCall([ ], elements, callback) :
+                  NATIVE_SLICE_PROTO ?
+                    slice.call(elements) :
+                    concatList([ ], elements);
             }
           }
         }
       }
 
       // fall back to NWMatcher select
-      return client_api(selector, from, callback, data);
+      return client_api(selector, from, callback);
     },
 
   // select elements matching selector
   // using cross-browser client API
   // @return array
   client_api =
-    function(selector, from, callback, data) {
+    function(selector, from, callback) {
 
       var i, element, elements, parts, token, hasChanged, isSingle;
 
       if (RE_SIMPLE_SELECTOR.test(selector))
-        return native_api(selector, from || doc, callback, data || [ ]);
+        return native_api(selector, from || doc, callback, [ ]);
 
       // add left context if missing
       if (reLeftContext.test(selector))
@@ -1096,9 +1093,6 @@ NW.Dom = (function(global) {
       // add right context if missing
       if (reRightContext.test(selector))
         selector = selector + '*';
-
-      // storage setup
-      data || (data = [ ]);
 
       // ensure context is set
       from || (from = doc);
@@ -1121,7 +1115,7 @@ NW.Dom = (function(global) {
           selector = selector.replace(reTrimSpaces, '');
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
-          return data;
+          return [ ];
         }
       }
 
@@ -1145,33 +1139,33 @@ NW.Dom = (function(global) {
             if ((element = byId(token, doc))) {
               if (match(element, selector)) {
                 callback && callback(element);
-                data[data.length] = element;
+                return [ element ];
               }
             }
-            return data;
+            return [ ];
           }
           // ID optimization LTR, to reduce selection context searches
           else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
             if ((element = byId(token, doc))) {
               if (/[>+~]/.test(selector)) from = element.parentNode;
               else from = element;
-            } else return data;
+            } else return [ ];
           }
         }
 
         if (NATIVE_GEBCN) {
           // RTL optimization for browsers with GEBCN, CLASS first TAG second
           if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-            if ((elements = byClass(token, from)).length === 0) return data;
+            if ((elements = byClass(token, from)).length === 0) return [ ];
           } else if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
-            if ((elements = byTag(token, from)).length === 0) return data;
+            if ((elements = byTag(token, from)).length === 0) return [ ];
           }
         } else {
           // RTL optimization for browser without GEBCN, TAG first CLASS second
           if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
-            if ((elements = byTag(token, from)).length === 0) return data;
+            if ((elements = byTag(token, from)).length === 0) return [ ];
           } else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-            if ((elements = byClass(token, from)).length === 0) return data;
+            if ((elements = byClass(token, from)).length === 0) return [ ];
           }
         }
 
@@ -1199,7 +1193,7 @@ NW.Dom = (function(global) {
       indexesByNodeType = { };
       indexesByNodeName = { };
 
-      return compiledSelectors[selector](elements, snap, data, doc, root, from, callback);
+      return compiledSelectors[selector](elements, snap, [ ], doc, root, from, callback);
     },
 
   // use the new native Selector API if available,
