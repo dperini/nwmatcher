@@ -1053,7 +1053,7 @@ NW.Dom = (function(global) {
               case 0:
                 return [ ];
               case 1:
-                element = elements.item(0); 
+                element = elements.item(0);
                 callback && callback(element);
                 return [ element ];
               default:
@@ -1080,7 +1080,7 @@ NW.Dom = (function(global) {
       var i, element, elements, parts, token, hasChanged, isSingle;
 
       if (RE_SIMPLE_SELECTOR.test(selector))
-        return native_api(selector, from || doc, callback, [ ]);
+        return native_api(selector, from || doc, callback);
 
       // add left context if missing
       if (reLeftContext.test(selector))
