@@ -256,6 +256,10 @@ NW.Dom = (function(global) {
 
   // matches simple id, tag & class selectors
   RE_SIMPLE_SELECTOR = new RegExp('^(?:\\*|[.#]?' + encoding + ')$'),
+  RE_SIMPLE_SELECTOR_QSA = new RegExp(
+    !(BUGGY_GEBTN && BUGGY_GEBCN) ?
+      '^(?:\\*|[.#]?' + encoding + ')$' :
+      '^#?' + encoding + '$'),
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
@@ -1052,34 +1056,32 @@ NW.Dom = (function(global) {
   select_qsa =
     function(selector, from, callback) {
 
-      if (USE_QSA) {
+      if (RE_SIMPLE_SELECTOR_QSA.test(selector))
+        return native_api(selector, from || doc, callback);
 
-        if (RE_SIMPLE_SELECTOR.test(selector))
-          return native_api(selector, from || doc, callback);
+      if (USE_QSA &&
+        !compiledSelectors[selector] &&
+        !RE_BUGGY_QSAPI.test(selector) &&
+        (!from || QSA_NODE_TYPES[from.nodeType])) {
 
-        if (!compiledSelectors[selector] &&
-          !RE_BUGGY_QSAPI.test(selector) &&
-          (!from || QSA_NODE_TYPES[from.nodeType])) {
+        try {
+          var elements = (from || doc).querySelectorAll(selector);
+        } catch(e) { }
 
-          try {
-            var elements = (from || doc).querySelectorAll(selector);
-          } catch(e) { }
-
-          if (elements) {
-            switch (elements.length) {
-              case 0:
-                return [ ];
-              case 1:
-                element = elements.item(0);
-                callback && callback(element);
-                return [ element ];
-              default:
-                return callback ?
-                  concatCall([ ], elements, callback) :
-                  NATIVE_SLICE_PROTO ?
-                    slice.call(elements) :
-                    concatList([ ], elements);
-            }
+        if (elements) {
+          switch (elements.length) {
+            case 0:
+              return [ ];
+            case 1:
+              element = elements.item(0);
+              callback && callback(element);
+              return [ element ];
+            default:
+              return callback ?
+                concatCall([ ], elements, callback) :
+                NATIVE_SLICE_PROTO ?
+                  slice.call(elements) :
+                  concatList([ ], elements);
           }
         }
       }
