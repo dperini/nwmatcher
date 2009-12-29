@@ -411,27 +411,41 @@ NW.Dom = (function(global) {
       return data;
     },
 
-  // element by id
-  // @return element reference or null
-  byId =
-    function(id, from) {
-      var i = -1, element, elements;
-      from || (from = doc);
-      id = id.replace(/\\/g, '');
-      if (!isXMLDocument && from.getElementById) {
-        if ((element = from.getElementById(id)) &&
-          element.name == id && from.getElementsByName) {
-          elements = from.getElementsByName(id);
-        } else return element;
-      } else elements = from.getElementsByTagName('*');
-
-      // fallback to manual
+  // element by id (raw)
+  byIdRaw =
+    function(id, elements) {
+      var i = -1, element = null;
       while ((element = elements[++i])) {
         if (element.getAttribute('id') == id) {
-          return element;
+          break;
         }
       }
-      return null;
+      return element;
+    },
+
+  // element by id
+  // @return element reference or null
+  byId = NATIVE_GEBID && !BUGGY_GEBTN ?
+    function(id, from) {
+      from || (from = doc);
+      id = id.replace(/\\/g, '');
+      if (isXMLDocument || from.nodeType != 9) {
+        return byIdRaw(id, from.getElementsByTagName('*'));
+      }
+      return from.getElementById(id);
+    }:
+    function(id, from) {
+      var element = null;
+      from || (from = doc);
+      id = id.replace(/\\/g, '');
+      if (isXMLDocument || from.nodeType != 9) {
+        return byIdRaw(id, from.getElementsByTagName('*'));
+      }
+      if ((element = from.getElementById(id)) &&
+        element.name == id && from.getElementsByName) {
+        return byIdRaw(id, from.getElementsByName(id));
+      }
+      return element;
     },
 
   // elements by tag
