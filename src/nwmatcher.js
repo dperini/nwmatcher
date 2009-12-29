@@ -455,16 +455,17 @@ NW.Dom = (function(global) {
       return slice.call((from || doc).getElementsByTagName(tag), 0);
     } :
     function(tag, from) {
-      var i = -1, j = i, data = [ ], element,
-        elements = (from || doc).getElementsByTagName(tag);
-      if (tag != '*') {
-        while ((element = elements[++i])) {
-          data[i] = element;
-        }
-      } else {
+      var i = -1, data = [ ],
+        element, elements = (from || doc).getElementsByTagName(tag);
+      if (tag == '*') {
+        var j = -1;
         while ((element = elements[++i])) {
           if (element.nodeName > '@')
             data[++j] = element;
+        }
+      } else {
+        while ((element = elements[++i])) {
+          data[i] = element;
         }
       }
       return data;
