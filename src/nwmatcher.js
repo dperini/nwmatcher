@@ -141,11 +141,13 @@ NW.Dom = (function(global) {
   // see http://yura.thinkweb2.com/cft/
   NATIVE_SLICE_PROTO =
     (function() {
+      var isBuggy = false, id = root.id;
+      root.id = 'length';
       try {
-        return !!slice.call(doc.childNodes, 0)[0];
-      } catch(e) {
-        return false;
-      }
+        isBuggy = !!slice.call(doc.childNodes, 0)[0];
+      } catch(e) { }
+      root.id = id;
+      return isBuggy;
     })(),
 
   // supports the new traversal API
