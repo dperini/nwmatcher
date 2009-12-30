@@ -685,7 +685,7 @@ NW.Dom = (function(global) {
       if (mode) {
         // for select method
         return new Function('c,s,r,d,h,g,f',
-          'var n,x=0,k=0,e;main:for(;e=c[k];++k){' + source + '}return r;');
+          'var n,x=0,k=-1,e;main:while(e=c[++k]){' + source + '}return r;');
       } else {
         // for match method
         return new Function('e,s,r,d,h,g,f',
@@ -1016,11 +1016,11 @@ NW.Dom = (function(global) {
         if (typeof selector == 'string' && selector.length) {
           root = (doc = element.ownerDocument).documentElement;
           // save compiled matcher
-          if (!compiledMatchers[selector]) {
-            compiledMatchers[selector] = compileGroup(selector, '', false);
+          if (!HTMLMatchers[selector]) {
+            HTMLMatchers[selector] = compileGroup(selector, '', false);
           }
-          // result of compiled matcher
-          return compiledMatchers[selector](element, snap, [ ], doc, root, from || doc, callback);
+          // return matcher results
+          return HTMLMatchers[selector](element, snap, [ ], doc, root, from || doc, callback);
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
         }
@@ -1060,9 +1060,7 @@ NW.Dom = (function(global) {
         return native_api(selector, from || doc, callback);
       }
 
-      if (USE_QSA &&
-        !compiledSelectors[selector] &&
-        !RE_BUGGY_QSAPI.test(selector) &&
+      if (USE_QSA && !RE_BUGGY_QSAPI.test(selector) &&
         (!from || QSA_NODE_TYPES[from.nodeType])) {
 
         try {
@@ -1101,7 +1099,8 @@ NW.Dom = (function(global) {
         return native_api(selector, from || doc, callback);
       }
 
-      var i, element, elements, parts, token, hasChanged, isSingle;
+      var i, element, elements, parts, token,
+        resolver, hasChanged, isSingle;
 
       // add left context if missing
       if (reLeftContext.test(selector)) {
@@ -1182,14 +1181,14 @@ NW.Dom = (function(global) {
           if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
             if ((elements = byClass(token, from)).length === 0) { return [ ]; }
           } else if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
-            if ((elements = byTag(token, from)).length === 0) return [ ];
+            if ((elements = byTag(token, from)).length === 0) { return [ ]; }
           }
         } else {
           // RTL optimization for browser without GEBCN, TAG first CLASS second
           if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
             if ((elements = from.getElementsByTagName(token)).length === 0) { return [ ]; }
           } else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-            if ((elements = byClass(token, from)).length === 0) return [ ];
+            if ((elements = byClass(token, from)).length === 0) { return [ ]; }
           }
         }
 
@@ -1200,24 +1199,42 @@ NW.Dom = (function(global) {
       }
       // end of prefiltering pass
 
-      // compile the selector if necessary
-      if (!compiledSelectors[selector] || isXMLDocument) {
+      if (isXMLDocument && !(resolver = XMLResolvers[selector])) {
+
         if (isSingle) {
-          compiledSelectors[selector] =
+          resolver =
             new Function('c,s,r,d,h,g,f',
-              'var n,x=0,k=0,e;main:for(;e=c[k];++k){' +
+              'var n,x=0,k=-1,e;main:while(e=c[++k]){' +
               compileSelector(selector, ACCEPT_NODE) +
               '}return r;');
         } else {
-          compiledSelectors[selector] = compileGroup(selector, '', true);
+          resolver = compileGroup(selector, '', true);
         }
+        XMLResolvers[selector] = resolver;
+
+      }
+
+      // compile the selector if necessary
+      else if (!(resolver = HTMLResolvers[selector])) {
+
+        if (isSingle) {
+          resolver =
+            new Function('c,s,r,d,h,g,f',
+              'var n,x=0,k=-1,e;main:while(e=c[++k]){' +
+              compileSelector(selector, ACCEPT_NODE) +
+              '}return r;');
+        } else {
+          resolver = compileGroup(selector, '', true);
+        }
+        HTMLResolvers[selector] = resolver;
+
       }
 
       // reinitialize indexes
       indexesByNodeType = { };
       indexesByNodeName = { };
 
-      return compiledSelectors[selector](elements, snap, [ ], doc, root, from, callback);
+      return resolver(elements, snap, [ ], doc, root, from, callback);
     },
 
   // use the new native Selector API if available,
@@ -1241,10 +1258,12 @@ NW.Dom = (function(global) {
   indexesByNodeName = { },
 
   // compiled select functions returning collections
-  compiledSelectors = { },
+  // keep each resolver type in different storages
+  XMLResolvers = { },
+  HTMLResolvers = { },
 
   // compiled match functions returning booleans
-  compiledMatchers = { },
+  HTMLMatchers = { },
 
   // used to pass methods to compiled functions
   snap = {
