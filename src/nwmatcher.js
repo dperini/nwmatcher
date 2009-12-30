@@ -437,7 +437,7 @@ NW.Dom = (function(global) {
         return byIdRaw(id, from.getElementsByTagName('*'));
       }
       return from.getElementById(id);
-    }:
+    } :
     function(id, from) {
       var element = null;
       from || (from = doc);
@@ -1152,24 +1152,26 @@ NW.Dom = (function(global) {
           lastSlice = token.split(':not')[0];
         }
 
-        if (doc.getElementById) {
-          // ID optimization RTL, to reduce number of elements to visit
-          if ((parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
-            if ((element = byId(token, doc))) {
-              if (match(element, selector)) {
-                callback && callback(element);
-                return [ element ];
-              }
+        // ID optimization RTL, to reduce number of elements to visit
+        if ((parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
+          if ((element = byId(token, from))) {
+            if (match(element, selector)) {
+              callback && callback(element);
+              return [ element ];
             }
-            return [ ];
           }
-          // ID optimization LTR, to reduce selection context searches
-          else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
-            if ((element = byId(token, doc))) {
-              if (/[>+~]/.test(selector)) from = element.parentNode;
-              else from = element;
-            } else return [ ];
-          }
+          return [ ];
+        }
+
+        // ID optimization LTR, to reduce selection context searches
+        else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
+          if ((element = byId(token, doc))) {
+            if (/[>+~]/.test(selector)) from = element.parentNode;
+            else {
+              selector = selector.replace('#' + token, '*');
+              from = element;
+            }
+          } else return [ ];
         }
 
         if (NATIVE_GEBCN) {
@@ -1182,7 +1184,7 @@ NW.Dom = (function(global) {
         } else {
           // RTL optimization for browser without GEBCN, TAG first CLASS second
           if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
-            if ((elements = byTag(token, from)).length === 0) return [ ];
+            if ((elements = from.getElementsByTagName(token)).length === 0) return [ ];
           } else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
             if ((elements = byClass(token, from)).length === 0) return [ ];
           }
