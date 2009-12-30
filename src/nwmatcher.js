@@ -1030,19 +1030,19 @@ NW.Dom = (function(global) {
 
   native_api =
     function(selector, from, callback) {
-      var element, elements;
       switch (selector.charAt(0)) {
         case '#':
+          var element;
           if ((element = byId(selector.slice(1), from))) {
             callback && callback(element);
             return [ element ];
           }
           return [ ];
         case '.':
-          elements = byClass(selector.slice(1), from);
+          var elements = byClass(selector.slice(1), from);
           break;
         default:
-          elements = byTag(selector, from);
+          var elements = byTag(selector, from);
           break;
       }
       return callback ?
@@ -1056,8 +1056,9 @@ NW.Dom = (function(global) {
   select_qsa =
     function(selector, from, callback) {
 
-      if (RE_SIMPLE_SELECTOR_QSA.test(selector))
+      if (RE_SIMPLE_SELECTOR_QSA.test(selector)) {
         return native_api(selector, from || doc, callback);
+      }
 
       if (USE_QSA &&
         !compiledSelectors[selector] &&
@@ -1096,22 +1097,23 @@ NW.Dom = (function(global) {
   client_api =
     function(selector, from, callback) {
 
+      if (RE_SIMPLE_SELECTOR.test(selector)) {
+        return native_api(selector, from || doc, callback);
+      }
+
       var i, element, elements, parts, token, hasChanged, isSingle;
 
-      if (RE_SIMPLE_SELECTOR.test(selector))
-        return native_api(selector, from || doc, callback);
-
       // add left context if missing
-      if (reLeftContext.test(selector))
-        selector = !from ?
-          '*' + selector :
-          from.id ?
-            '#' + from.id + selector :
+      if (reLeftContext.test(selector)) {
+        selector = !from ? '*' + selector :
+          from.id ? '#' + from.id + selector :
             selector;
+      }
 
       // add right context if missing
-      if (reRightContext.test(selector))
+      if (reRightContext.test(selector)) {
         selector = selector + '*';
+      }
 
       // ensure context is set
       from || (from = doc);
@@ -1166,8 +1168,9 @@ NW.Dom = (function(global) {
         // ID optimization LTR, to reduce selection context searches
         else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
           if ((element = byId(token, doc))) {
-            if (/[>+~]/.test(selector)) from = element.parentNode;
-            else {
+            if (/[>+~]/.test(selector)) {
+              from = element.parentNode;
+            } else {
               selector = selector.replace('#' + token, '*');
               from = element;
             }
@@ -1177,14 +1180,14 @@ NW.Dom = (function(global) {
         if (NATIVE_GEBCN) {
           // RTL optimization for browsers with GEBCN, CLASS first TAG second
           if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-            if ((elements = byClass(token, from)).length === 0) return [ ];
+            if ((elements = byClass(token, from)).length === 0) { return [ ]; }
           } else if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
             if ((elements = byTag(token, from)).length === 0) return [ ];
           }
         } else {
           // RTL optimization for browser without GEBCN, TAG first CLASS second
           if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
-            if ((elements = from.getElementsByTagName(token)).length === 0) return [ ];
+            if ((elements = from.getElementsByTagName(token)).length === 0) { return [ ]; }
           } else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
             if ((elements = byClass(token, from)).length === 0) return [ ];
           }
