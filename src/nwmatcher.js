@@ -196,6 +196,15 @@ NW.Dom = (function(global) {
     })() :
     true,
 
+  // detect Safari bug with selected option elements
+  BUGGY_SELECTED =
+    (function() {
+      var isBuggy, select = doc.createElement('select');
+      select.appendChild(doc.createElement('option'));
+      isBuggy = !select.firstChild.selected;
+      return isBuggy;
+    })(),
+
   // check Seletor API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
@@ -953,11 +962,8 @@ NW.Dom = (function(global) {
               break;
             case 'selected':
               // fix Safari selectedIndex property bug
-              n = doc.getElementsByTagName('select');
-              for (i = 0; n[i]; i++) {
-                n[i].selectedIndex;
-              }
-              source = 'if(e.selected){' + source + '}';
+              expr = BUGGY_SELECTED ? '||(n=e.parentNode)&&n.options[n.selectedIndex]===e' : '';
+              source = 'if(e.nodeName=="OPTION"&&e.selected' + expr + '){' + source + '}';
               break;
 
             default:
