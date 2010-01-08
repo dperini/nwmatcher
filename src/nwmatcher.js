@@ -28,7 +28,7 @@ NW.Dom = (function(global) {
   root = doc.documentElement,
 
   // persist last selector parsing data
-  lastSelector, lastSlice,
+  isSingle, lastSelector, lastSlice,
 
   // initialize to current loading context
   lastContext = doc,
@@ -1016,24 +1016,78 @@ NW.Dom = (function(global) {
   // @return boolean
   match =
     function(element, selector, from, callback) {
+
+      var matcher, parts, hasChanged;
+
       // make sure an element node was passed
-      if (element && element.nodeType == 1 &&
-        element.nodeName > '@') {
-        if (typeof selector == 'string' && selector.length) {
-          root = (doc = element.ownerDocument).documentElement;
-          isQuirksMode = isQuirks(doc);
-          isXMLDocument = isXML(doc);
-          // save compiled matcher
-          if (!HTMLMatchers[selector]) {
-            HTMLMatchers[selector] = compileGroup(selector, '', false);
-          }
-          // return matcher results
-          return HTMLMatchers[selector](element, snap, [ ], doc, root, from || doc, callback);
+      if (!(element && element.nodeType == 1 && element.nodeName > '@')) {
+        emit('DOMException: Passed element is not a DOM ELEMENT_NODE !');
+        return false;
+      }
+
+      // ensure context is set
+      from || (from = doc);
+
+      // extract context if changed
+      if (lastContext != from) {
+        // save passed context
+        lastContext = from;
+        // reference element ownerDocument and document root (HTML)
+        root = (doc = element.ownerDocument || element).documentElement;
+        isQuirksMode = isQuirks(doc);
+        isXMLDocument = isXML(doc);
+      }
+
+      if (hasChanged = lastSelector != selector) {
+        // process valid selector strings
+        if (reValidator.test(selector)) {
+          // save passed selector
+          lastSelector = selector;
+          selector = selector.replace(reTrimSpaces, '');
+          isSingle = (parts = selector.match(reSplitGroup)).length < 2;
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
+          return false;
         }
       }
-      return false;
+
+      // compile XML matcher if necessary
+      if (isXMLDocument && !(matcher = XMLMatchers[selector])) {
+
+        if (isSingle) {
+          matcher =
+            new Function('e,s,r,d,h,g,f',
+              'var n,x=0,k=e;' +
+              compileSelector(selector, 'return true;') +
+              'return false;');
+        } else {
+          matcher = compileGroup(selector, '', false);
+        }
+        XMLMatchers[selector] = matcher;
+
+      }
+
+      // compile HTML matcher if necessary
+      else if (!(matcher = HTMLMatchers[selector])) {
+
+        if (isSingle) {
+          matcher =
+            new Function('e,s,r,d,h,g,f',
+              'var n,x=0,k=e;' +
+              compileSelector(selector, 'return true;') +
+              'return false;');
+        } else {
+          matcher = compileGroup(selector, '', false);
+        }
+        HTMLMatchers[selector] = matcher;
+
+      }
+
+      // reinitialize indexes
+      indexesByNodeType = { };
+      indexesByNodeName = { };
+
+      return matcher(element, snap, [ ], doc, root, from || doc, callback);
     },
 
   native_api =
@@ -1108,7 +1162,7 @@ NW.Dom = (function(global) {
       }
 
       var i, element, elements, parts, token,
-        resolver, hasChanged, isSingle;
+        resolver, hasChanged;
 
       // add left context if missing
       if (reLeftContext.test(selector)) {
@@ -1141,16 +1195,17 @@ NW.Dom = (function(global) {
           // save passed selector
           lastSelector = selector;
           selector = selector.replace(reTrimSpaces, '');
+          isSingle = (parts = selector.match(reSplitGroup)).length < 2;
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
           return [ ];
         }
       }
 
-      // pre-filtering pass allow to scale proportionally with big DOM trees;
+      // pre-filtering pass allow to scale proportionally with big DOM trees
 
       // commas separators are treated sequentially to maintain order
-      if ((isSingle = selector.match(reSplitGroup).length < 2)) {
+      if (isSingle) {
 
         if (hasChanged) {
           // get right most selector token
