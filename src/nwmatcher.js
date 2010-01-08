@@ -156,6 +156,20 @@ NW.Dom = (function(global) {
 
   // BUGGY_XXXXX true if method is feature tested and has known bugs
 
+  // detect buggy gEBID
+  BUGGY_GEBID = NATIVE_GEBID ?
+    (function() {
+      var isBuggy = true, x = 'x' + String(+new Date),
+        a = doc.createElementNS ? 'a' : '<a name="' + x + '">';
+      (a = doc.createElement(a)).name = x;
+      root.insertBefore(a, root.firstChild);
+      isBuggy = !!doc.getElementById(x);
+      root.removeChild(a);
+      a = null;
+      return isBuggy;
+    })() :
+    true,
+
   // detect IE gEBTN comment nodes bug
   BUGGY_GEBTN = NATIVE_GEBTN ?
     (function() {
@@ -438,7 +452,7 @@ NW.Dom = (function(global) {
 
   // element by id
   // @return element reference or null
-  byId = NATIVE_GEBID && !BUGGY_GEBTN ?
+  byId = !BUGGY_GEBID ?
     function(id, from) {
       from || (from = doc);
       id = id.replace(/\\/g, '');
