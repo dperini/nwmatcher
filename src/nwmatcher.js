@@ -210,6 +210,16 @@ NW.Dom = (function(global) {
     })() :
     true,
 
+  // detect IE bug with non-standard boolean attributes
+  BUGGY_HAS_ATTRIBUTE = NATIVE_HAS_ATTRIBUTE ?
+    (function() {
+      var isBuggy, option = doc.createElement('option');
+      option.setAttribute('selected', 'selected');
+      isBuggy = !option.hasAttribute('selected');
+      return isBuggy;
+    })() :
+    true,
+
   // detect Safari bug with selected option elements
   BUGGY_SELECTED =
     (function() {
@@ -270,6 +280,16 @@ NW.Dom = (function(global) {
 
       pattern.push(':selected', ':contains');
 
+      if (BUGGY_HAS_ATTRIBUTE) {
+        pattern.push(
+          '\\[\\s*ismap',
+          '\\[\\s*checked',
+          '\\[\\s*disabled',
+          '\\[\\s*multiple',
+          '\\[\\s*readonly',
+          '\\[\\s*selected');
+      }
+ 
       div = null;
       return pattern.length ?
         new RegExp(pattern.join('|')) :
@@ -294,6 +314,11 @@ NW.Dom = (function(global) {
   ATTRIBUTES_URI = {
     'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
     'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2
+  },
+
+  // attributes treated as booleans in IE
+  ATTRIBUTES_BOOLEAN = {
+    ismap: 1, checked: 1, disabled: 1, multiple: 1, readonly: 1, selected: 1
   },
 
   // HTML 5 draft specifications
@@ -581,9 +606,12 @@ NW.Dom = (function(global) {
       return node.getAttribute(attribute) + '';
     } :
     function(node, attribute) {
+      attribute = attribute.toLowerCase();
       // specific URI attributes (parameter 2 to fix IE bug)
       if (ATTRIBUTES_URI[attribute]) {
         return node.getAttribute(attribute, 2) + '';
+      } else if (ATTRIBUTES_BOOLEAN[attribute]) {
+        return node.getAttribute(attribute) ? attribute : '';
       }
       node = node.getAttributeNode(attribute);
       return (node && node.value) + '';
@@ -591,9 +619,12 @@ NW.Dom = (function(global) {
 
   // attribute presence
   // @return boolean
-  hasAttribute = NATIVE_HAS_ATTRIBUTE ?
+  hasAttribute = !BUGGY_HAS_ATTRIBUTE ?
     function(node, attribute) {
       return node.hasAttribute(attribute);
+    } : NATIVE_HAS_ATTRIBUTE ?
+    function(node, attribute) {
+      return !!node.getAttribute(attribute);
     } :
     function(node, attribute) {
       // need to get at AttributeNode first on IE
