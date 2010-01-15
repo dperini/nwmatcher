@@ -555,6 +555,21 @@ NW.Dom = (function(global) {
       return data;
     },
 
+  // check if an element is a descendant of container
+  contains = 'compareDocumentPosition' in root ?
+    function(container, element) {
+      return (container.compareDocumentPosition(element) & 16) == 16;
+    } : 'contains' in root ?
+    function(container, element) {
+      return container !== element && container.contains(element);
+    } :
+    function(container, element) {
+      while ((element = element.parentNode)) {
+        if (element === container) return true;
+      }
+      return false;
+    },
+
   // children position by nodeType
   // @return number
   getIndexesByNodeType =
@@ -732,7 +747,7 @@ NW.Dom = (function(global) {
           if (!seen[token]) {
             seen[token] = true;
             source += i > 0 ? (mode ? 'e=c[k];': 'e=k;') : '';
-            source += compileSelector(token, mode ? ACCEPT_NODE : 'return true;');
+            source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
           }
         }
       }
@@ -1070,6 +1085,8 @@ NW.Dom = (function(global) {
         return false;
       }
 
+      if (from && !contains(from, element)) return false;
+
       // ensure context is set
       from || (from = doc);
 
@@ -1103,7 +1120,7 @@ NW.Dom = (function(global) {
           matcher =
             new Function('e,s,r,d,h,g,f',
               'var n,x=0,k=e;' +
-              compileSelector(selector, 'return true;') +
+              compileSelector(selector, 'f&&f(k);return true;') +
               'return false;');
         } else {
           matcher = compileGroup(selector, '', false);
@@ -1119,7 +1136,7 @@ NW.Dom = (function(global) {
           matcher =
             new Function('e,s,r,d,h,g,f',
               'var n,x=0,k=e;' +
-              compileSelector(selector, 'return true;') +
+              compileSelector(selector, 'f&&f(k);return true;') +
               'return false;');
         } else {
           matcher = compileGroup(selector, '', false);
