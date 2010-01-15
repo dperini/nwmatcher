@@ -1137,6 +1137,7 @@ NW.Dom = (function(global) {
 
   native_api =
     function(selector, from, callback) {
+      var elements;
       switch (selector.charAt(0)) {
         case '#':
           var element;
@@ -1146,10 +1147,10 @@ NW.Dom = (function(global) {
           }
           return [ ];
         case '.':
-          var elements = byClass(selector.slice(1), from);
+          elements = byClass(selector.slice(1), from);
           break;
         default:
-          var elements = byTag(selector, from);
+          elements = byTag(selector, from);
           break;
       }
       return callback ?
