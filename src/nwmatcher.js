@@ -984,7 +984,9 @@ NW.Dom = (function(global) {
             // CSS3 target pseudo-class
             case 'target':
               n = doc.location ? doc.location.hash : '';
-              source = 'if(e.id=="' + n + '"&&"href" in e){' + source + '}';
+              if (n) {
+                source = 'if(e.id=="' + n + '"&&"href" in e){' + source + '}';
+              }
               break;
 
             // CSS3 dynamic pseudo-classes
