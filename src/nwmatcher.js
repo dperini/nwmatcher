@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.1beta
  * Created: 20070722
- * Release: 20100107
+ * Release: 20100127
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -1106,7 +1106,7 @@ NW.Dom = (function(global) {
 
       if (hasChanged = lastSelector != selector) {
         // process valid selector strings
-        if (reValidator.test(selector)) {
+        if (selector && reValidator.test(selector)) {
           // save passed selector
           lastSelector = selector;
           selector = selector.replace(reTrimSpaces, '');
