@@ -906,17 +906,19 @@ NW.Dom = (function(global) {
 
                 // executed after the count is computed
                 type = match[4] ? 'n[e.nodeName' + TO_UPPER_CASE + ']' : 'n';
-                expr = match[2] == 'last' ? type + '.length-' + (b - 1) : b;
+                expr = match[2] == 'last' ? type + '.length-(' + (b - 1) + ')' : b;
 
                 // shortcut check for of-type selectors
                 type = type + '[e.' + CSS_INDEX + ']';
 
                 // build test expression out of structural pseudo (an+b) parameters
                 // see here: http://www.w3.org/TR/css3-selectors/#nth-child-pseudo
-                test = b < 1 && a > 1 ? '(' + type + '-(' + b + '))%' + a + '==0' :
-                  a > +1 ? type + '>=' + b + '&&(' + type + '-(' + b + '))%' + a + '==0' :
-                  a < -1 ? type + '<=' + b + '&&(' + type + '-(' + b + '))%' + a + '==0' :
-                  a === 0 ? type + '==' + expr : a == -1 ? type + '<=' + b : type + '>=' + b;
+                test =  b < 1 && a > 1 ? '(' + type + '-(' + expr + '))%' + a + '==0' : a > +1 ?
+                  (match[2] == 'last') ? '(' + type + '-(' + expr + '))%' + a + '==0' :
+                  type + '>=' + expr + '&&(' + type + '-(' + expr + '))%' + a + '==0' : a < -1 ?
+                  (match[2] == 'last') ? '(' + type + '-(' + expr + '))%' + a + '==0' :
+                  type + '<=' + expr + '&&(' + type + '-(' + expr + '))%' + a + '==0' : a=== 0 ?
+                  type + '==' + expr : a == -1 ? type + '<=' + expr : type + '>=' + expr;
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
                 source =
