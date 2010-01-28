@@ -289,7 +289,7 @@ NW.Dom = (function(global) {
           '\\[\\s*readonly',
           '\\[\\s*selected');
       }
- 
+
       div = null;
       return pattern.length ?
         new RegExp(pattern.join('|')) :
@@ -962,8 +962,8 @@ NW.Dom = (function(global) {
 
             // CSS3 UI element states
             case 'checked':
-              // only radio buttons and check boxes
-              source = 'if(e.type&&/radio|checkbox/i.test(e.type)&&e.checked){' + source + '}';
+              // only radio buttons, check boxes and option elements
+              source = 'if(((e.type&&/radio|checkbox/i.test(e.type))||e.nodeName.toLowerCase()=="option")&&(e.checked||e.selected)){' + source + '}';
               break;
             case 'enabled':
               // does not consider hidden input fields
