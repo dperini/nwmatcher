@@ -835,11 +835,7 @@ NW.Dom = (function(global) {
             'Attribute(e,"' + match[1] + '")' +
             (test ? '.toLowerCase();' : ';');
 
-          // consider presence/absence of operators/values
-          // to match browser internal CSS engine behavior
-          source = match[2] && match[2] != '=' &&
-            (!match[4] || match[4].length === 0) ? 'continue;' :
-            expr + 'if(' + (type ? type : 'n') + '){' + source + '}';
+          source = expr + 'if(' + (type ? type : 'n') + '){' + source + '}';
         }
 
         // *** Adjacent sibling combinator
