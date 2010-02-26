@@ -5,9 +5,9 @@
  * nwmatcher.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.2.1
+ * Version: 1.2.2beta
  * Created: 20070722
- * Release: 20100210
+ * Release: 20100226
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -19,7 +19,7 @@ window.NW || (window.NW = { });
 
 NW.Dom = (function(global) {
 
-  var version = 'nwmatcher-1.2.1',
+  var version = 'nwmatcher-1.2.2beta',
 
   // processing context
   doc = global.document,
@@ -27,11 +27,16 @@ NW.Dom = (function(global) {
   // context root element
   root = doc.documentElement,
 
-  // persist last selector parsing data
-  isSingle, lastSelector, lastSlice,
+  // persist last selector/matcher parsing data
+  lastSlice = '',
+  lastMatcher = '',
+  lastSelector = '',
+  isSingleMatch = false,
+  isSingleSelect = false,
 
-  // initialize to current loading context
-  lastContext = doc,
+  // initialize selector/matcher loading context
+  lastMatchContext = doc,
+  lastSelectContext = doc,
 
   // http://www.w3.org/TR/css3-syntax/#characters
   // unicode/ISO 10646 characters 161 and higher
@@ -1077,7 +1082,7 @@ NW.Dom = (function(global) {
   match =
     function(element, selector, from, callback) {
 
-      var matcher, parts, hasChanged;
+      var resolver, parts, hasChanged;
 
       // make sure an element node was passed
       if (!(element && element.nodeType == 1 && element.nodeName > '@')) {
@@ -1091,57 +1096,57 @@ NW.Dom = (function(global) {
       from || (from = doc);
 
       // extract context if changed
-      if (lastContext != from) {
+      if (lastMatchContext != from) {
         // save passed context
-        lastContext = from;
+        lastMatchContext = from;
         // reference element ownerDocument and document root (HTML)
         root = (doc = element.ownerDocument || element).documentElement;
         isQuirksMode = isQuirks(doc);
         isXMLDocument = isXML(doc);
       }
 
-      if (hasChanged = lastSelector != selector) {
+      if (hasChanged = lastMatcher != selector) {
         // process valid selector strings
         if (selector && reValidator.test(selector)) {
           // save passed selector
-          lastSelector = selector;
+          lastMatcher = selector;
           selector = selector.replace(reTrimSpaces, '');
-          isSingle = (parts = selector.match(reSplitGroup)).length < 2;
+          isSingleMatch = (parts = selector.match(reSplitGroup)).length < 2;
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
           return false;
         }
       }
 
-      // compile XML matcher if necessary
-      if (isXMLDocument && !(matcher = XMLMatchers[selector])) {
+      // compile XML resolver if necessary
+      if (isXMLDocument && !(resolver = XMLMatchers[selector])) {
 
-        if (isSingle) {
-          matcher =
+        if (isSingleMatch) {
+          resolver =
             new Function('e,s,r,d,h,g,f',
               'var n,x=0,k=e;' +
               compileSelector(selector, 'f&&f(k);return true;') +
               'return false;');
         } else {
-          matcher = compileGroup(selector, '', false);
+          resolver = compileGroup(selector, '', false);
         }
-        XMLMatchers[selector] = matcher;
+        XMLMatchers[selector] = resolver;
 
       }
 
-      // compile HTML matcher if necessary
-      else if (!(matcher = HTMLMatchers[selector])) {
+      // compile HTML resolver if necessary
+      else if (!(resolver = HTMLMatchers[selector])) {
 
-        if (isSingle) {
-          matcher =
+        if (isSingleMatch) {
+          resolver =
             new Function('e,s,r,d,h,g,f',
               'var n,x=0,k=e;' +
               compileSelector(selector, 'f&&f(k);return true;') +
               'return false;');
         } else {
-          matcher = compileGroup(selector, '', false);
+          resolver = compileGroup(selector, '', false);
         }
-        HTMLMatchers[selector] = matcher;
+        HTMLMatchers[selector] = resolver;
 
       }
 
@@ -1149,7 +1154,7 @@ NW.Dom = (function(global) {
       indexesByNodeType = { };
       indexesByNodeName = { };
 
-      return matcher(element, snap, [ ], doc, root, from || doc, callback);
+      return resolver(element, snap, [ ], doc, root, from || doc, callback);
     },
 
   native_api =
@@ -1243,9 +1248,9 @@ NW.Dom = (function(global) {
       from || (from = doc);
 
       // extract context if changed
-      if (lastContext != from) {
+      if (lastSelectContext != from) {
         // save passed context
-        lastContext = from;
+        lastSelectContext = from;
         // reference context ownerDocument and document root (HTML)
         root = (doc = from.ownerDocument || from).documentElement;
         isQuirksMode = isQuirks(doc);
@@ -1258,7 +1263,7 @@ NW.Dom = (function(global) {
           // save passed selector
           lastSelector = selector;
           selector = selector.replace(reTrimSpaces, '');
-          isSingle = (parts = selector.match(reSplitGroup)).length < 2;
+          isSingleSelect = (parts = selector.match(reSplitGroup)).length < 2;
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
           return [ ];
@@ -1268,7 +1273,7 @@ NW.Dom = (function(global) {
       // pre-filtering pass allow to scale proportionally with big DOM trees
 
       // commas separators are treated sequentially to maintain order
-      if (isSingle) {
+      if (isSingleSelect) {
 
         if (hasChanged) {
           // get right most selector token
@@ -1327,7 +1332,7 @@ NW.Dom = (function(global) {
 
       if (isXMLDocument && !(resolver = XMLResolvers[selector])) {
 
-        if (isSingle) {
+        if (isSingleSelect) {
           resolver =
             new Function('c,s,r,d,h,g,f',
               'var n,x=0,k=-1,e;main:while(e=c[++k]){' +
@@ -1343,7 +1348,7 @@ NW.Dom = (function(global) {
       // compile the selector if necessary
       else if (!(resolver = HTMLResolvers[selector])) {
 
-        if (isSingle) {
+        if (isSingleSelect) {
           resolver =
             new Function('c,s,r,d,h,g,f',
               'var n,x=0,k=-1,e;main:while(e=c[++k]){' +
