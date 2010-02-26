@@ -896,7 +896,10 @@ NW.Dom = (function(global) {
 
             default:
               if (match[1] && match[5]) {
-                if (match[5] == 'even') {
+                if (match[5] == 'n') {
+                  a = 1;
+                  b = 0;
+                } else if (match[5] == 'even') {
                   a = 2;
                   b = 0;
                 } else if (match[5] == 'odd') {
@@ -911,7 +914,7 @@ NW.Dom = (function(global) {
 
                 // executed after the count is computed
                 type = match[4] ? 'n[e.nodeName' + TO_UPPER_CASE + ']' : 'n';
-                expr = match[2] == 'last' ? type + '.length-(' + (b - 1) + ')' : b;
+                expr = match[2] == 'last' && b > 0 ? type + '.length-(' + (b - 1) + ')' : b; 
 
                 // shortcut check for of-type selectors
                 type = type + '[e.' + CSS_INDEX + ']';
