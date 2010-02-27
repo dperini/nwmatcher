@@ -966,7 +966,7 @@ NW.Dom = (function(global) {
             case 'not':
               // compile nested selectors, need to escape double quotes characters
               // since the string we are inserting into already uses double quotes
-              source = 'if(!s.match(e, "' + match[3].replace(/\x22/g, '\\"') + '")){' + source +'}';
+              source = 'if(!(' + compileGroup(match[3].replace(/\x22/g, '\\"'), '', false) + '(e,s,r,d,h,g,f))){' + source + '}'; 
               break;
 
             // CSS3 UI element states
