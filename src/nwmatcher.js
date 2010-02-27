@@ -755,11 +755,11 @@ NW.Dom = (function(global) {
       if (mode) {
         // for select method
         return new Function('c,s,r,d,h,g,f',
-          'var n,x=0,k=-1,e;main:while(e=c[++k]){' + source + '}return r;');
+          'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' + source + '}return r;');
       } else {
         // for match method
         return new Function('e,s,r,d,h,g,f',
-          'var n,x=0,k=e;' + source + 'return false;');
+          'var N,n,x=0,k=e;' + source + 'return false;');
       }
     },
 
@@ -897,8 +897,8 @@ NW.Dom = (function(global) {
             default:
               if (match[1] && match[5]) {
                 if (match[5] == 'n') {
-                  a = 1;
-                  b = 0;
+                  source = 'if(e!==h){' + source + '}';
+                  break;
                 } else if (match[5] == 'even') {
                   a = 2;
                   b = 0;
@@ -913,8 +913,8 @@ NW.Dom = (function(global) {
                 }
 
                 // executed after the count is computed
-                type = match[4] ? 'n[e.nodeName' + TO_UPPER_CASE + ']' : 'n';
-                expr = match[2] == 'last' && b > 0 ? type + '.length-(' + (b - 1) + ')' : b; 
+                type = match[4] ? 'n[N]' : 'n';
+                expr = match[2] == 'last' && b > 0 ? type + '.length-(' + (b - 1) + ')' : b;
 
                 // shortcut check for of-type selectors
                 type = type + '[e.' + CSS_INDEX + ']';
@@ -930,9 +930,10 @@ NW.Dom = (function(global) {
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
                 source =
+                  (match[4] ? 'N=e.nodeName' + TO_UPPER_CASE + ';' : '') +
                   'if(e!==h){' +
                     'n=s.getIndexesBy' + (match[4] ? 'NodeName' : 'NodeType') +
-                    '(e.parentNode' + (match[4] ? ',e.nodeName' + TO_UPPER_CASE : '') + ');' +
+                    '(e.parentNode' + (match[4] ? ',N' : '') + ');' +
                     'if(' + test + '){' + source + '}' +
                   '}';
 
@@ -1127,7 +1128,7 @@ NW.Dom = (function(global) {
         if (isSingleMatch) {
           resolver =
             new Function('e,s,r,d,h,g,f',
-              'var n,x=0,k=e;' +
+              'var N,n,x=0,k=e;' +
               compileSelector(selector, 'f&&f(k);return true;') +
               'return false;');
         } else {
@@ -1143,7 +1144,7 @@ NW.Dom = (function(global) {
         if (isSingleMatch) {
           resolver =
             new Function('e,s,r,d,h,g,f',
-              'var n,x=0,k=e;' +
+              'var N,n,x=0,k=e;' +
               compileSelector(selector, 'f&&f(k);return true;') +
               'return false;');
         } else {
@@ -1338,7 +1339,7 @@ NW.Dom = (function(global) {
         if (isSingleSelect) {
           resolver =
             new Function('c,s,r,d,h,g,f',
-              'var n,x=0,k=-1,e;main:while(e=c[++k]){' +
+              'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
               compileSelector(selector, ACCEPT_NODE) +
               '}return r;');
         } else {
@@ -1354,7 +1355,7 @@ NW.Dom = (function(global) {
         if (isSingleSelect) {
           resolver =
             new Function('c,s,r,d,h,g,f',
-              'var n,x=0,k=-1,e;main:while(e=c[++k]){' +
+              'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
               compileSelector(selector, ACCEPT_NODE) +
               '}return r;');
         } else {
