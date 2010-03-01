@@ -285,8 +285,10 @@ NW.Dom = (function(global) {
 
       pattern.push(':selected', ':contains');
 
+      // value not a boolean but should be avoided in IE QSA
       if (BUGGY_HAS_ATTRIBUTE) {
         pattern.push(
+          '\\[\\s*value',
           '\\[\\s*ismap',
           '\\[\\s*checked',
           '\\[\\s*disabled',
@@ -316,12 +318,12 @@ NW.Dom = (function(global) {
   QSA_NODE_TYPES = { '9': 1, '11': 1 },
 
   // boolean attributes should return attribute name instead of true/false
-  ATTRIBUTES_BOOLEAN = {
+  ATTR_BOOLEAN = {
     checked: 1, disabled: 1, ismap: 1, multiple: 1, readonly: 1, selected: 1
   },
 
   // attribute referencing URI data values need special treatment in IE
-  ATTRIBUTES_URIDATA = {
+  ATTR_URIDATA = {
     'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
     'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2
   },
@@ -627,12 +629,24 @@ NW.Dom = (function(global) {
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
+      if (node.form !== undefined) {
+        switch(attribute) {
+          case 'value':
+            return node.defaultValue || '';
+          case 'checked':
+            return node.defaultChecked && attribute;
+          case 'selected':
+            return node.defaultSelected && attribute;
+          default:
+            break;
+        }
+      }
       return (
         // specific URI data attributes (parameter 2 to fix IE bug)
-        ATTRIBUTES_URIDATA[attribute] ? node.getAttribute(attribute, 2) || '' :
+        ATTR_URIDATA[attribute] ? node.getAttribute(attribute, 2) || '' :
         // boolean attributes should return name instead of true/false
-        ATTRIBUTES_BOOLEAN[attribute] ? node.getAttribute(attribute) ? attr : '' :
-          ((node = node.getAttributeNode(attribute)) && node.value) || ''); 
+        ATTR_BOOLEAN[attribute] ? node.getAttribute(attribute) ? attribute : '' :
+          ((node = node.getAttributeNode(attribute)) && node.value) || '');
     },
 
   // attribute presence
