@@ -972,15 +972,15 @@ NW.Dom = (function(global) {
             // CSS3 UI element states
             case 'checked':
               // only radio buttons, check boxes and option elements
-              source = 'if(((e.type&&/radio|checkbox/i.test(e.type))||e.nodeName.toLowerCase()=="option")&&(e.checked||e.selected)){' + source + '}';
+              source = 'if(((e.form!==undefined&&(/radio|checkbox/i).test(e.type))||/option/i.test(e.nodeName))&&(e.checked||e.selected)){' + source + '}';
               break;
             case 'enabled':
               // does not consider hidden input fields
-              source = 'if(((e.type&&"form" in e&&e.type.toLowerCase()!=="hidden")||s.isLink(e))&&!e.disabled){' + source + '}';
+              source = 'if(((e.form!==undefined&&!(/hidden/i).test(e.type))||s.isLink(e))&&!e.disabled){' + source + '}';
               break;
             case 'disabled':
               // does not consider hidden input fields
-              source = 'if(((e.type&&"form" in e&&e.type.toLowerCase()!=="hidden")||s.isLink(e))&&e.disabled){' + source + '}';
+              source = 'if(((e.form!==undefined&&!(/hidden/i).test(e.type))||s.isLink(e))&&e.disabled){' + source + '}';
               break;
 
             // CSS3 lang pseudo-class
@@ -1019,6 +1019,7 @@ NW.Dom = (function(global) {
               source = 'if(e===d.hoverElement){' + source + '}';
               break;
             case 'focus':
+              if (isXMLDocument) break;
               source = NATIVE_FOCUS ?
                 'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href)){' + source + '}' :
                 'if(e===d.activeElement&&(e.type||e.href)){' + source + '}';
