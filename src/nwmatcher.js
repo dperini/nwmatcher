@@ -964,9 +964,8 @@ NW.Dom = (function(global) {
           switch (match[1]) {
             // CSS3 negation pseudo-class
             case 'not':
-              // compile nested selectors, need to escape double quotes characters
-              // since the string we are inserting into already uses double quotes
-              source = 'if(!(' + compileGroup(match[3], '', false) + '(e,s,r,d,h,g,f))){' + source + '}'; 
+              // compile nested selectors, DO NOT pass a callback parameter
+              source = 'N=' + compileGroup(match[3], '', false) + '(e,s,r,d,h,g);if(!N){' + source + '}'; 
               break;
 
             // CSS3 UI element states
