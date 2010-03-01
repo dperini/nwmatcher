@@ -315,15 +315,15 @@ NW.Dom = (function(global) {
 
   QSA_NODE_TYPES = { '9': 1, '11': 1 },
 
-  // attribute referencing URI values need special treatment in IE
-  ATTRIBUTES_URI = {
-    'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
-    'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2
+  // boolean attributes should return attribute name instead of true/false
+  ATTRIBUTES_BOOLEAN = {
+    checked: 1, disabled: 1, ismap: 1, multiple: 1, readonly: 1, selected: 1
   },
 
-  // attributes treated as booleans in IE
-  ATTRIBUTES_BOOLEAN = {
-    ismap: 1, checked: 1, disabled: 1, multiple: 1, readonly: 1, selected: 1
+  // attribute referencing URI data values need special treatment in IE
+  ATTRIBUTES_URIDATA = {
+    'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
+    'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2
   },
 
   // HTML 5 draft specifications
@@ -623,14 +623,16 @@ NW.Dom = (function(global) {
   // @return string
   getAttribute = NATIVE_HAS_ATTRIBUTE ?
     function(node, attribute) {
-      return ((node.getAttribute(attribute) || '') + '');
+      return node.getAttribute(attribute) || '';
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
-      // specific URI attributes (parameter 2 to fix IE bug)
-      return ATTRIBUTES_URI[attribute] ? ((node.getAttribute(attribute, 2) || '') + '') :
-        ATTRIBUTES_BOOLEAN[attribute] ? (node.getAttribute(attribute) ? attribute : '') :
-          ((((node = node.getAttributeNode(attribute)) && node.value) || '') + '');
+      return (
+        // specific URI data attributes (parameter 2 to fix IE bug)
+        ATTRIBUTES_URIDATA[attribute] ? node.getAttribute(attribute, 2) || '' :
+        // boolean attributes should return name instead of true/false
+        ATTRIBUTES_BOOLEAN[attribute] ? node.getAttribute(attribute) ? attr : '' :
+          ((node = node.getAttributeNode(attribute)) && node.value) || ''); 
     },
 
   // attribute presence
