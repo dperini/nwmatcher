@@ -49,7 +49,7 @@ NW.Dom = (function(global) {
   skipgroup = '(?:\\[.*\\]|\\(.*\\))',
 
   // discard invalid chars found in passed selector
-  reValidator = /^(\*|[.:#][a-zA-Z]+|[>+~a-zA-Z]|[^\x00-\xa0]|\[.*\]|\{.*\})/,
+  reValidator = /^\s?(\*|[.:#](?:[a-zA-Z]|[^\x00-\xa0])+|[>+~a-zA-Z]|[^\x00-\xa0]|\[.*\]|\{.*\})/,
 
   // only five chars can occur in whitespace, they are:
   // \x20 \t \n \r \f, checks now uniformed in the code
