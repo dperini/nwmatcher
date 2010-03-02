@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.2beta
  * Created: 20070722
- * Release: 20100226
+ * Release: 20100302
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -15,9 +15,7 @@
  *  http://javascript.nwbox.com/NWMatcher/nwmatcher.js
  */
 
-window.NW || (window.NW = { });
-
-NW.Dom = (function(global) {
+(function(global, undefined) {
 
   var version = 'nwmatcher-1.2.2beta',
 
@@ -1444,7 +1442,9 @@ NW.Dom = (function(global) {
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
-  return {
+  global.NW || (global.NW = { });
+
+  NW.Dom = {
 
     // retrieve element by id attr
     byId: byId,
