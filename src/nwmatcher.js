@@ -630,7 +630,8 @@
       if (node.form !== undefined) {
         switch(attribute) {
           case 'value':
-            return node.defaultValue || '';
+            if (node.defaultValue) return node.defaultValue || '';
+            break;
           case 'checked':
             return node.defaultChecked && attribute;
           case 'selected':
