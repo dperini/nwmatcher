@@ -862,8 +862,8 @@
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
           source = NATIVE_TRAVERSAL_API ?
-            'if((e=e.previousElementSibling)){' + source + '}' :
-            'while((e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}';
+            'if(e&&(e=e.previousElementSibling)){' + source + '}' :
+            'while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}';
         }
 
         // *** General sibling combinator
@@ -881,13 +881,13 @@
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'if(e!==h&&e!==g&&(e=e.parentNode)){' + source + '}';
+          source = 'if(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}';
         }
 
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'while(e!==h&&e!==g&&(e=e.parentNode)){' + source + '}';
+          source = 'while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}';
         }
 
         // *** Structural pseudo-classes
