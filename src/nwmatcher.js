@@ -627,7 +627,7 @@
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
-      if (type of node.form !== 'undefined') {
+      if (typeof node.form !== 'undefined') {
         switch(attribute) {
           case 'value':
             if (node.defaultValue) return node.defaultValue || '';
