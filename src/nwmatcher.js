@@ -931,7 +931,7 @@
 
                 // executed after the count is computed
                 type = match[4] ? 'n[N]' : 'n';
-                expr = match[2] == 'last' && b > 0 ? type + '.length-(' + (b - 1) + ')' : b;
+                expr = match[2] == 'last' && b >= 0 ? type + '.length-(' + (b - 1) + ')' : b;
 
                 // shortcut check for of-type selectors
                 type = type + '[e.' + CSS_INDEX + ']';
