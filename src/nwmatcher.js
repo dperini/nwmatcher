@@ -15,7 +15,7 @@
  *  http://javascript.nwbox.com/NWMatcher/nwmatcher.js
  */
 
-(function(global, undefined) {
+(function(global) {
 
   var version = 'nwmatcher-1.2.2beta',
 
@@ -627,7 +627,7 @@
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
-      if (node.form !== undefined) {
+      if (type of node.form !== 'undefined') {
         switch(attribute) {
           case 'value':
             if (node.defaultValue) return node.defaultValue || '';
@@ -986,15 +986,15 @@
             // CSS3 UI element states
             case 'checked':
               // only radio buttons, check boxes and option elements
-              source = 'if(((e.form!==undefined&&(/radio|checkbox/i).test(e.type))||/option/i.test(e.nodeName))&&(e.checked||e.selected)){' + source + '}';
+              source = 'if(((typeof e.form!=="undefined"&&(/radio|checkbox/i).test(e.type))||/option/i.test(e.nodeName))&&(e.checked||e.selected)){' + source + '}';
               break;
             case 'enabled':
               // does not consider hidden input fields
-              source = 'if(((e.form!==undefined&&!(/hidden/i).test(e.type))||s.isLink(e))&&!e.disabled){' + source + '}';
+              source = 'if(((typeof e.form!=="undefined"&&!(/hidden/i).test(e.type))||s.isLink(e))&&!e.disabled){' + source + '}';
               break;
             case 'disabled':
               // does not consider hidden input fields
-              source = 'if(((e.form!==undefined&&!(/hidden/i).test(e.type))||s.isLink(e))&&e.disabled){' + source + '}';
+              source = 'if(((typeof e.form!=="undefined"&&!(/hidden/i).test(e.type))||s.isLink(e))&&e.disabled){' + source + '}';
               break;
 
             // CSS3 lang pseudo-class
