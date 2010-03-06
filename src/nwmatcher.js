@@ -286,7 +286,12 @@
       // value not a boolean but should be avoided in IE QSA
       if (BUGGY_HAS_ATTRIBUTE) {
         pattern.push(
+          // IE fails reading empty values for ^= $= operators
+          '\\[\\s*.*\\^\\=',
+          '\\[\\s*.*\\$\\=',
+          // IE fails reading original values for input/textarea
           '\\[\\s*value',
+          // IE fails reading original boolean value for controls
           '\\[\\s*ismap',
           '\\[\\s*checked',
           '\\[\\s*disabled',
