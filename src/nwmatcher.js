@@ -1002,8 +1002,9 @@
               test = '';
               if (match[3]) test = match[3].substr(0, 2) + '-';
               source = 'do{(n=e.lang||"").toLowerCase();' +
-                'if(n&&(n=="' + match[3].toLowerCase() +
-                '"||n.substr(0,3)=="' + test.toLowerCase() + '"))' +
+                'if((n==""&&h.lang=="' + match[3].toLowerCase() + '")||' +
+                '(n&&(n=="' + match[3].toLowerCase() +
+                '"||n.substr(0,3)=="' + test.toLowerCase() + '")))' +
                 '{' + source + 'break;}}while((e=e.parentNode)&&e!==g);';
               break;
 
