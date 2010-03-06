@@ -843,9 +843,11 @@
           expr = expr.length == 2 ? expr[1] : expr[0] + '';
 
           // replace Operators parameter if needed
-          if ((type = Operators[match[2]])) {
+          if ((type = Operators[match[2]]) && match[4]) {
             // case treatment depends on document
             HTML_TABLE['class'] = isQuirksMode ? 1 : 0;
+            // replace escaped values and HTML entities
+            match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1'); 
             test = (isXMLDocument ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
             type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
           }
@@ -853,7 +855,7 @@
           // build expression for has/getAttribute
           expr = 'n=s.' + (type ? 'get' : 'has') +
             'Attribute(e,"' + match[1] + '")' +
-            (test ? '.toLowerCase();' : ';');
+            (test && type ? '.toLowerCase();' : ';');
 
           source = expr + 'if(' + (type ? type : 'n') + '){' + source + '}';
         }
