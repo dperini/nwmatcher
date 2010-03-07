@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.2beta
  * Created: 20070722
- * Release: 20100302
+ * Release: 20100306
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -280,9 +280,9 @@
       div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
       div.removeChild(div.firstChild);
 
-      pattern.push(':selected', ':contains');
+      pattern.push(':target', ':selected', ':contains');
 
-      // value not a boolean but should be avoided in IE QSA
+      // avoid following selectors for IE QSA
       if (BUGGY_HAS_ATTRIBUTE) {
         pattern.push(
           // IE fails reading empty values for ^= $= operators
