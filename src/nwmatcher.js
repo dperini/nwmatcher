@@ -1222,7 +1222,7 @@
 
         try {
           var elements = (from || doc).querySelectorAll(selector);
-        } catch(e) { }
+        } catch(e) {/*if (/:not(.*)/i.test(selector)) return [ ];*/}
 
         if (elements) {
           switch (elements.length) {
