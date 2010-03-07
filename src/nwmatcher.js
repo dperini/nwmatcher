@@ -121,7 +121,7 @@
 
   // initialized with the loading context
   // and reset for each selection query
-  isQuirksMody = isQuirks(doc),
+  isQuirksMode = isQuirks(doc),
   isXMLDocument = isXML(doc),
 
   // NATIVE_XXXXX true if method exist and is callable
