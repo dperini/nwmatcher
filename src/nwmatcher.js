@@ -94,8 +94,8 @@
   // makes harder to detect Quirks vs. Strict mode
   isQuirks =
     function(document) {
-      return (document.compatMode ?
-        (document.compatMode.indexOf('CSS') < 0) :
+      return typeof document.compatMode == 'string' ?
+        document.compatMode.indexOf('CSS') < 0 :
         (function() {
           var div = document.createElement('div'),
             isStrict = div.style &&
@@ -103,7 +103,7 @@
               div.style.width != '1px';
           div = null;
           return !isStrict;
-        })());
+        })();
     },
 
   // XML is functional in W3C browsers
@@ -119,10 +119,9 @@
         !(/html/i).test(document.documentElement.nodeName);
     },
 
-  // reset and reused dynamically for each selection
-  isQuirksMode = isQuirks(doc),
-
-  // reset and reused dynamically for each selection
+  // initialized with the loading context
+  // and reset for each selection query
+  isQuirksMody = isQuirks(doc),
   isXMLDocument = isXML(doc),
 
   // NATIVE_XXXXX true if method exist and is callable
