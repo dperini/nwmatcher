@@ -858,21 +858,24 @@
           expr = expr.length == 2 ? expr[1] : expr[0] + '';
 
           // replace Operators parameter if needed
-          if ((type = Operators[match[2]]) && match[4]) {
+          if (match[2] && match[4] && (type = Operators[match[2]])) {
             // case treatment depends on document
             HTML_TABLE['class'] = isQuirksMode ? 1 : 0;
             // replace escaped values and HTML entities
             match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
             test = (isXMLDocument ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
             type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
+          } else {
+            test = false;
+            type = '';
           }
 
           // build expression for has/getAttribute
-          expr = 'n=s.' + (type ? 'get' : 'has') +
+          expr = 'n=s.' + (match[2] ? 'get' : 'has') +
             'Attribute(e,"' + match[1] + '")' +
-            (test && type ? '.toLowerCase();' : ';');
+            (test ? '.toLowerCase();' : ';');
 
-          source = expr + 'if(' + (type ? type : 'n') + '){' + source + '}';
+          source = expr + 'if(' + (match[2] ? type : 'n') + '){' + source + '}';
         }
 
         // *** Adjacent sibling combinator
