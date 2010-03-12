@@ -1029,7 +1029,7 @@
             case 'target':
               n = doc.location ? doc.location.hash : '';
               if (n) {
-                source = 'if(e.id=="' + n + '"&&"href" in e){' + source + '}';
+                source = 'if(e.id=="' + n.slice(1) + '"){' + source + '}';
               }
               break;
 
