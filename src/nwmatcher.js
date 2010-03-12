@@ -862,7 +862,7 @@
             // case treatment depends on document
             HTML_TABLE['class'] = isQuirksMode ? 1 : 0;
             // replace escaped values and HTML entities
-            match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1'); 
+            match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
             test = (isXMLDocument ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
             type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
           }
@@ -997,7 +997,9 @@
             // CSS3 negation pseudo-class
             case 'not':
               // compile nested selectors, DO NOT pass a callback parameter
-              source = 'N=' + compileGroup(match[3], '', false) + '(e,s,r,d,h,g);if(!N){' + source + '}'; 
+              //if (!/\[/.test(match[3]) || match[3].indexOf('[') === 0) {
+              source = 'N=' + compileGroup(match[3], '', false) + '(e,s,r,d,h,g);if(!N){' + source + '}';
+              //} else { source = 'if(false){' + source + '}'; }
               break;
 
             // CSS3 UI element states
@@ -1233,7 +1235,7 @@
 
         try {
           var elements = (from || doc).querySelectorAll(selector);
-        } catch(e) {/*if (/:not(.*)/i.test(selector)) return [ ];*/}
+        } catch(e) {/*if (/:not\(.*\)/i.test(selector)) return [ ];*/}
 
         if (elements) {
           switch (elements.length) {
