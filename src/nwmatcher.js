@@ -668,6 +668,17 @@
       return !!(node && (node.specified || node.nodeValue));
     },
 
+  // check node emptyness
+  isEmpty =
+    function(node) {
+      node = node.firstChild;
+      while (node) {
+        if (node.nodeType == 3 || node.nodeName > '@') return false;
+        node = node.nextSibling;
+      }
+      return true;
+    },
+
   // check if element matches the :link pseudo
   // @return boolean
   isLink =
@@ -912,7 +923,7 @@
 
             case 'empty':
               // element that has no children
-              source = 'if(!e.firstChild){' + source + '}';
+              source = 'if(s.isEmpty(e)){' + source + '}';
               break;
 
             default:
@@ -1442,6 +1453,7 @@
 
     // helper/check methods
     stripTags: stripTags,
+    isEmpty: isEmpty,
     isLink: isLink,
 
     // selection/matching
