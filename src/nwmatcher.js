@@ -867,7 +867,8 @@
             type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
           } else {
             test = false;
-            type = '';
+            // handle empty values
+            type = match[2] == '=' ? 'n==""' : 'false';
           }
 
           // build expression for has/getAttribute
@@ -1238,7 +1239,7 @@
 
         try {
           var elements = (from || doc).querySelectorAll(selector);
-        } catch(e) {/*if (/:not\(.*\)/i.test(selector)) return [ ];*/}
+        } catch(e) { }
 
         if (elements) {
           switch (elements.length) {
