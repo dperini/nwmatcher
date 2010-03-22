@@ -5,20 +5,20 @@
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     <title>NWMatcher Unit Test</title>
     <link rel="stylesheet" href="test.css" type="text/css" media="screen" charset="utf-8" />
-    <script src="../src/nwmatcher.js" type="text/javascript" charset="utf-8"></script>
-    <script src="lib/prototype.js" type="text/javascript" charset="utf-8"></script>
-    <script src="lib/unittest.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../../src/nwmatcher.js" type="text/javascript" charset="utf-8"></script>
+    <script src="assets/prototype.js" type="text/javascript" charset="utf-8"></script>
+    <script src="lib_assets/unittest.js" type="text/javascript" charset="utf-8"></script>
   </head>
   <body>
     <!-- Log output start -->
     <div id="testlog"></div>
     <!-- Log output end -->
-    
+
     <div id="fixtures" style="display: none">
       <h1 class="title">Some title <span>here</span></h1>
       <p id="p" class="first summary">
         <strong id="strong">This</strong> is a short blurb
-        <a id="link_1" class="first internal" rel="external nofollow" href="#">with a <em id="em2">link</em></a> or 
+        <a id="link_1" class="first internal" rel="external nofollow" href="#">with a <em id="em2">link</em></a> or
         <a id="link_2" class="internal highlight" href="#"><em id="em">two</em></a>.
         Or <cite id="with_title" title="hello world!">a citation</cite>.
       </p>
@@ -42,7 +42,7 @@
 
       <form id="troubleForm2">
         <input type="checkbox" name="brackets[5][]" id="chk_1" checked="checked" value="1" />
-        <input type="checkbox" name="brackets[5][]" id="chk_2" value="2" />    
+        <input type="checkbox" name="brackets[5][]" id="chk_2" value="2" />
       </form>
 
       <div id="level1">
@@ -52,7 +52,7 @@
           <span id="level3_2"></span>
         </span>
         <span id="level2_2">
-          <em id="level_only_child">    
+          <em id="level_only_child">
           </em>
         </span>
         <div id="level2_3"></div>
@@ -70,12 +70,12 @@
         </span>
       </div> <!-- #dupContainer -->
 
-      <div id="grandfather"> grandfather    
-        <div id="father" class="brothers men"> father      
+      <div id="grandfather"> grandfather
+        <div id="father" class="brothers men"> father
           <div id="son"> son </div>
         </div>
         <div id="uncle" class="brothers men"> uncle </div>
-      </div>  
+      </div>
 
       <form id="commaParent" title="commas,are,good">
         <input type="hidden" id="commaChild" name="foo" value="#commaOne,#commaTwo" />
@@ -83,17 +83,19 @@
       </form>
       <div id="counted_container"><div class="is_counted"></div></div>
     </div>
-    
-    
-    
+
     <script type="text/javascript" charset="utf-8">
+
       /* Plug NW.Matcher on Prototype methods */
-//      NW.Dom.setCache(0);
-      
+
       function $$() {
-        return NW.Dom.select($A(arguments).join(', ')).collect(Element.extend);
+        var context, args = $A(arguments);
+        if (typeof args[args.length - 1] != 'string') {
+          context = args.pop();
+        }
+        return NW.Dom.select(args.join(', '), context, Element.extend);
       }
-      
+
       Element.addMethods({
         match: function(element, selector) {
           return !Object.isString(selector) && Object.isFunction(selector.match) ?
@@ -101,7 +103,9 @@
             NW.Dom.match(element, selector);
         }
       });
-    
+
+      /* Standard Prototype test */
+
       var $RunBenchmarks = false;
 
       new Test.Unit.Runner({
@@ -113,7 +117,7 @@
 
           var allNodes = $A(document.getElementsByTagName('*')).select( function(node) {
             return node.tagName !== '!';
-          });      
+          });
           this.assertEnumEqual(allNodes, $$('*'));
         },
 
@@ -197,7 +201,7 @@
         },
 
         testSelectorWithTagNameAndNegatedAttributeValue: function() {
-          this.assertEnumEqual([], $$('a:not([href="#"])'));
+          this.assertEnumEqual([], $$('a[href!="#"]'));
         },
 
         testSelectorWithBracketAttributeValue: function() {
@@ -214,8 +218,8 @@
         testSelectorWithMultipleConditions: function() {
           this.assertEnumEqual([$('link_3')], $$('a[class~=external][href="#"]'),
            'a[class~=external][href="#"]');
-          this.assertEnumEqual([], $$('a[class~=external]:not([href="#"])'),
-           'a[class~=external]:not([href="#"])');
+          this.assertEnumEqual([], $$('a[class~=external][href!="#"]'),
+           'a[class~=external][href!="#"]');
         },
 
         testSelectorMatchElements: function() {
@@ -239,7 +243,7 @@
           this.assert(span.match('span'));
           this.assert(span.match('span#dupL1'));
           this.assert(span.match('div > span'), 'child combinator');
-          this.assert(span.match('#dupContainer span'), 'descendant combinator');      
+          this.assert(span.match('#dupContainer span'), 'descendant combinator');
           this.assert(span.match('#dupL1'), 'ID only');
           this.assert(span.match('span.span_foo'), 'class name 1');
           this.assert(span.match('span.span_bar'), 'class name 2');
@@ -292,13 +296,13 @@
 
         testSelectorWithAdjacence: function() {
           this.assertEnumEqual([$('uncle')], $$('div.brothers + div.brothers'));
-          this.assertEnumEqual([$('uncle')], $$('div.brothers + div'));      
-          this.assertEqual($('level2_2'), $$('#level2_1+span').reduce());
-          this.assertEqual($('level2_2'), $$('#level2_1 + span').reduce());
-          this.assertEqual($('level2_2'), $$('#level2_1 + *').reduce());
+          this.assertEnumEqual([$('uncle')], $$('div.brothers + div'));
+          this.assertEqual($('level2_2'), $$('#level2_1+span')[0]);
+          this.assertEqual($('level2_2'), $$('#level2_1 + span')[0]);
+          this.assertEqual($('level2_2'), $$('#level2_1 + *')[0]);
           this.assertEnumEqual([], $$('#level2_2 + span'));
-          this.assertEqual($('level3_2'), $$('#level3_1 + span').reduce());
-          this.assertEqual($('level3_2'), $$('#level3_1 + *').reduce());
+          this.assertEqual($('level3_2'), $$('#level3_1 + span')[0]);
+          this.assertEqual($('level3_2'), $$('#level3_1 + *')[0]);
           this.assertEnumEqual([], $$('#level3_2 + *'));
           this.assertEnumEqual([], $$('#level3_1 + em'));
           $RunBenchmarks && this.wait(500, function() {
@@ -308,8 +312,8 @@
 
         testSelectorWithLaterSibling: function() {
           this.assertEnumEqual([$('list')], $$('h1 ~ ul'));
-          this.assertEqual($('level2_2'), $$('#level2_1 ~ span').reduce());
-          this.assertEnumEqual($('level2_2', 'level2_3'), $$('#level2_1 ~ *').reduce());
+          this.assertEqual($('level2_2'), $$('#level2_1 ~ span')[0]);
+          this.assertEnumEqual($('level2_2', 'level2_3'), $$('#level2_1 ~ *'));
           this.assertEnumEqual([], $$('#level2_2 ~ span'));
           this.assertEnumEqual([], $$('#level3_2 ~ *'));
           this.assertEnumEqual([], $$('#level3_1 ~ em'));
@@ -412,7 +416,7 @@
             this.assertEnumEqual([$('level3_1')], $$('#level3_1:empty'), 'IE forced empty content!');
             this.info("IE forced empty content!");
           }
-        },    
+        },
 
         testIdenticalResultsFromEquivalentSelectors: function() {
           this.assertEnumEqual($$('div.brothers'), $$('div[class~=brothers]'));
@@ -460,10 +464,10 @@
 
         testCountedIsNotAnAttribute: function() {
           var el = $('list');
-          Selector.handlers.mark([el]);
+          el.setAttribute("counted", "_counted");
           this.assert(!el.innerHTML.include("_counted"));
-          Selector.handlers.unmark([el]);
-          this.assert(!el.innerHTML.include("_counted"));      
+          el.setAttribute("counted", "");
+          this.assert(!el.innerHTML.include("_counted"));
         },
 
         testCopiedNodesGetIncluded: function() {
@@ -473,13 +477,13 @@
           );
           $('counted_container').innerHTML += $('counted_container').innerHTML;
           this.assertElementsMatch(
-            Selector.matchElements($('counted_container').descendants(), 'div'), 'div.is_counted', 
+            Selector.matchElements($('counted_container').descendants(), 'div'), 'div.is_counted',
             'div.is_counted'
           );
         },
 
         testElementDown: function() {
-          var a = $('dupL4'); 
+          var a = $('dupL4');
           var b = $('dupContainer').down('#dupL4');
 
           this.assertEqual(a, b);

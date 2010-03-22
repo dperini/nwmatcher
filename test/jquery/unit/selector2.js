@@ -63,7 +63,7 @@ if ( location.protocol != "file:" ) {
 }
 
 test("broken", function() {
-	expect(7);
+	expect(6);
 	function broken(name, selector) {
 		try {
 			t(name, selector, [ ]);
@@ -79,7 +79,8 @@ test("broken", function() {
 	broken( "Broken Selector", "<", [] );
 	broken( "Broken Selector", "()", [] );
 	broken( "Broken Selector", "<>", [] );
-	broken( "Broken Selector", "{}", [] );
+    // curly braces could be used in extensions
+	//broken( "Broken Selector", "{}", [] );
 });
 
 test("id", function() {

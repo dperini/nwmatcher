@@ -34,7 +34,7 @@ Event.simulateMouse = function(element, eventName) {
     options.buttons, options.pointerX, options.pointerY, options.pointerX, options.pointerY, 
     false, false, false, false, 0, $(element));
   
-  if (this.mark) Element.remove(this.mark);
+  if(this.mark) Element.remove(this.mark);
   
   var style = 'position: absolute; width: 5px; height: 5px;' + 
     'top: #{pointerY}px; left: #{pointerX}px;'.interpolate(options) + 
@@ -44,7 +44,7 @@ Event.simulateMouse = function(element, eventName) {
   this.mark.appendChild(document.createTextNode(" "));
   document.body.appendChild(this.mark);
   
-  if (this.step)
+  if(this.step)
     alert('['+new Date().getTime().toString()+'] '+eventName+'/'+Test.Unit.inspect(options));
   
   $(element).dispatchEvent(oEvent);
@@ -71,7 +71,7 @@ Event.simulateKey = function(element, eventName) {
 };
 
 Event.simulateKeys = function(element, command) {
-  for (var i=0; i<command.length; i++) {
+  for(var i=0; i<command.length; i++) {
     Event.simulateKey(element,'keypress',{charCode:command.charCodeAt(i)});
   }
 };
@@ -83,20 +83,28 @@ var Test = {
 };
 
 Test.Unit.Logger = Class.create({
-  initialize: function(element) {
-    this.element = $(element);
+  initialize: function(id) {
+    if (typeof id === 'string')
+      id = document.getElementById(id);
+    this.element = id;
     if (this.element) this._createLogTable();
-    this.tbody = $(this.element.getElementsByTagName('tbody')[0]);
+    this.tbody = this.element.getElementsByTagName('tbody')[0];
   },
   
   start: function(testName) {
     if (!this.element) return;
-    this.tbody.insert('<tr><td>' + testName + '</td><td></td><td></td></tr>');
+    var tr = document.createElement('tr');
+    var first = document.createElement('td');
+    first.appendChild(document.createTextNode(testName));
+    tr.appendChild(first);
+    tr.appendChild(document.createElement('td'));
+    tr.appendChild(document.createElement('td'));
+    this.tbody.appendChild(tr);
   },
   
   setStatus: function(status) {
-    this.getLastLogLine().addClassName(status);
-    $(this.getLastLogLine().getElementsByTagName('td')[1]).update(status);
+    this.getLastLogLine().className = status;
+    this.getLastLogLine().getElementsByTagName('td')[1].innerHTML = status;
   },
   
   finish: function(status, summary) {
@@ -107,25 +115,21 @@ Test.Unit.Logger = Class.create({
   
   message: function(message) {
     if (!this.element) return;
-    this.getMessageCell().update(this._toHTML(message));
+    this.getMessageCell().innerHTML = this._toHTML(message);
   },
   
   summary: function(summary) {
     if (!this.element) return;
-    var div = $(this.element.getElementsByTagName('div')[0]);
-    div.update(this._toHTML(summary));
+    this.element.getElementsByTagName('div')[0].innerHTML = this._toHTML(summary);
   },
   
   getLastLogLine: function() {
-    //return this.element.descendants('tr').last();
     var trs = this.element.getElementsByTagName('tr');
-    return $(trs[trs.length - 1]);
+    return trs[trs.length - 1];
   },
   
   getMessageCell: function() {
-    return this.getLastLogLine().down('td', 2);
-    var tds = this.getLastLogLine().getElementsByTagName('td');
-    return $(tds[2]);
+    return this.getLastLogLine().getElementsByTagName('td')[2];
   },
   
   _createLogTable: function() {
@@ -134,12 +138,12 @@ Test.Unit.Logger = Class.create({
     '<thead><tr><th>Status</th><th>Test</th><th>Message</th></tr></thead>' +
     '<tbody class="loglines"></tbody>' +
     '</table>';
-    this.element.update(html);
+    this.element.innerHTML = html;
     
   },
   
   appendActionButtons: function(actions) {
-    actions = $H(actions);
+   /* actions = $H(actions);
     if (!actions.any()) return;
     var div = new Element("div", {className: 'action_buttons'});
     actions.inject(div, function(container, action) {
@@ -147,13 +151,26 @@ Test.Unit.Logger = Class.create({
       button.type = "button";
       return container.insert(button);
     });
-    this.getMessageCell().insert(div);
+    this.getMessageCell().insert(div); */
   },
   
   _toHTML: function(txt) {
     return txt.escapeHTML().replace(/\n/g,"<br />");
   }
 });
+
+Test.Unit.runners = [];
+Test.Unit.run = true;
+Test.Unit.AutoRunner = {
+  run: function() {
+    if (!Test.Unit.run) return;
+    Test.Unit.run = false;
+    for (var i=0; i < Test.Unit.runners.length; i++) {
+      Test.Unit.runners[i].run();
+    };
+  }
+};
+Event.observe(window, "load", Test.Unit.AutoRunner.run);
 
 Test.Unit.Runner = Class.create({
   initialize: function(testcases) {
@@ -165,11 +182,12 @@ Test.Unit.Runner = Class.create({
     
     this.tests = this.getTests(testcases);
     this.currentTest = 0;
-
-    Event.observe(window, "load", function() {
-      this.logger = new Test.Unit.Logger($(options.testLog));
-      this.runTests.bind(this).delay(0.1);
-    }.bind(this));
+    Test.Unit.runners.push(this);
+  },
+  
+  run: function() {
+    this.logger = new Test.Unit.Logger(this.options.testLog);
+    this.runTests.bind(this).delay(0.1);
   },
   
   queryParams: window.location.search.parseQuery(),
@@ -204,7 +222,9 @@ Test.Unit.Runner = Class.create({
   },
   
   postResults: function() {
-    if (this.options.resultsURL) {
+    if (window.postUnittestResults) {
+      window.postUnittestResults(this.getResult());
+    } else if (this.options.resultsURL) {
       new Ajax.Request(this.options.resultsURL, 
         { method: 'get', parameters: this.getResult(), asynchronous: false });
     }
@@ -212,11 +232,11 @@ Test.Unit.Runner = Class.create({
   
   runTests: function() {
     var test = this.tests[this.currentTest], actions;
-    
+
     if (!test) return this.finish();
     if (!test.isWaiting) this.logger.start(test.name);
     test.run();
-    if (test.isWaiting) {
+    if(test.isWaiting) {
       this.logger.message("Waiting for " + test.timeToWait + "ms");
       setTimeout(this.runTests.bind(this), test.timeToWait || 1000);
       return;
@@ -256,159 +276,160 @@ Test.Unit.MessageTemplate = Class.create({
   }
 });
 
-Test.Unit.Assertions = {
-  buildMessage: function(message, template) {
-    var args = $A(arguments).slice(2);
-    return (message ? message + '\n' : '') + new Test.Unit.MessageTemplate(template).evaluate(args);
-  },
+Test.Unit.Assertions = (function() {
+  var MessageTemplate = Test.Unit.MessageTemplate;
   
-  flunk: function(message) {
+  function buildMessage(message, template) {
+    var args = Array.prototype.slice.call(arguments, 2);
+    return (message ? message + '\n' : '') + new MessageTemplate(template).evaluate(args);
+  }
+
+  function flunk(message) {
     this.assertBlock(message || 'Flunked', function() { return false });
-  },
-  
-  assertBlock: function(message, block) {
+  }
+
+  function assertBlock(message, block) {
     try {
       block.call(this) ? this.pass() : this.fail(message);
     } catch(e) { this.error(e) }
-  },
-  
-  assert: function(expression, message) {
-    message = this.buildMessage(message || 'assert', 'got <?>', expression);
+  }
+
+  function assert(expression, message) {
+    message = buildMessage(message || 'assert', 'got <?>', expression);
     this.assertBlock(message, function() { return expression });
-  },
-  
-  assertEqual: function(expected, actual, message) {
-    message = this.buildMessage(message || 'assertEqual', 'expected <?>, actual: <?>', expected, actual);
+  }
+
+  function assertEqual(expected, actual, message) {
+    message = buildMessage(message || 'assertEqual', 'expected: <?>, actual: <?>', expected, actual);
     this.assertBlock(message, function() { return expected == actual });
-  },
-  
-  assertNotEqual: function(expected, actual, message) {
-    message = this.buildMessage(message || 'assertNotEqual', 'expected <?>, actual: <?>', expected, actual);
+  }
+
+  function assertNotEqual(expected, actual, message) {
+    message = buildMessage(message || 'assertNotEqual', 'expected: <?>, actual: <?>', expected, actual);
     this.assertBlock(message, function() { return expected != actual });
-  },
-  
-  assertEnumEqual: function(expected, actual, message) {
+  }
+
+  function assertEnumEqual(expected, actual, message) {
     expected = $A(expected);
     actual = $A(actual);
-    message = this.buildMessage(message || 'assertEnumEqual', 'expected <?>, actual: <?>', expected, actual);
+    message = buildMessage(message || 'assertEnumEqual', 'expected: <?>, actual: <?>', expected, actual);
     this.assertBlock(message, function() {
       return expected.length == actual.length && expected.zip(actual).all(function(pair) { return pair[0] == pair[1] });
     });
-  },
-  
-  assertEnumNotEqual: function(expected, actual, message) {
+  }
+
+  function assertEnumNotEqual(expected, actual, message) {
     expected = $A(expected);
     actual = $A(actual);
-    message = this.buildMessage(message || 'assertEnumNotEqual', '<?> was the same as <?>', expected, actual);
+    message = buildMessage(message || 'assertEnumNotEqual', '<?> was the same as <?>', expected, actual);
     this.assertBlock(message, function() {
       return expected.length != actual.length || expected.zip(actual).any(function(pair) { return pair[0] != pair[1] });
     });
-  },
+  }
   
-  assertHashEqual: function(expected, actual, message) {
+  function assertPairEqual(pair) {
+    return pair.all(Object.isArray) ?
+      pair[0].zip(pair[1]).all(assertPairEqual) : pair[0] == pair[1];
+  }
+  
+  function assertHashEqual(expected, actual, message) {
     expected = $H(expected);
     actual = $H(actual);
     var expected_array = expected.toArray().sort(), actual_array = actual.toArray().sort();
-    message = this.buildMessage(message || 'assertHashEqual', 'expected <?>, actual: <?>', expected, actual);
+    message = buildMessage(message || 'assertHashEqual', 'expected: <?>, actual: <?>', expected, actual);
     // from now we recursively zip & compare nested arrays
-    var block = function() {
+    function block() {
       return expected_array.length == actual_array.length && 
-        expected_array.zip(actual_array).all(function(pair) {
-          return pair.all(Object.isArray) ?
-            pair[0].zip(pair[1]).all(arguments.callee) : pair[0] == pair[1];
-        });
-    };
+        expected_array.zip(actual_array).all(assertPairEqual);
+    }
     this.assertBlock(message, block);
-  },
-  
-  assertHashNotEqual: function(expected, actual, message) {
+  }
+
+  function assertHashNotEqual(expected, actual, message) {
     expected = $H(expected);
     actual = $H(actual);
     var expected_array = expected.toArray().sort(), actual_array = actual.toArray().sort();
-    message = this.buildMessage(message || 'assertHashNotEqual', '<?> was the same as <?>', expected, actual);
+    message = buildMessage(message || 'assertHashNotEqual', '<?> was the same as <?>', expected, actual);
     // from now we recursively zip & compare nested arrays
-    var block = function() {
+    function block() {
       return !(expected_array.length == actual_array.length && 
-        expected_array.zip(actual_array).all(function(pair) {
-          return pair.all(Object.isArray) ?
-            pair[0].zip(pair[1]).all(arguments.callee) : pair[0] == pair[1];
-        }));
+        expected_array.zip(actual_array).all(assertPairEqual));
     };
     this.assertBlock(message, block);
-  },
-  
-  assertIdentical: function(expected, actual, message) {
-    message = this.buildMessage(message || 'assertIdentical', 'expected <?>, actual: <?>', expected, actual);
-    this.assertBlock(message, function() { return expected === actual });
-  },
-  
-  assertNotIdentical: function(expected, actual, message) { 
-    message = this.buildMessage(message || 'assertNotIdentical', 'expected <?>, actual: <?>', expected, actual);
-    this.assertBlock(message, function() { return expected !== actual });
-  },
-  
-  assertNull: function(obj, message) {
-    message = this.buildMessage(message || 'assertNull', 'got <?>', obj);
-    this.assertBlock(message, function() { return obj === null });
-  },
-  
-  assertNotNull: function(obj, message) {
-    message = this.buildMessage(message || 'assertNotNull', 'got <?>', obj);
-    this.assertBlock(message, function() { return obj !== null });
-  },
-  
-  assertUndefined: function(obj, message) {
-    message = this.buildMessage(message || 'assertUndefined', 'got <?>', obj);
-    this.assertBlock(message, function() { return typeof obj == "undefined" });
-  },
-  
-  assertNotUndefined: function(obj, message) {
-    message = this.buildMessage(message || 'assertNotUndefined', 'got <?>', obj);
-    this.assertBlock(message, function() { return typeof obj != "undefined" });
-  },
-  
-  assertNullOrUndefined: function(obj, message) {
-    message = this.buildMessage(message || 'assertNullOrUndefined', 'got <?>', obj);
-    this.assertBlock(message, function() { return obj == null });
-  },
-  
-  assertNotNullOrUndefined: function(obj, message) {
-    message = this.buildMessage(message || 'assertNotNullOrUndefined', 'got <?>', obj);
-    this.assertBlock(message, function() { return obj != null });
-  },
-  
-  assertMatch: function(expected, actual, message) {
-    message = this.buildMessage(message || 'assertMatch', 'regex <?> did not match <?>', expected, actual);
-    this.assertBlock(message, function() { return new RegExp(expected).exec(actual) });
-  },
-  
-  assertNoMatch: function(expected, actual, message) {
-    message = this.buildMessage(message || 'assertNoMatch', 'regex <?> matched <?>', expected, actual);
-    this.assertBlock(message, function() { return !(new RegExp(expected).exec(actual)) });
-  },
-  
-  assertHidden: function(element, message) {
-    message = this.buildMessage(message || 'assertHidden', '? isn\'t hidden.', element);
-    this.assertBlock(message, function() { return element.style.display == 'none' });
-  },
-  
-  assertInstanceOf: function(expected, actual, message) {
-    message = this.buildMessage(message || 'assertInstanceOf', '<?> was not an instance of the expected type', actual);
-    this.assertBlock(message, function() { return actual instanceof expected });
-  },
-  
-  assertNotInstanceOf: function(expected, actual, message) {
-    message = this.buildMessage(message || 'assertNotInstanceOf', '<?> was an instance of the expected type', actual);
-    this.assertBlock(message, function() { return !(actual instanceof expected) });
-  },
-  
-  assertRespondsTo: function(method, obj, message) {
-    message = this.buildMessage(message || 'assertRespondsTo', 'object doesn\'t respond to <?>', method);
-    this.assertBlock(message, function() { return (method in obj && typeof obj[method] == 'function') });
-  },
+  }
 
-  assertRaise: function(exceptionName, method, message) {
-    message = this.buildMessage(message || 'assertRaise', '<?> exception expected but none was raised', exceptionName);
+  function assertIdentical(expected, actual, message) {
+    message = buildMessage(message || 'assertIdentical', 'expected: <?>, actual: <?>', expected, actual);
+    this.assertBlock(message, function() { return expected === actual });
+  }
+
+  function assertNotIdentical(expected, actual, message) { 
+    message = buildMessage(message || 'assertNotIdentical', 'expected: <?>, actual: <?>', expected, actual);
+    this.assertBlock(message, function() { return expected !== actual });
+  }
+
+  function assertNull(obj, message) {
+    message = buildMessage(message || 'assertNull', 'got <?>', obj);
+    this.assertBlock(message, function() { return obj === null });
+  }
+
+  function assertNotNull(obj, message) {
+    message = buildMessage(message || 'assertNotNull', 'got <?>', obj);
+    this.assertBlock(message, function() { return obj !== null });
+  }
+
+  function assertUndefined(obj, message) {
+    message = buildMessage(message || 'assertUndefined', 'got <?>', obj);
+    this.assertBlock(message, function() { return typeof obj == "undefined" });
+  }
+
+  function assertNotUndefined(obj, message) {
+    message = buildMessage(message || 'assertNotUndefined', 'got <?>', obj);
+    this.assertBlock(message, function() { return typeof obj != "undefined" });
+  }
+
+  function assertNullOrUndefined(obj, message) {
+    message = buildMessage(message || 'assertNullOrUndefined', 'got <?>', obj);
+    this.assertBlock(message, function() { return obj == null });
+  }
+
+  function assertNotNullOrUndefined(obj, message) {
+    message = buildMessage(message || 'assertNotNullOrUndefined', 'got <?>', obj);
+    this.assertBlock(message, function() { return obj != null });
+  }
+
+  function assertMatch(expected, actual, message) {
+    message = buildMessage(message || 'assertMatch', 'regex <?> did not match <?>', expected, actual);
+    this.assertBlock(message, function() { return new RegExp(expected).exec(actual) });
+  }
+
+  function assertNoMatch(expected, actual, message) {
+    message = buildMessage(message || 'assertNoMatch', 'regex <?> matched <?>', expected, actual);
+    this.assertBlock(message, function() { return !(new RegExp(expected).exec(actual)) });
+  }
+
+  function assertHidden(element, message) {
+    message = buildMessage(message || 'assertHidden', '? isn\'t hidden.', element);
+    this.assertBlock(message, function() { return element.style.display == 'none' });
+  }
+
+  function assertInstanceOf(expected, actual, message) {
+    message = buildMessage(message || 'assertInstanceOf', '<?> was not an instance of the expected type', actual);
+    this.assertBlock(message, function() { return actual instanceof expected });
+  }
+
+  function assertNotInstanceOf(expected, actual, message) {
+    message = buildMessage(message || 'assertNotInstanceOf', '<?> was an instance of the expected type', actual);
+    this.assertBlock(message, function() { return !(actual instanceof expected) });
+  }
+
+  function assertRespondsTo(method, obj, message) {
+    message = buildMessage(message || 'assertRespondsTo', 'object doesn\'t respond to <?>', method);
+    this.assertBlock(message, function() { return (method in obj && typeof obj[method] == 'function') });
+  }
+
+  function assertRaise(exceptionName, method, message) {
+    message = buildMessage(message || 'assertRaise', '<?> exception expected but none was raised', exceptionName);
     var block = function() {
       try { 
         method();
@@ -419,60 +440,92 @@ Test.Unit.Assertions = {
       }
     };
     this.assertBlock(message, block);
-  },
-  
-  assertNothingRaised: function(method, message) {
+  }
+
+  function assertNothingRaised(method, message) {
     try { 
       method();
       this.assert(true, "Expected nothing to be thrown");
     } catch(e) {
-      message = this.buildMessage(message || 'assertNothingRaised', '<?> was thrown when nothing was expected.', e);
+      message = buildMessage(message || 'assertNothingRaised', '<?> was thrown when nothing was expected.', e);
       this.flunk(message);
     }
-  },
-  
-  _isVisible: function(element) {
+  }
+
+  function isVisible(element) {
     element = $(element);
-    if (!element.parentNode) return true;
+    if(!element.parentNode) return true;
     this.assertNotNull(element);
-    if (element.style && Element.getStyle(element, 'display') == 'none')
+    if(element.style && Element.getStyle(element, 'display') == 'none')
       return false;
-    
-    return arguments.callee.call(this, element.parentNode);
-  },
-  
-  assertVisible: function(element, message) {
-    message = this.buildMessage(message, '? was not visible.', element);
-    this.assertBlock(message, function() { return this._isVisible(element) });
-  },
-  
-  assertNotVisible: function(element, message) {
-    message = this.buildMessage(message, '? was not hidden and didn\'t have a hidden parent either.', element);
-    this.assertBlock(message, function() { return !this._isVisible(element) });
-  },
-  
-  assertElementsMatch: function() {
-    var pass = true, expressions = $A(arguments), elements = $A(expressions.shift());
+    return isVisible.call(this, element.parentNode);
+  }
+
+  function assertVisible(element, message) {
+    message = buildMessage(message, '? was not visible.', element);
+    this.assertBlock(message, function() { return isVisible.call(this, element) });
+  }
+
+  function assertNotVisible(element, message) {
+    message = buildMessage(message, '? was not hidden and didn\'t have a hidden parent either.', element);
+    this.assertBlock(message, function() { return !isVisible.call(this, element) });
+  }
+
+  function assertElementsMatch() {
+    var message, pass = true, expressions = $A(arguments), elements = $A(expressions.shift());
     if (elements.length != expressions.length) {
-      message = this.buildMessage('assertElementsMatch', 'size mismatch: ? elements, ? expressions (?).', elements.length, expressions.length, expressions);
+      message = buildMessage('assertElementsMatch', 'size mismatch: ? elements, ? expressions (?).', elements.length, expressions.length, expressions);
       this.flunk(message);
       pass = false;
     }
     elements.zip(expressions).all(function(pair, index) {
       var element = $(pair.first()), expression = pair.last();
       if (element.match(expression)) return true;
-      message = this.buildMessage('assertElementsMatch', 'In index <?>: expected <?> but got ?', index, expression, element);
+      message = buildMessage('assertElementsMatch', 'In index <?>: expected <?> but got ?', index, expression, element);
       this.flunk(message);
       pass = false;
     }.bind(this))
-    
+
     if (pass) this.assert(true, "Expected all elements to match.");
-  },
-  
-  assertElementMatches: function(element, expression, message) {
+  }
+
+  function assertElementMatches(element, expression, message) {
     this.assertElementsMatch([element], expression);
   }
-};
+  
+  return {
+    buildMessage:             buildMessage,
+    flunk:                    flunk,
+    assertBlock:              assertBlock,
+    assert:                   assert,
+    assertEqual:              assertEqual,
+    assertNotEqual:           assertNotEqual,
+    assertEnumEqual:          assertEnumEqual,
+    assertEnumNotEqual:       assertEnumNotEqual,
+    assertHashEqual:          assertHashEqual,
+    assertHashNotEqual:       assertHashNotEqual,
+    assertIdentical:          assertIdentical,
+    assertNotIdentical:       assertNotIdentical,
+    assertNull:               assertNull,
+    assertNotNull:            assertNotNull,
+    assertUndefined:          assertUndefined,
+    assertNotUndefined:       assertNotUndefined,
+    assertNullOrUndefined:    assertNullOrUndefined,
+    assertNotNullOrUndefined: assertNotNullOrUndefined,
+    assertMatch:              assertMatch,
+    assertNoMatch:            assertNoMatch,
+    assertHidden:             assertHidden,
+    assertInstanceOf:         assertInstanceOf,
+    assertNotInstanceOf:      assertNotInstanceOf,
+    assertRespondsTo:         assertRespondsTo,
+    assertRaise:              assertRaise,
+    assertNothingRaised:      assertNothingRaised,
+    assertVisible:            assertVisible,
+    assertNotVisible:         assertNotVisible,
+    assertElementsMatch:      assertElementsMatch,
+    assertElementMatches:     assertElementMatches
+  }
+})();
 
 Test.Unit.Testcase = Class.create(Test.Unit.Assertions, {
   initialize: function(name, test, setup, teardown) {
@@ -504,7 +557,7 @@ Test.Unit.Testcase = Class.create(Test.Unit.Assertions, {
         this.isWaiting = false;
         this.test();
       } finally {
-        if (!this.isWaiting) {
+        if(!this.isWaiting) {
           this.teardown();
         }
       }
@@ -542,7 +595,7 @@ Test.Unit.Testcase = Class.create(Test.Unit.Assertions, {
   error: function(error, test) {
     this.errors++;
     this.actions['retry with throw'] = function() { test.run(true) };
-    this.messages.push(error.name + ": "+ error.message + "(" + Test.Unit.inspect(error) + ")");
+    this.messages.push(error.name + ": "+ error.message + ", error=(" + Test.Unit.inspect(error) + ")");
   },
   
   status: function() {
