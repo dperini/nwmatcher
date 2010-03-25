@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.2beta
  * Created: 20070722
- * Release: 20100306
+ * Release: 20100322
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -882,33 +882,35 @@
         // *** Adjacent sibling combinator
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
+          k++; 
           source = NATIVE_TRAVERSAL_API ?
-            'if(e&&(e=e.previousElementSibling)){' + source + '}' :
-            'while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}';
+            'var N' + k + '=e;if(e&&(e=e.previousElementSibling)){' + source + '}e=N' + k + ';' :
+            'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}e=N' + k + ';';
         }
 
         // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
           k++;
-          // previousSibling particularly slow on Gecko based browsers prior to FF3.1
           source = NATIVE_TRAVERSAL_API ?
             ('var N' + k + '=e;e=e.parentNode.firstElementChild;' +
-            'while(e&&e!=N' + k +'){' + source + 'e=e.nextElementSibling;}') :
+            'while(e&&e!=N' + k + '){' + source + 'e=e.nextElementSibling;}e=N' + k + ';') :
             ('var N' + k + '=e;e=e.parentNode.firstChild;' +
-            'while(e&&e!=N' + k +'){if(e.nodeName>"@"){' + source + '}e=e.nextSibling;}');
+            'while(e&&e!=N' + k + '){if(e.nodeName>"@"){' + source + '}e=e.nextSibling;}e=N' + k + ';');
         }
 
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'if(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}';
+          k++;
+          source = 'var N' + k + '=e;if(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
         }
 
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}';
+          k++;
+          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
         }
 
         // *** Structural pseudo-classes
