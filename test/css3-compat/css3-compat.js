@@ -11,20 +11,20 @@ var CDN = 'http://ajax.googleapis.com/ajax/libs/',
 //  * CDN hosted frameworks
 //  * other selector engines
 engines = {
-   'querySelectorAll': [ 'document.querySelectorAll',  '' ]
-  ,'nwmatcher':        [ 'NW.Dom.select',              '../../src/nwmatcher.js' ]
-//  ,'base2':            [ 'base2.dom.querySelectorAll', 'lib/base2+dom.js' ]
-//  ,'dojo':             [ 'dojo.query',                 CDN + 'dojo/1.4.1/dojo/dojo.xd.js' ]
-//  ,'ext':              [ 'Ext.DomQuery.select',        CDN + 'ext-core/3.1.0/ext-core.js' ]
-//  ,'jquery':           [ '$',                          CDN + 'jquery/1.4.2/jquery.min.js' ]
-//  ,'mootools':         [ '$$',                         CDN + 'mootools/1.2.4/mootools.js' ]
-//  ,'prototype':        [ '$$',                         CDN + 'prototype/1.6.1.0/prototype.js' ]
-//  ,'domquery':         [ 'Ext.DomQuery.select',        'lib/DomQuery.js' ]
-//  ,'mylib':            [ 'API.getEBCS',                'lib/mylib-qsa-min.js' ]
-//  ,'yass':             [ '_',                          'lib/yass.0.3.9.js' ]
-//  ,'slick':            [ 'Slick',                      'lib/slick.js' ]
-//  ,'yui':              [ 'Y.Selector.query',           'lib/yui3.js' ]
-//  ,'sly':              [ 'Sly.search',                 'lib/sly.js' ]
+  'querySelectorAll': [ 'document.querySelectorAll(s)',    '' ],
+  'nwmatcher':        [ 'NW.Dom.select(s)',                '../../src/nwmatcher.js' ],
+//  'base2':            [ 'base2.dom.querySelectorAll(c,s)', 'lib/base2+dom.js' ],
+//  'dojo':             [ 'dojo.query(s)',                   CDN + 'dojo/1.4.1/dojo/dojo.xd.js' ],
+//  'ext':              [ 'Ext.DomQuery.select(s)',          CDN + 'ext-core/3.1.0/ext-core.js' ],
+//  'jquery':           [ '$(s)',                            CDN + 'jquery/1.4.2/jquery.min.js' ],
+//  'mootools':         [ '$$(s)',                           CDN + 'mootools/1.2.4/mootools.js' ],
+//  'prototype':        [ '$$(s)',                           CDN + 'prototype/1.6.1.0/prototype.js' ],
+//  'mylib':            [ 'API.getEBCS(s)',                  'lib/mylib-qsa-min.js' ],
+//  'yass':             [ '_(s)',                            'lib/yass.0.3.9.js' ],
+//  'slick':            [ 'Slick(c,s)',                      'lib/slick.js' ],
+//  'yui':              [ 'Y.Selector.query(s)',             'lib/yui3.js' ],
+//  'sly':              [ 'Sly.search(s)',                   'lib/sly.js' ],
+  'querySelectorAll': [ 'document.querySelectorAll(s)',    '' ]
 };
 
 (function(global, engines) {
@@ -142,18 +142,7 @@ engines = {
       // some engine will throw errors and stop processing
       // so we added a try/catch block around the method call
       // exceptions needing different order of parameters first
-      switch(engine) {
-        case 'base2':
-          try { elements = base2.dom.Document.querySelectorAll(document, selectorText); } catch(e) { }
-          break;
-        case 'slick':
-          try { elements = Slick(document, selectorText); } catch(e) { }
-          break;
-        default:
-          // engines having a signature of (selector, context, ...)
-          try { elements = Function('s', 'return ' + method + '(s)')(selectorText); } catch(e) { }
-          break;
-      }
+      try { elements = Function('c,s', 'return ' + method)(doc, selectorText); } catch(e) { }
 
       if (elements && elements.length) {
         for (j = 0; elements.length > j; j++) {
@@ -191,6 +180,12 @@ engines = {
     function() {
 
       var i, items, length, link, node, rules, style;
+
+      // for nwmatcher, disable complex selectors nested in
+      // :not() pseudo-classes to comply with specifications
+      if (engine == 'nwmatcher') {
+        NW.Dom.configure({ 'SIMPLENOT': true });
+      }
 
       if (engine == 'querySelectorAll' && typeof doc.querySelectorAll == 'undefined') {
         alert('This browser do not support Query Selectors API !!!\n' +
