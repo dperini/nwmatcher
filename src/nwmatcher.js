@@ -688,19 +688,33 @@
 
   /*------------------------------- DEBUGGING --------------------------------*/
 
-  // error control
-  setERR =
-    function(enable) {
-      VERBOSE = enable ? true : false;
+  // compile selectors to ad-hoc functions resolvers
+  // @selector string
+  // @mode boolean
+  // false = select resolvers
+  // true = match resolvers
+  compile =
+    function(selector, mode) {
+      return compileGroup(selector, '', mode || false);
     },
 
-  // enable/disable notifications
-  VERBOSE = false,
+  configure =
+    function(options) {
+      for (var i in options) {
+        if (i == 'VERBOSITY') {
+          VERBOSITY = !!options[i];
+        } else if (i == 'SIMPLENOT') {
+          SIMPLENOT = !!options[i];
+        } else if (i == 'USE_QSAPI') {
+          USE_QSAPI = !!options[i] && NATIVE_QSAPI;
+        }
+      }
+    },
 
   // a way to control user notification
   emit =
     function(message) {
-      if (VERBOSE) {
+      if (VERBOSITY) {
         var console = global.console;
         if (console && console.log) {
           console.log(message);
@@ -715,26 +729,15 @@
       }
     },
 
-  // compile selectors to ad-hoc functions resolvers
-  // @selector string
-  // @mode boolean
-  // false = select resolvers
-  // true = match resolvers
-  compile =
-    function(selector, mode) {
-      return compileGroup(selector, '', mode || false);
-    },
+  // by default enable complex selectors nested
+  // in :not() pseudo-classes, contrary to specs
+  SIMPLENOT = false,
 
-  // use internal or QSA engine
-  // @enable boolean
-  // false = disable QSA
-  // true = enable QSA
-  setQSA =
-    function(enable) {
-      USE_QSA = enable && NATIVE_QSAPI ? true : false;
-    },
+  // enable engine errors/warnings notifications
+  VERBOSITY = false,
 
-  USE_QSA = NATIVE_QSAPI ? true : false,
+  // controls selecting internal or QSAPI engines
+  USE_QSAPI = NATIVE_QSAPI,
 
   /*---------------------------- COMPILER METHODS ----------------------------*/
 
@@ -882,7 +885,7 @@
         // *** Adjacent sibling combinator
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
-          k++; 
+          k++;
           source = NATIVE_TRAVERSAL_API ?
             'var N' + k + '=e;if(e&&(e=e.previousElementSibling)){' + source + '}e=N' + k + ';' :
             'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}e=N' + k + ';';
@@ -1002,10 +1005,18 @@
           switch (match[1]) {
             // CSS3 negation pseudo-class
             case 'not':
-              // compile nested selectors, DO NOT pass a callback parameter
-              //if (!/\[/.test(match[3]) || match[3].indexOf('[') === 0) {
-              source = 'N=' + compileGroup(match[3], '', false) + '(e,s,r,d,h,g);if(!N){' + source + '}';
-              //} else { source = 'if(false){' + source + '}'; }
+              // compile nested selectors, DO NOT pass the callback parameter
+              // SIMPLENOT allow disabling complex selectors nested
+              // in :not() pseudo-classes, breaks some test units
+              expr = match[3].replace(reTrimSpaces, '');
+              if (SIMPLENOT && (expr.indexOf(':') > 0 || expr.indexOf('[') > 0)) source = '';
+              else {
+                if ('compatMode' in doc) {
+                  source = 'N=' + compileGroup(expr, '', false) + '(e,s,r,d,h,g);if(!N){' + source + '}';
+                } else {
+                  source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '"),r,d,h,g){' + source +'}';
+                }
+              }
               break;
 
             // CSS3 UI element states
@@ -1236,7 +1247,7 @@
         return native_api(selector, from || doc, callback);
       }
 
-      if (USE_QSA && !RE_BUGGY_QSAPI.test(selector) &&
+      if (USE_QSAPI && !RE_BUGGY_QSAPI.test(selector) &&
         (!from || QSA_NODE_TYPES[from.nodeType])) {
 
         try {
@@ -1504,11 +1515,8 @@
     // compile selector into ad-hoc javascript resolver
     compile: compile,
 
-    // enable/disable error notification console logging
-    setERR: setERR,
-
-    // select internal engine or native querySelectorAll
-    setQSA: setQSA,
+    // engine configuration helper
+    configure: configure,
 
     // add or overwrite user defined operators
     registerOperator:
