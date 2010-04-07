@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2007-2009 Diego Perini
+ * Copyright (C) 2007-2010 Diego Perini
  * All rights reserved.
  *
  * nwmatcher.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.2.2beta
+ * Version: 1.2.2
  * Created: 20070722
- * Release: 20100322
+ * Release: 20100407
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -17,7 +17,7 @@
 
 (function(global) {
 
-  var version = 'nwmatcher-1.2.2beta',
+  var version = 'nwmatcher-1.2.2',
 
   // processing context
   doc = global.document,
@@ -745,15 +745,13 @@
   // in multiple places to build compiled functions
   ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
 
-  // conditionals optimizers used internally by compiler
-
   // checks if nodeName comparisons need to be uppercased
   TO_UPPER_CASE = typeof doc.createElementNS == 'function' ?
     '.toUpperCase()' : '',
 
   // use the textContent or innerText property to check CSS3 :contains
-  // Safari 2 has a bug with innerText and hidden content, using an
-  // internal replace on the innerHTML property avoids trashing it
+  // Safari 2 have a bug with innerText and hidden content, so we need
+  // to use an internal stripTags and the innerHTML property
   CONTAINS_TEXT =
     'textContent' in root ?
     'e.textContent' :
@@ -769,7 +767,7 @@
 
   // compile a comma separated group of selector
   // @mode boolean true for select, false for match
-  // @return function (compiled)
+  // return a compiled function
   compileGroup =
     function(selector, source, mode) {
       var i = -1, seen = { }, parts, token;
