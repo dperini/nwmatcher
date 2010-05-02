@@ -5,9 +5,9 @@
  * nwmatcher.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.2.2
+ * Version: 1.2.3beta
  * Created: 20070722
- * Release: 20100407
+ * Release: 20100501
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -844,7 +844,7 @@
           // and notes at the bottom; explicitly non-normative in this specification.
           source = 'if((n=' + (isXMLDocument ?
             's.getAttribute(e,"class")' : 'e.className') +
-            ')&&(" "+' + (isQuirksMode ? 'n.toLowerCase()' : 'n') +
+            ')&&n.length&&(" "+' + (isQuirksMode ? 'n.toLowerCase()' : 'n') +
             '.replace(' + reWhiteSpace +'," ")+" ").indexOf(" ' +
             (isQuirksMode ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
             '){' + source + '}';
