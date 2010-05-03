@@ -246,12 +246,13 @@
     (function() {
       var pattern = [ ], div = doc.createElement('div'), input;
 
-      // WebKit is correct with className case insensitivity (when no DOCTYPE)
-      // obsolete bug https://bugs.webkit.org/show_bug.cgi?id=19047
-      // so the bug is in all other browsers code now :-)
+      // In quirks mode css class names are case insensitive.
+      // In standards mode they are case sensitive. See docs:
+      // https://developer.mozilla.org/en/Mozilla_Quirks_Mode_Behavior
       // http://www.whatwg.org/specs/web-apps/current-work/#selectors
 
-      // Safari 3.2 QSA doesn't work with mixedcase on quirksmode
+      // Safari 3.2 QSA doesn't work with mixedcase in quirksmode
+      // https://bugs.webkit.org/show_bug.cgi?id=19047
       // must test the attribute selector '[class~=xxx]'
       // before '.xXx' or the bug may not present itself
       div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
@@ -264,9 +265,17 @@
       div.removeChild(div.firstChild);
       div.removeChild(div.firstChild);
 
+      // ^= $= *= operators bugs whith empty values (Opera 10 / IE8)
+      div.appendChild(doc.createElement('p')).setAttribute('class', '');
+      try {
+        div.querySelectorAll('[class^=""]').length === 1 &&
+          pattern.push('\\[\\s*.*(?:=\\^=|\\$=|\\*=).*]');
+      } catch(e) { }
+      div.removeChild(div.firstChild);
+
       // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
       // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
-      // IE8 throws error with these pseudos
+      // IE8 QSA has problems too and throws error with these dynamic pseudos
       (input = doc.createElement('input')).setAttribute('type', 'hidden');
       div.appendChild(input);
       try {
@@ -275,29 +284,18 @@
       } catch(e) { }
       div.removeChild(div.firstChild);
 
-      // :checked bugs whith checkbox fields (Opera 10beta3 bug)
-      (input = doc.createElement('input')).setAttribute('type', 'hidden');
-      div.appendChild(input);
-      input.setAttribute('checked', 'checked');
-      try {
-        div.querySelectorAll(':checked').length !== 1 &&
-          pattern.push(':checked');
-      } catch(e) { }
-      div.removeChild(div.firstChild);
-
       // :link bugs with hyperlinks matching (Firefox/Safari)
       div.appendChild(doc.createElement('a')).setAttribute('href', 'x');
       div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
       div.removeChild(div.firstChild);
 
+      // Chrome and Safari 4.0 fail :target resolution
+      // :selected and :contains are for legacy support
       pattern.push(':target', ':selected', ':contains');
 
       // avoid following selectors for IE QSA
       if (BUGGY_HAS_ATTRIBUTE) {
         pattern.push(
-          // IE fails reading empty values for ^= $= operators
-          '\\[\\s*.*\\^\\=',
-          '\\[\\s*.*\\$\\=',
           // IE fails reading original values for input/textarea
           '\\[\\s*value',
           // IE fails reading original boolean value for controls
