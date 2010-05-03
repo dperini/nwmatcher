@@ -509,11 +509,25 @@
       return element;
     },
 
+  // elements by tag (raw)
+  byTagRaw = function(tag, node) {
+    var elements = [], i = 0, anyTag = tag === "*", next = node.firstChild;
+    while ((node = next)) {
+      if (node.nodeName > '@') elements[i++] = node;
+      next = node.firstChild || node.nextSibling;
+      while (!next && (node = node.parentNode)) next = node.nextSibling;
+    }
+    return elements;
+  },
+
   // elements by tag
   // @return array
   byTag = !BUGGY_GEBTN && NATIVE_SLICE_PROTO ?
     function(tag, from) {
-      return slice.call((from || doc).getElementsByTagName(tag), 0);
+      from || (from = doc);
+      return slice.call(from.getElementsByTagName ?
+        from.getElementsByTagName(tag) :
+        byTagRaw(tag, from), 0);
     } :
     function(tag, from) {
       var i = -1, data = [ ],
