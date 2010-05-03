@@ -17,7 +17,7 @@
 
 (function(global) {
 
-  var version = 'nwmatcher-1.2.2',
+  var version = 'nwmatcher-1.2.3beta', 
 
   // processing context
   doc = global.document,
@@ -137,6 +137,7 @@
   // frameworks extend these to elements, but it seems
   // this does not work for XML namespaced attributes,
   // used to check both getAttribute/hasAttribute in IE
+  NATIVE_GET_ATTRIBUTE = isNative(root, 'getAttribute'),
   NATIVE_HAS_ATTRIBUTE = isNative(root, 'hasAttribute'),
 
   // check if slice() can convert nodelist to array
@@ -209,6 +210,15 @@
       div.removeChild(div.firstChild);
       div = null;
       return isBuggy;
+    })() :
+    true,
+
+  // detect IE bug with dynamic attributes
+  BUGGY_GET_ATTRIBUTE = NATIVE_GET_ATTRIBUTE ?
+    (function() {
+      var isBuggy, input;
+      (input = doc.createElement('input')).setAttribute('value', '5');
+      return isBuggy = input.defaultValue != 5;
     })() :
     true,
 
@@ -639,7 +649,7 @@
 
   // attribute value
   // @return string
-  getAttribute = NATIVE_HAS_ATTRIBUTE ?
+  getAttribute = !BUGGY_GET_ATTRIBUTE ?
     function(node, attribute) {
       return node.getAttribute(attribute) || '';
     } :
@@ -648,7 +658,7 @@
       if (typeof node.form !== 'undefined') {
         switch(attribute) {
           case 'value':
-            if (node.defaultValue) return node.defaultValue || '';
+            if ('defaultValue' in node) return node.defaultValue || '';
             break;
           case 'checked':
             return node.defaultChecked && attribute;
