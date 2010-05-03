@@ -49,6 +49,9 @@
   // discard invalid chars found in passed selector
   reValidator = /^\s*(\*|[.:#](?:[a-zA-Z]|[^\x00-\xa0])+|[>+~a-zA-Z]|[^\x00-\xa0]|\[.*\]|\{.*\})/,
 
+  // only allow simple expressions inside :not() pseudo
+  reSimpleNot = /^(\s*([.:#]?([a-zA-Z]+([-\w]*|\\.)*)(\(\d*n?\d*\))?)|[>+~]|\[.*\]|\*)$/,
+
   // only five chars can occur in whitespace, they are:
   // \x20 \t \n \r \f, checks now uniformed in the code
   // http://www.w3.org/TR/css3-selectors/#selector-syntax
@@ -727,6 +730,10 @@
           VERBOSITY = !!options[i];
         } else if (i == 'SIMPLENOT') {
           SIMPLENOT = !!options[i];
+          HTMLResolvers = { };
+          XMLResolvers = { };
+          HTMLMatchers = { };
+          XMLMatchers = { };
         } else if (i == 'USE_QSAPI') {
           USE_QSAPI = !!options[i] && NATIVE_QSAPI;
         }
@@ -880,6 +887,11 @@
           expr = match[1].split(':');
           expr = expr.length == 2 ? expr[1] : expr[0] + '';
 
+          if (match[2] && !Operators[match[2]]) {
+            emit('DOMException: unsupported operator in attribute selectors "' + selector + '"');
+            return '';
+          }
+
           // replace Operators parameter if needed
           if (match[2] && match[4] && (type = Operators[match[2]])) {
             // case treatment depends on document
@@ -1029,8 +1041,12 @@
               // SIMPLENOT allow disabling complex selectors nested
               // in :not() pseudo-classes, breaks some test units
               expr = match[3].replace(reTrimSpaces, '');
-              if (SIMPLENOT && (expr.indexOf(':') > 0 || expr.indexOf('[') > 0)) source = '';
-              else {
+
+              if (SIMPLENOT && !reSimpleNot.test(expr)) {
+                // see above, log error but continue execution
+                emit('DOMException: negated pseudo-class only accept simple selectors "' + selector + '"');
+                return '';
+              } else {
                 if ('compatMode' in doc) {
                   source = 'N=' + compileGroup(expr, '', false) + '(e,s,r,d,h,g);if(!N){' + source + '}';
                 } else {
