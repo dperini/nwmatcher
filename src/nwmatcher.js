@@ -1159,7 +1159,7 @@
   match =
     function(element, selector, from, callback) {
 
-      var resolver, parts, hasChanged;
+      var changed, parts, resolver;
 
       // make sure an element node was passed
       if (!(element && element.nodeType == 1 && element.nodeName > '@')) {
@@ -1167,7 +1167,9 @@
         return false;
       }
 
-      if (from && !contains(from, element)) return false;
+      if (from && !contains(from, element) || !selector) return false;
+
+      selector = selector.replace(reTrimSpaces, '');
 
       // ensure context is set
       from || (from = doc);
@@ -1182,12 +1184,11 @@
         isXMLDocument = isXML(doc);
       }
 
-      if (hasChanged = lastMatcher != selector) {
+      if (changed = lastMatcher != selector) {
         // process valid selector strings
         if (selector && reValidator.test(selector)) {
           // save passed selector
           lastMatcher = selector;
-          selector = selector.replace(reTrimSpaces, '');
           isSingleMatch = (parts = selector.match(reSplitGroup)).length < 2;
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
@@ -1195,36 +1196,17 @@
         }
       }
 
-      // compile XML resolver if necessary
+      // compile matcher resolver if necessary
       if (isXMLDocument && !(resolver = XMLMatchers[selector])) {
-
-        if (isSingleMatch) {
-          resolver =
-            new Function('e,s,r,d,h,g,f',
-              'var N,n,x=0,k=e;' +
-              compileSelector(selector, 'f&&f(k);return true;') +
-              'return false;');
-        } else {
-          resolver = compileGroup(selector, '', false);
-        }
-        XMLMatchers[selector] = resolver;
-
-      }
-
-      // compile HTML resolver if necessary
-      else if (!(resolver = HTMLMatchers[selector])) {
-
-        if (isSingleMatch) {
-          resolver =
-            new Function('e,s,r,d,h,g,f',
-              'var N,n,x=0,k=e;' +
-              compileSelector(selector, 'f&&f(k);return true;') +
-              'return false;');
-        } else {
-          resolver = compileGroup(selector, '', false);
-        }
-        HTMLMatchers[selector] = resolver;
-
+        resolver = XMLMatchers[selector] = isSingleMatch ?
+          new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
+            compileSelector(selector, 'f&&f(k);return true;') +
+            'return false;') : compileGroup(selector, '', false);
+      } else if (!(resolver = HTMLMatchers[selector])) {
+        resolver = HTMLMatchers[selector] = isSingleMatch ?
+          new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
+            compileSelector(selector, 'f&&f(k);return true;') +
+            'return false;') : compileGroup(selector, '', false);
       }
 
       // reinitialize indexes
@@ -1234,45 +1216,53 @@
       return resolver(element, snap, [ ], doc, root, from || doc, callback);
     },
 
-  native_api =
-    function(selector, from, callback) {
-      var elements;
-      switch (selector.charAt(0)) {
-        case '#':
-          var element;
-          if ((element = byId(selector.slice(1), from))) {
-            callback && callback(element);
-            return [ element ];
-          }
-          return [ ];
-        case '.':
-          elements = byClass(selector.slice(1), from);
-          break;
-        default:
-          elements = byTag(selector, from);
-          break;
-      }
-      return callback ?
-        concatCall([ ], elements, callback) :
-        elements;
-    },
-
   // select elements matching selector
   // using new Query Selector API
+  // or cross-browser client API
   // @return array
-  select_qsa =
+  select =
     function(selector, from, callback) {
 
+      var i, changed, element, elements, parts, resolver, token;
+
+      if (arguments.length === 0) {
+        throw { code: DOMException.SYNTAX_ERR, message: 'Missing required selector parameters' };
+      } else if (selector === '') {
+        throw { code: DOMException.SYNTAX_ERR, message: 'Empty selector string' };
+      }
+
+      if (typeof selector != 'string') return [ ];
+
+      selector = selector.replace(reTrimSpaces, '');
+
+      // ensure context is set
+      from || (from = doc);
+
       if (RE_SIMPLE_SELECTOR_QSA.test(selector)) {
-        return native_api(selector, from || doc, callback);
+        switch (selector.charAt(0)) {
+          case '#':
+            if ((element = byId(selector.slice(1), from))) {
+              callback && callback(element);
+              return [ element ];
+            }
+            return [ ];
+          case '.':
+            elements = byClass(selector.slice(1), from);
+            break;
+          default:
+            elements = byTag(selector, from);
+            break;
+        }
+        return callback ?
+          concatCall([ ], elements, callback) : elements;
       }
 
       if (USE_QSAPI && !RE_BUGGY_QSAPI.test(selector) &&
         (!from || QSA_NODE_TYPES[from.nodeType])) {
 
         try {
-          var elements = (from || doc).querySelectorAll(selector);
-        } catch(e) { }
+          elements = (from || doc).querySelectorAll(selector);
+        } catch(e) { if (selector == '') throw e; }
 
         if (elements) {
           switch (elements.length) {
@@ -1292,23 +1282,6 @@
         }
       }
 
-      // fall back to NWMatcher select
-      return client_api(selector, from, callback);
-    },
-
-  // select elements matching selector
-  // using cross-browser client API
-  // @return array
-  client_api =
-    function(selector, from, callback) {
-
-      if (RE_SIMPLE_SELECTOR.test(selector)) {
-        return native_api(selector, from || doc, callback);
-      }
-
-      var i, element, elements, parts, token,
-        resolver, hasChanged;
-
       // add left context if missing
       if (reLeftContext.test(selector)) {
         selector = !from ? '*' + selector :
@@ -1321,9 +1294,6 @@
         selector = selector + '*';
       }
 
-      // ensure context is set
-      from || (from = doc);
-
       // extract context if changed
       if (lastSelectContext != from) {
         // save passed context
@@ -1334,12 +1304,11 @@
         isXMLDocument = isXML(doc);
       }
 
-      if (hasChanged = lastSelector != selector) {
+      if (changed = lastSelector != selector) {
         // process valid selector strings
         if (reValidator.test(selector)) {
           // save passed selector
           lastSelector = selector;
-          selector = selector.replace(reTrimSpaces, '');
           isSingleSelect = (parts = selector.match(reSplitGroup)).length < 2;
         } else {
           emit('DOMException: "' + selector + '" is not a valid CSS selector.');
@@ -1350,9 +1319,9 @@
       // pre-filtering pass allow to scale proportionally with big DOM trees
 
       // commas separators are treated sequentially to maintain order
-      if (isSingleSelect) {
+      if (isSingleSelect && from.nodeType != 11) {
 
-        if (hasChanged) {
+        if (changed) {
           // get right most selector token
           parts = selector.match(reSplitToken);
           token = parts[parts.length - 1];
@@ -1407,35 +1376,19 @@
       }
       // end of prefiltering pass
 
+      // compile selector resolver if necessary
       if (isXMLDocument && !(resolver = XMLResolvers[selector])) {
-
-        if (isSingleSelect) {
-          resolver =
-            new Function('c,s,r,d,h,g,f',
-              'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
-              compileSelector(selector, ACCEPT_NODE) +
-              '}return r;');
-        } else {
-          resolver = compileGroup(selector, '', true);
-        }
-        XMLResolvers[selector] = resolver;
-
-      }
-
-      // compile the selector if necessary
-      else if (!(resolver = HTMLResolvers[selector])) {
-
-        if (isSingleSelect) {
-          resolver =
-            new Function('c,s,r,d,h,g,f',
-              'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
-              compileSelector(selector, ACCEPT_NODE) +
-              '}return r;');
-        } else {
-          resolver = compileGroup(selector, '', true);
-        }
-        HTMLResolvers[selector] = resolver;
-
+        resolver = XMLResolvers[selector] = isSingleSelect ?
+          new Function('c,s,r,d,h,g,f',
+            'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
+            compileSelector(selector, ACCEPT_NODE) + '}return r;') :
+          compileGroup(selector, '', true);
+      } else if (!(resolver = HTMLResolvers[selector])) {
+        resolver = HTMLResolvers[selector] = isSingleSelect ?
+          new Function('c,s,r,d,h,g,f',
+            'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
+            compileSelector(selector, ACCEPT_NODE) + '}return r;') :
+          compileGroup(selector, '', true);
       }
 
       // reinitialize indexes
@@ -1444,13 +1397,6 @@
 
       return resolver(elements, snap, [ ], doc, root, from, callback);
     },
-
-  // use the new native Selector API if available,
-  // if missing, use the cross-browser client api
-  // @return array
-  select = NATIVE_QSAPI ?
-    select_qsa :
-    client_api,
 
   /*-------------------------------- STORAGE ---------------------------------*/
 
@@ -1466,12 +1412,12 @@
   indexesByNodeName = { },
 
   // compiled select functions returning collections
-  // keep each resolver type in different storages
-  XMLResolvers = { },
   HTMLResolvers = { },
+  XMLResolvers = { },
 
   // compiled match functions returning booleans
   HTMLMatchers = { },
+  XMLMatchers = { },
 
   // used to pass methods to compiled functions
   snap = {
