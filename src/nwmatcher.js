@@ -47,7 +47,7 @@
   skipgroup = '(?:\\[.*\\]|\\(.*\\))',
 
   // discard invalid chars found in passed selector
-  reValidator = /^\s*(\*|[.:#](?:[a-zA-Z]|[^\x00-\xa0])+|[>+~a-zA-Z]|[^\x00-\xa0]|\[.*\]|\{.*\})/,
+  reValidator = /^\s*(\*|[.:#](?:[a-zA-Z]|[^\x00-\xa0])+|[>+~a-zA-Z]|[^\x00-\xa0]|\(.+\)|\[.+\]|\{.+\})/, 
 
   // only allow simple expressions inside :not() pseudo
   reSimpleNot = /^(\s*([.:#]?([a-zA-Z]+([-\w]*|\\.)*)(\(\d*n?\d*\))?)|[>+~]|\[.*\]|\*)$/,
