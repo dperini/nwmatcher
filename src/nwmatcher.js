@@ -17,7 +17,7 @@
 
 (function(global) {
 
-  var version = 'nwmatcher-1.2.3beta', 
+  var version = 'nwmatcher-1.2.3beta',
 
   // processing context
   doc = global.document,
@@ -272,7 +272,7 @@
       div.appendChild(doc.createElement('p')).setAttribute('class', '');
       try {
         div.querySelectorAll('[class^=""]').length === 1 &&
-          pattern.push('\\[\\s*.*(?:=\\^=|\\$=|\\*=).*]');
+          pattern.push('\\[\\s*.*(?=\\^=|\\$=|\\*=).*]');
       } catch(e) { }
       div.removeChild(div.firstChild);
 
@@ -318,11 +318,10 @@
     true,
 
   // matches simple id, tag & class selectors
-  RE_SIMPLE_SELECTOR = new RegExp('^(?:\\*|[.#]?' + encoding + ')$'),
-  RE_SIMPLE_SELECTOR_QSA = new RegExp(
+  RE_SIMPLE_SELECTOR = new RegExp(
     !(BUGGY_GEBTN && BUGGY_GEBCN) ?
-      '^(?:\\*|[.#]?' + encoding + ')$' :
-      '^#?' + encoding + '$'),
+      '^(?:\\*|[.#]?[a-zA-Z]+' + encoding + ')$' :
+      '^#?[a-zA-Z]+' + encoding + '$'),
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
@@ -1254,7 +1253,7 @@
       // ensure context is set
       from || (from = doc);
 
-      if (RE_SIMPLE_SELECTOR_QSA.test(selector)) {
+      if (RE_SIMPLE_SELECTOR.test(selector)) {
         switch (selector.charAt(0)) {
           case '#':
             if ((element = byId(selector.slice(1), from))) {
