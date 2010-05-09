@@ -757,9 +757,9 @@
       }
     },
 
-  // by default enable complex selectors nested
-  // in :not() pseudo-classes, contrary to specs
-  SIMPLENOT = false,
+  // by default disable complex selectors nested in
+  // :not() pseudo-classes, as for specifications
+  SIMPLENOT = true,
 
   // enable engine errors/warnings notifications
   VERBOSITY = false,
