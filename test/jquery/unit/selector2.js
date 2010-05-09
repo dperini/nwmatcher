@@ -1,3 +1,5 @@
+NW.Dom.configure({SIMPLENOT:false,VERBOSITY:false});
+
 module("selector");
 
 // convert HTML Fragment (string) into a DOM Fragment (dom nodes)
@@ -44,7 +46,7 @@ test("element", function() {
 	t( "Checking sort order", "h2:first, h1:first", ["header", "banner"] );
 	t( "Checking sort order", "p, p a", ["firstp", "simon1", "ap", "google", "groups", "anchor1", "mark", "sndp", "en", "yahoo", "sap", "anchor2", "simon", "first"] );
 });
-
+/*
 if ( location.protocol != "file:" ) {
 	test("XML Document Selectors", function() {
 		expect(7);
@@ -61,7 +63,7 @@ if ( location.protocol != "file:" ) {
 		});
 	});
 }
-
+*/
 test("broken", function() {
 	expect(6);
 	function broken(name, selector) {

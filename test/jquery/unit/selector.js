@@ -1,3 +1,5 @@
+NW.Dom.configure({SIMPLENOT:false,VERBOSITY:false});
+
 module("selector");
 
 // convert HTML Fragment (string) into a DOM Fragment (dom nodes)
