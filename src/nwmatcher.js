@@ -47,7 +47,7 @@
   skipgroup = '(?:\\[.*\\]|\\(.*\\))',
 
   // discard invalid chars found in passed selector
-  reValidator = /^\s*(\*|[.:#](?:[a-zA-Z]|[^\x00-\xa0])+|[>+~a-zA-Z]|[^\x00-\xa0]|\(.+\)|\[.+\]|\{.+\})/, 
+  reValidator = /^\s*(\*|[.:#](?:[a-zA-Z]|[^\x00-\xa0])+|[>+~a-zA-Z]|[^\x00-\xa0]|\(.+\)|\[.+\]|\{.+\})/,
 
   // only allow simple expressions inside :not() pseudo
   reSimpleNot = /^(\s*([.:#]?([a-zA-Z]+([-\w]*|\\.)*)(\(\d*n?\d*\))?)|[>+~]|\[.*\]|\*)$/,
@@ -739,7 +739,7 @@
       }
     },
 
-  // a way to control user notification
+  // control user notifications
   emit =
     function(message) {
       if (VERBOSITY) {
@@ -761,10 +761,10 @@
   // :not() pseudo-classes, as for specifications
   SIMPLENOT = true,
 
-  // enable engine errors/warnings notifications
+  // controls the engine error/warning notifications
   VERBOSITY = false,
 
-  // controls selecting internal or QSAPI engines
+  // controls enabling the Query Selector API branch
   USE_QSAPI = NATIVE_QSAPI,
 
   /*---------------------------- COMPILER METHODS ----------------------------*/
