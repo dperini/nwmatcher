@@ -87,6 +87,7 @@
     <script type="text/javascript" charset="utf-8">
 
       /* Plug NW.Matcher on Prototype methods */
+      NW.Dom.configure({SIMPLENOT:false,VERBOSITY:false,USE_QSAPI:true});
 
       function $$() {
         var context, args = $A(arguments);
@@ -201,7 +202,7 @@
         },
 
         testSelectorWithTagNameAndNegatedAttributeValue: function() {
-          this.assertEnumEqual([], $$('a[href!="#"]'));
+          this.assertEnumEqual([], $$('a:not([href="#"])'));
         },
 
         testSelectorWithBracketAttributeValue: function() {
@@ -218,7 +219,7 @@
         testSelectorWithMultipleConditions: function() {
           this.assertEnumEqual([$('link_3')], $$('a[class~=external][href="#"]'),
            'a[class~=external][href="#"]');
-          this.assertEnumEqual([], $$('a[class~=external][href!="#"]'),
+          this.assertEnumEqual([], $$('a[class~=external]:not([href="#"])'),
            'a[class~=external][href!="#"]');
         },
 
@@ -428,7 +429,9 @@
           this.assertEnumEqual($$('ul > li:nth-child(odd)'), $$('ul > li:nth-child(2n+1)'));
           this.assertEnumEqual($$('ul > li:first-child'), $$('ul > li:nth-child(1)'));
           this.assertEnumEqual($$('ul > li:last-child'), $$('ul > li:nth-last-child(1)'));
-          this.assertEnumEqual($$('ul > li:nth-child(n-999)'), $$('ul > li'));
+          // Opera 10 does not accept values > 128 as a parameter to :nth-child
+          // see Artificial Limits: http://operawiki.info/ArtificialLimits
+          this.assertEnumEqual($$('ul > li:nth-child(n-128)'), $$('ul > li'));
           this.assertEnumEqual($$('ul>li'), $$('ul > li'));
           this.assertEnumEqual($$('#p a:not(a[rel$="nofollow"])>em'), $$('#p a:not(a[rel$="nofollow"]) > em'))
         },
