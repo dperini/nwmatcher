@@ -743,6 +743,17 @@
   emit =
     function(message) {
       if (VERBOSITY) {
+        // DOMException.SYNTAX_ERR code 12
+        if (typeof window.DOMException !== 'undefined') {
+          var err = new Error();
+          err.message = message;
+          err.code = err.number = 12;
+          err.name = 'DOMException SYNTAX_ERR';
+          throw err;
+        } else {
+          throw new Error(12, 'DOMException: ' + message);
+        }
+      } else {
         var console = global.console;
         if (console && console.log) {
           console.log(message);
@@ -762,7 +773,7 @@
   SIMPLENOT = true,
 
   // controls the engine error/warning notifications
-  VERBOSITY = false,
+  VERBOSITY = true,
 
   // controls enabling the Query Selector API branch
   USE_QSAPI = NATIVE_QSAPI,
@@ -887,7 +898,7 @@
           expr = expr.length == 2 ? expr[1] : expr[0] + '';
 
           if (match[2] && !Operators[match[2]]) {
-            emit('DOMException: unsupported operator in attribute selectors "' + selector + '"');
+            emit('unsupported operator in attribute selectors "' + selector + '"');
             return '';
           }
 
@@ -1043,7 +1054,7 @@
 
               if (SIMPLENOT && !reSimpleNot.test(expr)) {
                 // see above, log error but continue execution
-                emit('DOMException: negated pseudo-class only accept simple selectors "' + selector + '"');
+                emit('negated pseudo-class only accept simple selectors "' + selector + '"');
                 return '';
               } else {
                 if ('compatMode' in doc) {
@@ -1147,13 +1158,13 @@
           if (!status) {
             // log error but continue execution, don't throw real exceptions
             // because blocking following processes maybe is not a good idea
-            emit('DOMException: unknown pseudo selector "' + selector + '"');
+            emit('unknown pseudo selector "' + selector + '"');
             return '';
           }
 
           if (!expr) {
             // see above, log error but continue execution
-            emit('DOMException: unknown token in selector "' + selector + '"');
+            emit('unknown token in selector "' + selector + '"');
             return '';
           }
 
@@ -1178,7 +1189,7 @@
 
       // make sure an element node was passed
       if (!(element && element.nodeType == 1 && element.nodeName > '@')) {
-        emit('DOMException: Passed element is not a DOM ELEMENT_NODE !');
+        emit('passed element is not a DOM ELEMENT_NODE !');
         return false;
       }
 
@@ -1206,7 +1217,7 @@
           lastMatcher = selector;
           isSingleMatch = (parts = selector.match(reSplitGroup)).length < 2;
         } else {
-          emit('DOMException: "' + selector + '" is not a valid CSS selector.');
+          emit('"' + selector + '" is not a valid CSS selector.');
           return false;
         }
       }
@@ -1241,12 +1252,15 @@
       var i, changed, element, elements, parts, resolver, token;
 
       if (arguments.length === 0) {
-        throw { code: DOMException.SYNTAX_ERR, message: 'Missing required selector parameters' };
+        emit('missing required selector parameters');
+        return [ ];
       } else if (selector === '') {
-        throw { code: DOMException.SYNTAX_ERR, message: 'Empty selector string' };
+        emit('empty selector string');
+        return [ ];
+      } else if (typeof selector != 'string') {
+        // QSA capable browsers do not throw
+        return [ ];
       }
-
-      if (typeof selector != 'string') return [ ];
 
       selector = selector.replace(reTrimSpaces, '');
 
@@ -1277,7 +1291,7 @@
 
         try {
           elements = (from || doc).querySelectorAll(selector);
-        } catch(e) { if (selector == '') throw e; }
+        } catch(e) { if (selector === '') throw e; }
 
         if (elements) {
           switch (elements.length) {
@@ -1326,7 +1340,7 @@
           lastSelector = selector;
           isSingleSelect = (parts = selector.match(reSplitGroup)).length < 2;
         } else {
-          emit('DOMException: "' + selector + '" is not a valid CSS selector.');
+          emit('"' + selector + '" is not a valid CSS selector.');
           return [ ];
         }
       }
