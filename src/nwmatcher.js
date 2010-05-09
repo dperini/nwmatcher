@@ -394,13 +394,11 @@
     '$=': "n.substr(n.length-'%m'.length)=='%m'"
   },
 
-  TAGS = "(?:^|[>+~\\x20\\t\\n\\r\\f])",
-
   // optimization expressions
   Optimize = {
-    ID: new RegExp("#" + encoding + "|" + skipgroup),
-    TAG: new RegExp(TAGS + encoding + "|" + skipgroup),
-    CLASS: new RegExp("\\." + encoding + "|" + skipgroup),
+    ID: new RegExp("^#" + encoding + "|" + skipgroup),
+    TAG: new RegExp("^" + encoding + "|" + skipgroup),
+    CLASS: new RegExp("^\\." + encoding + "$|" + skipgroup),
     NAME: /\[\s*name\s*=\s*((["']*)([^'"()]*?)\2)?\s*\]/
   },
 
