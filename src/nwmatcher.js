@@ -1191,8 +1191,8 @@
 
       var changed, parts, resolver;
 
-      // make sure an element node was passed
-      if (!(element && element.nodeType == 1 && element.nodeName > '@')) {
+      // ensures a valid element node was passed
+      if (!element || element.nodeName < 'A') {
         emit('passed element is not a DOM ELEMENT_NODE !');
         return false;
       }
@@ -1216,7 +1216,7 @@
 
       if (changed = lastMatcher != selector) {
         // process valid selector strings
-        if (selector && reValidator.test(selector)) {
+        if (reValidator.test(selector)) {
           // save passed selector
           lastMatcher = selector;
           isSingleMatch = (parts = selector.match(reSplitGroup)).length < 2;
