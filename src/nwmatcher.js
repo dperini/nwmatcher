@@ -731,6 +731,8 @@
           XMLResolvers = { };
           HTMLMatchers = { };
           XMLMatchers = { };
+        } else if (i == 'SHORTCUTS') {
+          SHORTCUTS = !!options[i];
         } else if (i == 'USE_QSAPI') {
           USE_QSAPI = !!options[i] && NATIVE_QSAPI;
         }
@@ -769,6 +771,10 @@
   // by default disable complex selectors nested in
   // :not() pseudo-classes, as for specifications
   SIMPLENOT = true,
+
+  // by default do not add missing left/right context
+  // to selector string shortcuts like "+div" or "ul>"
+  SHORTCUTS = false,
 
   // controls the engine error/warning notifications
   VERBOSITY = true,
@@ -1309,16 +1315,17 @@
         }
       }
 
-      // add left context if missing
-      if (reLeftContext.test(selector)) {
-        selector = !from ? '*' + selector :
-          from.id ? '#' + from.id + selector :
-            selector;
-      }
-
-      // add right context if missing
-      if (reRightContext.test(selector)) {
-        selector = selector + '*';
+      if (SHORTCUTS) {
+        // add left context if missing
+        if (reLeftContext.test(selector)) {
+          selector = !from ? '*' + selector :
+            from.id ? '#' + from.id + selector :
+              selector;
+        }
+        // add right context if missing
+        if (reRightContext.test(selector)) {
+          selector = selector + '*';
+        }
       }
 
       // extract context if changed
