@@ -743,11 +743,10 @@
   emit =
     function(message) {
       if (VERBOSITY) {
-        // DOMException.SYNTAX_ERR code 12
-        if (typeof window.DOMException !== 'undefined') {
+        // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
+        if (typeof global.DOMException !== 'undefined') {
           var err = new Error();
-          err.message = message;
-          err.code = err.number = 12;
+          err.message = message; err.code = 12;
           err.name = 'DOMException SYNTAX_ERR';
           throw err;
         } else {
