@@ -334,6 +334,13 @@
     checked: 1, disabled: 1, ismap: 1, multiple: 1, readonly: 1, selected: 1
   },
 
+  // dynamic attributes that needs to be checked against original HTML value
+  ATTR_DEFAULT = {
+    value: 'defaultValue',
+    checked: 'defaultChecked',
+    selected: 'defaultSelected'
+  },
+
   // attribute referencing URI data values need special treatment in IE
   ATTR_URIDATA = {
     'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
@@ -653,18 +660,8 @@
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
-      if (typeof node.form !== 'undefined') {
-        switch(attribute) {
-          case 'value':
-            if ('defaultValue' in node) return node.defaultValue || '';
-            break;
-          case 'checked':
-            return node.defaultChecked && attribute;
-          case 'selected':
-            return node.defaultSelected && attribute;
-          default:
-            break;
-        }
+      if (ATTR_DEFAULT[attribute] && typeof node.form != 'undefined') {
+        return node[ATTR_DEFAULT[attribute]] || '';
       }
       return (
         // specific URI data attributes (parameter 2 to fix IE bug)
@@ -679,11 +676,12 @@
   hasAttribute = !BUGGY_HAS_ATTRIBUTE ?
     function(node, attribute) {
       return node.hasAttribute(attribute);
-    } : NATIVE_HAS_ATTRIBUTE ?
-    function(node, attribute) {
-      return !!node.getAttribute(attribute);
     } :
     function(node, attribute) {
+      attribute = attribute.toLowerCase();
+      if (ATTR_DEFAULT[attribute] && typeof node.form != 'undefined') {
+        return !!node[ATTR_DEFAULT[attribute]];
+      }
       // need to get at AttributeNode first on IE
       node = node.getAttributeNode(attribute);
       // use both "specified" & "nodeValue" properties
