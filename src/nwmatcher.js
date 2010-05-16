@@ -47,7 +47,7 @@
   skipgroup = '(?:\\[.*\\]|\\(.*\\))',
 
   // discard invalid chars found in passed selector
-  reValidator = /^\s*(\*|[.:#](?:[a-zA-Z]|[^\x00-\xa0])+|[>+~a-zA-Z]|[^\x00-\xa0]|\(.+\)|\[.+\]|\{.+\})/,
+  reValidator = /(\*|(?:[.:#]{1}|[-a-zA-Z]+[-\w]*|[^\x00-\xa0]+|\\)|[\x20\t\n\r\f>+~,]+|["'][^'"]*|\[[^\[\]]+\]|\[.+\]|\([^\(\)]+\)|\(.+\)|\{[^\{\}]+\}|\{.+\})+/g,
 
   // only allow simple expressions inside :not() pseudo
   reSimpleNot = /^(\s*([.:#]?([a-zA-Z]+([-\w]*|\\.)*)(\(\d*n?\d*\))?)|[>+~]|\[.*\]|\*)$/,
@@ -1213,7 +1213,7 @@
 
       if (changed = lastMatcher != selector) {
         // process valid selector strings
-        if (reValidator.test(selector)) {
+        if ((parts = selector.match(reValidator)) && parts[0] == selector) {
           // save passed selector
           lastMatcher = selector;
           isSingleMatch = (parts = selector.match(reSplitGroup)).length < 2;
@@ -1337,7 +1337,7 @@
 
       if (changed = lastSelector != selector) {
         // process valid selector strings
-        if (reValidator.test(selector)) {
+        if ((parts = selector.match(reValidator)) && parts[0] == selector) {
           // save passed selector
           lastSelector = selector;
           isSingleSelect = (parts = selector.match(reSplitGroup)).length < 2;
