@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.3beta
  * Created: 20070722
- * Release: 20100501
+ * Release: 20100605
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -1288,10 +1288,10 @@
       }
 
       if (USE_QSAPI && !RE_BUGGY_QSAPI.test(selector) &&
-        (!from || QSA_NODE_TYPES[from.nodeType])) {
+        QSA_NODE_TYPES[from.nodeType]) {
 
         try {
-          elements = (from || doc).querySelectorAll(selector);
+          elements = from.querySelectorAll(selector);
         } catch(e) { if (selector === '') throw e; }
 
         if (elements) {
@@ -1315,13 +1315,13 @@
       if (SHORTCUTS) {
         // add left context if missing
         if (reLeftContext.test(selector)) {
-          selector = !from ? '*' + selector :
-            from.id ? '#' + from.id + selector :
+          selector = from.nodeType == 9 ? '* ' + selector :
+            from.id ? '#' + from.id + ' ' + selector :
               selector;
         }
         // add right context if missing
         if (reRightContext.test(selector)) {
-          selector = selector + '*';
+          selector = selector + ' *';
         }
       }
 
@@ -1431,7 +1431,7 @@
 
   /*-------------------------------- STORAGE ---------------------------------*/
 
-  // CSS_ID expando on elements,
+  // CSS_ID expando on elements
   // used to keep child indexes
   // during a selection session
   CSS_ID = 1,
