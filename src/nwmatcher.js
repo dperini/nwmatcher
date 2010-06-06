@@ -1061,7 +1061,7 @@
                 if ('compatMode' in doc) {
                   source = 'N=' + compileGroup(expr, '', false) + '(e,s,r,d,h,g);if(!N){' + source + '}';
                 } else {
-                  source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '"),r,d,h,g){' + source +'}';
+                  source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",r)){' + source +'}';
                 }
               }
               break;
