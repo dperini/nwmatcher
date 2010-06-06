@@ -706,6 +706,18 @@
       return hasAttribute(element,'href') && LINK_NODES[element.nodeName];
     },
 
+  // fix for reading the selected property
+  // in older Safari 2 and Opera 8 browsers
+  isSelected = BUGGY_SELECTED ?
+    function(element) {
+      var parent = element.parentNode;
+      return element.defaultSelected ||
+        parent.options[parent.selectedIndex] === element;
+    } :
+    function(element) {
+      return element.selected;
+    };
+
   /*------------------------------- DEBUGGING --------------------------------*/
 
   // compile selectors to ad-hoc functions resolvers
@@ -1130,9 +1142,8 @@
               source = 'if(' + CONTAINS_TEXT + '.indexOf("' + match[3] + '")>-1){' + source + '}';
               break;
             case 'selected':
-              // fix Safari selectedIndex property bug
-              expr = BUGGY_SELECTED ? '||(n=e.parentNode)&&n.options[n.selectedIndex]===e' : '';
-              source = 'if(e.nodeName=="OPTION"&&(e.selected' + expr + ')){' + source + '}';
+              // isSelected needed for Safari 2/Opera 8 problems with the 'selected' property
+              source = 'if(e.nodeName.toUpperCase()=="OPTION"&&s.isSelected(e)){' + source + '}';
               break;
 
             default:
@@ -1468,6 +1479,7 @@
     byId: byId,
 
     // helper/check methods
+    isSelected: isSelected,
     stripTags: stripTags,
     isEmpty: isEmpty,
     isLink: isLink,
