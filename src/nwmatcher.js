@@ -660,7 +660,7 @@
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
-      if (ATTR_DEFAULT[attribute] && typeof node.form != 'undefined') {
+      if (ATTR_DEFAULT[attribute] && ATTR_DEFAULT[attribute] in node) {
         return node[ATTR_DEFAULT[attribute]] || '';
       }
       return (
@@ -679,7 +679,7 @@
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
-      if (ATTR_DEFAULT[attribute] && typeof node.form != 'undefined') {
+      if (ATTR_DEFAULT[attribute] && ATTR_DEFAULT[attribute] in node) {
         return !!node[ATTR_DEFAULT[attribute]];
       }
       // need to get at AttributeNode first on IE
