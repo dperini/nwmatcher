@@ -276,6 +276,17 @@
       } catch(e) { }
       div.removeChild(div.firstChild);
 
+      // :checked bugs whith checkbox (Opera 10 to 10.53)
+      input = doc.createElement('input');
+      input.setAttribute('type', 'checkbox');
+      input.setAttribute('checked', 'checked');
+      div.appendChild(input);
+      try {
+        div.querySelectorAll(':checked').length !== 1 &&
+          pattern.push(':checked');
+      } catch(e) { }
+      div.removeChild(div.firstChild);
+
       // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
       // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
       // IE8 QSA has problems too and throws error with these dynamic pseudos
