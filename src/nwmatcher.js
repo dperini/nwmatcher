@@ -727,7 +727,7 @@
     } :
     function(element) {
       return element.selected;
-    };
+    },
 
   /*------------------------------- DEBUGGING --------------------------------*/
 
