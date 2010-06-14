@@ -604,21 +604,6 @@
       return data;
     },
 
-  // check if an element is a descendant of container
-  contains = 'compareDocumentPosition' in root ?
-    function(container, element) {
-      return (container.compareDocumentPosition(element) & 16) == 16;
-    } : 'contains' in root ?
-    function(container, element) {
-      return container !== element && container.contains(element);
-    } :
-    function(container, element) {
-      while ((element = element.parentNode)) {
-        if (element === container) return true;
-      }
-      return false;
-    },
-
   // children position by nodeType
   // @return number
   getIndexesByNodeType =
@@ -1216,7 +1201,7 @@
         return false;
       }
 
-      if (from && !contains(from, element) || !selector) return false;
+      if (from && !('nodeType' in from) || !selector) return false;
 
       selector = selector.replace(reTrimSpaces, '');
 
