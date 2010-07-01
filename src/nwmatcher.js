@@ -42,10 +42,10 @@
   // NOTE: Safari 2.0.x crashes with escaped (\\)
   // Unicode ranges in regular expressions so we
   // use a negated character range class instead
-  encoding = '((?:[-\\w]|[^\\x00-\\xa0]|\\\\.)+)',
+  encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)+',
 
   // used to skip [ ] or ( ) groups in token tails
-  skipgroup = '(?:\\[.*\\]|\\(.*\\))',
+  skipgroup = '\\[.*\\]|\\(.*\\)',
 
   // discard invalid chars found in passed selector
   reValidator = /(\*|(?:[.:#]{1}|[-a-zA-Z]+[-\w]*|[^\x00-\xa0]+|\\)|[\x20\t\n\r\f>+~,]+|["'][^'"]*|\[[^\[\]]+\]|\[.+\]|\([^\(\)]+\)|\(.+\)|\{[^\{\}]+\}|\{.+\})+/g,
@@ -415,9 +415,9 @@
 
   // optimization expressions
   Optimize = {
-    ID: new RegExp("^#" + encoding + "|" + skipgroup),
-    TAG: new RegExp("^" + encoding + "|" + skipgroup),
-    CLASS: new RegExp("^\\." + encoding + "$|" + skipgroup),
+    ID: new RegExp("^#(" + encoding + ")|" + skipgroup),
+    TAG: new RegExp("^(" + encoding + ")|" + skipgroup),
+    CLASS: new RegExp("^\\.(" + encoding + "$)|" + skipgroup),
     NAME: /\[\s*name\s*=\s*((["']*)([^'"()]*?)\2)?\s*\]/
   },
 
@@ -440,11 +440,11 @@
     // all
     universal: /^\*(.*)/,
     // id
-    id: new RegExp("^#" + encoding + "(.*)"),
+    id: new RegExp("^#(" + encoding + ")(.*)"),
     // tag
-    tagName: new RegExp("^" + encoding + "(.*)"),
+    tagName: new RegExp("^(" + encoding + ")(.*)"),
     // class
-    className: new RegExp("^\\." + encoding + "(.*)")
+    className: new RegExp("^\\.(" + encoding + ")(.*)")
   },
 
   // current CSS3 grouping of Pseudo-Classes
