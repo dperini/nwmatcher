@@ -424,7 +424,7 @@
   // precompiled Regular Expressions
   Patterns = {
     // element attribute matcher
-    attribute: /^\[[\x20\t\n\r\f]*([-\w\\]*:?(?:[-\w\\])+)[\x20\t\n\r\f]*(?:([~*^$|!]?=)[\x20\t\n\r\f]*(["']*)([^'"()]*?)\3)?[\x20\t\n\r\f]*\](.*)/,
+    attribute: /^\[[\x20\t\n\r\f]*([-\w\\]*:?(?:[-\w\\])+)[\x20\t\n\r\f]*(?:([~*^$|!]?=)[\x20\t\n\r\f]*((?:".*"|'.*'|[-a-zA-Z]+[-\w]*|[^\x00-\xa0]*)))?[\x20\t\n\r\f]*\](.*)/,
     // structural pseudo-classes
     spseudos: /^\:(root|empty|nth)?-?(first|last|only)?-?(child)?-?(of-type)?(?:\(([^\x29]*)\))?(.*)/,
     // uistates + dynamic + negation pseudo-classes
@@ -919,6 +919,8 @@
         // [attr] [attr=value] [attr="value"] [attr='value'] and !=, *=, ~=, |=, ^=, $=
         // case sensitivity is treated differently depending on the document type (see map)
         else if ((match = selector.match(Patterns.attribute))) {
+          if (match[3]) match[3] = match[3].replace(/^\x22|\x22$/g, '').replace(/^\x27|\x27$/g, '');
+
           // xml namespaced attribute ?
           expr = match[1].split(':');
           expr = expr.length == 2 ? expr[1] : expr[0] + '';
@@ -929,13 +931,13 @@
           }
 
           // replace Operators parameter if needed
-          if (match[2] && match[4] && (type = Operators[match[2]])) {
+          if (match[2] && match[3] && (type = Operators[match[2]])) {
             // case treatment depends on document
             HTML_TABLE['class'] = isQuirksMode ? 1 : 0;
             // replace escaped values and HTML entities
-            match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
+            match[3] = match[3].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
             test = (isXMLDocument ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
-            type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
+            type = type.replace(/\%m/g, test ? match[3].toLowerCase() : match[3]);
           } else {
             test = false;
             // handle empty values
