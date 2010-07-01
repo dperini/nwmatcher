@@ -1195,6 +1195,12 @@
 
         }
 
+        // error if no matches found by the pattern scan
+        if (!match) {
+          emit('invalid syntax in selector "' + selector + '"');
+          return '';
+        }
+
         // ensure "match" is not null or empty since
         // we do not throw real DOMExceptions above
         selector = match && match[match.length - 1];
