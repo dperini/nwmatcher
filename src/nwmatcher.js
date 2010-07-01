@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.3beta
  * Created: 20070722
- * Release: 20100605
+ * Release: 20100701
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -794,7 +794,8 @@
   ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
 
   // checks if nodeName comparisons need to be uppercased
-  TO_UPPER_CASE = typeof doc.createElementNS == 'function' ?
+  TO_UPPER_CASE = typeof doc.createElementNS == 'function' &&
+    doc.createElement('div').nodeName == 'DIV' ?
     '.toUpperCase()' : '',
 
   // use the textContent or innerText property to check CSS3 :contains
