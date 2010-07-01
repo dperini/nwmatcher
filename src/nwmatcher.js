@@ -893,8 +893,7 @@
   ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
 
   // checks if nodeName comparisons need to be uppercased
-  TO_UPPER_CASE = typeof doc.createElementNS == 'function' ||
-    doc.createElement('div').nodeName == 'DIV' ?
+  TO_UPPER_CASE = doc.createElement('nAv').nodeName == 'nAv' ?
     '.toUpperCase()' : '',
 
   // use the textContent or innerText property to check CSS3 :contains
