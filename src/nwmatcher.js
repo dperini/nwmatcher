@@ -26,6 +26,7 @@
   root = doc.documentElement,
 
   // persist last selector/matcher parsing data
+  lastError = '',
   lastSlice = '',
   lastMatcher = '',
   lastSelector = '',
@@ -1326,9 +1327,16 @@
       if (USE_QSAPI && !RE_BUGGY_QSAPI.test(selector) &&
         QSA_NODE_TYPES[from.nodeType]) {
 
+        // clear error state
+        lastError = null;
+
         try {
           elements = from.querySelectorAll(selector);
-        } catch(e) { if (selector === '') throw e; }
+        } catch(e) {
+          // remember last error
+          lastError = e;
+          if (selector === '') throw e;
+        }
 
         if (elements) {
           switch (elements.length) {
