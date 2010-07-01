@@ -47,26 +47,109 @@
   // used to skip [ ] or ( ) groups in token tails
   skipgroup = '\\[.*\\]|\\(.*\\)',
 
-  // discard invalid chars found in passed selector
-  reValidator = /(\*|(?:[.:#]{1}|[-a-zA-Z]+[-\w]*|[^\x00-\xa0]+|\\)|[\x20\t\n\r\f>+~,]+|["'][^'"]*|\[[^\[\]]+\]|\[.+\]|\([^\(\)]+\)|\(.+\)|\{[^\{\}]+\}|\{.+\})+/g,
+  // prefixes identifying id, class & pseudo-class
+  prefixes = '[.:#]?',
 
-  // only allow simple expressions inside :not() pseudo
-  reSimpleNot = /^(\s*([.:#]?([a-zA-Z]+([-\w]*|\\.)*)(\(\d*n?\d*\))?)|[>+~]|\[.*\]|\*)$/,
+  // attribute operators
+  // ! invalid but compat !
+  operators = '([~*^$|!]?={1})',
+
+  // whitespace characters
+  whitespace = '[\\x20\\t\\n\\r\\f]*',
+
+  // 4 combinators F E, F>E, F+E, F~E
+  combinators = '[\\x20]|[>+~][^>+~]',
+
+  // an+b format params for psuedo-classes
+  pseudoparms = '[-+]?\\d*n?[-+]?\\d*',
+
+  // CSS quoted string values
+  quotedvalue = '"[^"]*"' + "|'[^']*'",
+
+  // CSS identifiers
+  identifier = '(?:' +
+    '(?:[-_a-zA-Z]{1}[-\\w]*)|' +
+	'[^\\x00-\\xa0]+|' +
+	'\\\\.+)',
+
+  // build attribute RE
+  attributes =
+    whitespace + '(' + encoding + ':?' + encoding + ')' +
+    whitespace + '(?:' + operators + whitespace + '(' +
+    quotedvalue + '|' + identifier + '))?' + whitespace,
+
+  // build pseudo-class RE
+  pseudoclass = '((?:' +
+    // an+b parameters or quoted string
+    pseudoparms + '|' + quotedvalue + '|' +
+    // id, class, pseudo-class selector
+    prefixes + '|' + encoding + '|' +
+    // nested HTML attribute selector
+    '\\[' + attributes + '\\]|'+
+    // nested pseudo-class selector
+    '\\(.+\\)|' + whitespace + '|' +
+    // nested pseudos/separators
+    ',)+)',
+
+  // placeholder for extensions
+  extensions = ".+",
+
+  // CSS3: syntax scanner and
+  // one pass validation only
+  // using regular expression
+  reValidator = new RegExp(
+    // discard start
+    "(?=\s*[^>+~(){}<>])" +
+    // open match group
+    "(" +
+    //universal selector
+    "\\*" +
+    // id, class/pseudo-class
+    "|(?:" + prefixes +
+    // identifier/tag selector
+    identifier + ")" +
+    // combinator selector
+    "|" + combinators +
+    // quoted values selector
+    "|" + quotedvalue +
+    // HTML attribute selector
+    "|\\[" + attributes + "\\]" +
+    // "|\\[.+\\]" + // faster
+    // pseudo-classes parameters
+    "|\\(" + pseudoclass + "\\)" +
+    // "|\\(.+\\)" + // faster
+    // dom properties selector (extension)
+    "|\\{" + extensions + "\\}" +
+    // selector group separator (comma)
+    "|," +
+    // close match group
+    ")+", "g"),
 
   // only five chars can occur in whitespace, they are:
   // \x20 \t \n \r \f, checks now uniformed in the code
   // http://www.w3.org/TR/css3-selectors/#selector-syntax
-  reTrimSpaces = /^[\x20\t\n\r\f]+|[\x20\t\n\r\f]+$/g,
+  reTrimSpaces = new RegExp("^" +
+    whitespace + "|" + whitespace + "$", "g"),
+
+  // only allow simple expressions inside :not() pseudo
+  reSimpleNot = new RegExp("^(" +
+    whitespace + prefixes + encoding +
+    "|\\[" + attributes + "\\])$"),
 
   // split comma groups, exclude commas in '' "" () []
-  reSplitGroup = /([^,\\()[\]]+|\([^()]+\)|\(.*\)|\[(?:\[[^[\]]*\]|["'][^'"]*["']|[^'"[\]]+)+\]|\[.*\]|\\.)+/g,
+  reSplitGroup = new RegExp("(" +
+    "[^(,)\\\\]|\\[\\([^()]+\\)|[^[\\]]+\\]|" +
+    skipgroup + "|\\\\.)+", "g"),
 
   // split last, right most, selector group token
-  reSplitToken = /([^ >+~,\\()[\]]+|\([^()]+\)|\(.*\)|\[[^[\]]+\]|\[.*\]|\\.)+/g,
+  reSplitToken = new RegExp("(" +
+    "\\(" + pseudoclass + "\\)|" +
+    "\\[" + attributes + "\\]|" +
+    "[^ >+~]|\\\\.)+", "g"),
 
   // for pseudos, ids and in excess whitespace removal
-  reClassValue = /([-\w]+)/,
-  reIdSelector = /\#([-\w]+)$/,
+  reClassValue = /(-?[a-zA-Z][-\w]+)/,
+  reIdSelector = /\#(-?[a-zA-Z][-\w]+)/,
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
   // match missing R/L context
@@ -423,12 +506,12 @@
 
   // precompiled Regular Expressions
   Patterns = {
-    // element attribute matcher
-    attribute: /^\[[\x20\t\n\r\f]*([-\w\\]*:?(?:[-\w\\])+)[\x20\t\n\r\f]*(?:([~*^$|!]?=)[\x20\t\n\r\f]*((?:".*"|'.*'|[-a-zA-Z]+[-\w]*|[^\x00-\xa0]*)))?[\x20\t\n\r\f]*\](.*)/,
-    // structural pseudo-classes
+    // structural pseudo-classes and child selectors
     spseudos: /^\:(root|empty|nth)?-?(first|last|only)?-?(child)?-?(of-type)?(?:\(([^\x29]*)\))?(.*)/,
     // uistates + dynamic + negation pseudo-classes
     dpseudos: /^\:([\w]+|[^\x00-\xa0]+)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
+    // element attribute matcher
+    attribute: new RegExp("^\\[" + attributes + "\\](.*)"),
     // E > F
     children: /^[\x20\t\n\r\f]*\>[\x20\t\n\r\f]*(.*)/,
     // E + F
