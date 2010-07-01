@@ -604,6 +604,21 @@
       return data;
     },
 
+  // check if an element is a descendant of container
+  contains = 'compareDocumentPosition' in root ?
+    function(container, element) {
+      return (container.compareDocumentPosition(element) & 16) == 16;
+    } : 'contains' in root ?
+    function(container, element) {
+      return container !== element && container.contains(element);
+    } :
+    function(container, element) {
+      while ((element = element.parentNode)) {
+        if (element === container) return true;
+      }
+      return false;
+    },
+
   // children position by nodeType
   // @return number
   getIndexesByNodeType =
@@ -1196,13 +1211,13 @@
 
       var changed, parts, resolver;
 
-      // ensures a valid element node was passed
-      if (!element || element.nodeName < 'A') {
-        emit('passed element is not a DOM ELEMENT_NODE !');
-        return false;
-      }
+      // ensures a valid element node and selector was passed
+      if (!element || element.nodeName < 'A' || !selector) return false;
 
-      if (from && !('nodeType' in from) || !selector) return false;
+      // if passed, check context contains element
+      if (from && from.nodeType == 1) {
+        if (!contains(from, element)) return false;
+      }
 
       selector = selector.replace(reTrimSpaces, '');
 
