@@ -1276,6 +1276,19 @@
       // ensure context is set
       from || (from = doc);
 
+      if (SHORTCUTS) {
+        // add left context if missing
+        if (reLeftContext.test(selector)) {
+          selector = from.nodeType == 9 ? '* ' + selector :
+            from.id ? '#' + from.id + ' ' + selector :
+              selector;
+        }
+        // add right context if missing
+        if (reRightContext.test(selector)) {
+          selector = selector + ' *';
+        }
+      }
+
       if (RE_SIMPLE_SELECTOR.test(selector)) {
         switch (selector.charAt(0)) {
           case '#':
@@ -1317,19 +1330,6 @@
                   slice.call(elements) :
                   concatList([ ], elements);
           }
-        }
-      }
-
-      if (SHORTCUTS) {
-        // add left context if missing
-        if (reLeftContext.test(selector)) {
-          selector = from.nodeType == 9 ? '* ' + selector :
-            from.id ? '#' + from.id + ' ' + selector :
-              selector;
-        }
-        // add right context if missing
-        if (reRightContext.test(selector)) {
-          selector = selector + ' *';
         }
       }
 
