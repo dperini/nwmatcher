@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.3beta
  * Created: 20070722
- * Release: 20100701
+ * Release: 20100720
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -839,10 +839,13 @@
           XMLResolvers = { };
           HTMLMatchers = { };
           XMLMatchers = { };
+          USE_QSAPI = false;
+          reValidator = new RegExp(extendedValidator, "g");
         } else if (i == 'SHORTCUTS') {
           SHORTCUTS = !!options[i];
         } else if (i == 'USE_QSAPI') {
           USE_QSAPI = !!options[i] && NATIVE_QSAPI;
+          reValidator = new RegExp(standardValidator, "g");
         }
       }
     },
