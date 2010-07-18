@@ -1122,7 +1122,10 @@
                   type + '>=' + expr + '&&(' + type + '-(' + expr + '))%' + a + '==0' : a < -1 ?
                   (match[2] == 'last') ? '(' + type + '-(' + expr + '))%' + a + '==0' :
                   type + '<=' + expr + '&&(' + type + '-(' + expr + '))%' + a + '==0' : a=== 0 ?
-                  type + '==' + expr : a == -1 ? type + '<=' + expr : type + '>=' + expr;
+                  type + '==' + expr :
+                  (match[2] == 'last') ?
+                    a == -1 ? type + '>=' + expr : type + '<=' + expr :
+                    a == -1 ? type + '<=' + expr : type + '>=' + expr;
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
                 source =
