@@ -67,10 +67,7 @@
   quotedvalue = '"[^"]*"' + "|'[^']*'",
 
   // CSS identifiers
-  identifier = '(?:' +
-    '(?:[-_a-zA-Z]{1}[-\\w]*)|' +
-	'[^\\x00-\\xa0]+|' +
-	'\\\\.+)',
+  identifier = '(?:-?[a-zA-Z]{1,}[-\\w]{0,}|[^\\x00-\\xa0]{1,}|\\\\.)+',
 
   // build attribute RE
   attributes =
@@ -97,7 +94,7 @@
   // CSS3: syntax scanner and
   // one pass validation only
   // using regular expression
-  reValidator = new RegExp(
+  standardValidator =
     // discard start
     "(?=\s*[^>+~(){}<>])" +
     // open match group
@@ -123,7 +120,13 @@
     // selector group separator (comma)
     "|," +
     // close match group
-    ")+", "g"),
+    ")+",
+
+  // validator for standard selectors as default
+  reValidator = new RegExp(standardValidator, "g"),
+
+  // validator for complex selectors in :not() pseudo-classes
+  extendedValidator = standardValidator.replace(pseudoclass, '.*'),
 
   // only five chars can occur in whitespace, they are:
   // \x20 \t \n \r \f, checks now uniformed in the code
@@ -148,8 +151,8 @@
     "[^ >+~]|\\\\.)+", "g"),
 
   // for pseudos, ids and in excess whitespace removal
-  reClassValue = /(-?[a-zA-Z][-\w]+)/,
-  reIdSelector = /\#(-?[a-zA-Z][-\w]+)/,
+  reClassValue = new RegExp("(" + identifier + ")"),
+  reIdSelector = new RegExp("#(" + identifier + ")"),
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
   // match missing R/L context
@@ -415,8 +418,8 @@
   // matches simple id, tag & class selectors
   RE_SIMPLE_SELECTOR = new RegExp(
     !(BUGGY_GEBTN && BUGGY_GEBCN) ?
-      '^(?:\\*|[.#]?[a-zA-Z]+' + encoding + ')$' :
-      '^#?[a-zA-Z]+' + encoding + '$'),
+      '^(?:\\*|[.#]?' + identifier + ')$' :
+      '^#?' + identifier + '$'),
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
