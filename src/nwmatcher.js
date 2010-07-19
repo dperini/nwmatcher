@@ -52,7 +52,7 @@
 
   // attribute operators
   // ! invalid but compat !
-  operators = '([~*^$|!]?={1})',
+  operators = '([~*^$|!]?=+)',
 
   // whitespace characters
   whitespace = '[\\x20\\t\\n\\r\\f]*',
@@ -67,7 +67,7 @@
   quotedvalue = '"[^"]*"' + "|'[^']*'",
 
   // CSS identifiers
-  identifier = '(?:-?[a-zA-Z]{1,}[-\\w]{0,}|[^\\x00-\\xa0]{1,}|\\\\.)+',
+  identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)',
 
   // build attribute RE
   attributes =
@@ -418,8 +418,8 @@
   // matches simple id, tag & class selectors
   RE_SIMPLE_SELECTOR = new RegExp(
     !(BUGGY_GEBTN && BUGGY_GEBCN) ?
-      '^(?:\\*|[.#]?' + identifier + ')$' :
-      '^#?' + identifier + '$'),
+      '^(?:\\*|[.#]?-?[_a-zA-Z]{1}' + encoding + ')$' :
+      '^#?-?[_a-zA-Z]{1}' + encoding + '$'),
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
@@ -1106,8 +1106,8 @@
                   b = 1;
                 } else {
                   // assumes correct "an+b" format, "b" before "a" to keep "n" values
-                  b = ((n = match[5].match(/(-?\d{1,})$/)) ? parseInt(n[1], 10) : 0);
-                  a = ((n = match[5].match(/(-?\d{0,})n/)) ? parseInt(n[1], 10) : 0);
+                  b = ((n = match[5].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
+                  a = ((n = match[5].match(/(-?\d*)n/)) ? parseInt(n[1], 10) : 0);
                   if (n && n[1] == '-') a = -1;
                 }
 
