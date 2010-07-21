@@ -131,8 +131,12 @@
 
   // only allow simple expressions inside :not() pseudo
   reSimpleNot = new RegExp("^(" +
-    whitespace + prefixes + encoding +
-    "|\\[" + attributes + "\\])$"),
+    "(?!:not)" +
+	"(" + prefixes +
+	"|" + identifier +
+	"|\\([^()]*\\))+" +
+    "|\\[" + attributes + "\\]" +
+	")$"),
 
   // skip group of round brackets
   skipround = '\\([^()]+\\)|\\(.*\\)',
