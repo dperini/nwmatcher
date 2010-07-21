@@ -118,7 +118,7 @@
   // validator for standard selectors as default
   reValidator = new RegExp(standardValidator, "g"),
 
-  // validator for complex selectors in :not() pseudo-classes
+  // validator for complex selectors in ':not()' pseudo-classes
   extendedValidator = standardValidator.replace(pseudoclass, '.*'),
 
   // whitespace is any combination of these 5 character [\x20\t\n\r\f]
@@ -126,12 +126,12 @@
   reTrimSpaces = new RegExp("^" +
     whitespace + "|" + whitespace + "$", "g"),
 
-  // only allow simple expressions inside :not() pseudo
+  // only allow simple selectors nested in ':not()' pseudo-classes
   reSimpleNot = new RegExp("^(" +
     "(?!:not)" +
-	"(" + prefixes +
-	"|" + identifier +
-	"|\\([^()]*\\))+" +
+    "(" + prefixes +
+    "|" + identifier +
+    "|\\([^()]*\\))+" +
     "|\\[" + attributes + "\\]" +
 	")$"),
 
@@ -892,7 +892,7 @@
     },
 
   // by default disable complex selectors nested in
-  // :not() pseudo-classes, as for specifications
+  // ':not()' pseudo-classes, as for specifications
   SIMPLENOT = true,
 
   // by default do not add missing left/right context
@@ -1181,12 +1181,12 @@
             case 'not':
               // compile nested selectors, DO NOT pass the callback parameter
               // SIMPLENOT allow disabling complex selectors nested
-              // in :not() pseudo-classes, breaks some test units
+              // in ':not()' pseudo-classes, breaks some test units
               expr = match[3].replace(reTrimSpaces, '');
 
               if (SIMPLENOT && !reSimpleNot.test(expr)) {
                 // see above, log error but continue execution
-                emit('negated pseudo-class only accept simple selectors "' + selector + '"');
+                emit('negation pseudo-class only accepts simple selectors "' + selector + '"');
                 return '';
               } else {
                 if ('compatMode' in doc) {
