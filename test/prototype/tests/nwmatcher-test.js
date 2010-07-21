@@ -1,7 +1,3 @@
-if (NW && NW.Dom && typeof NW.Dom.configure == 'function') {
-  NW.Dom.configure({SIMPLENOT:false,VERBOSITY:false});
-}
-
 (function(global) {
 
   var param, select;

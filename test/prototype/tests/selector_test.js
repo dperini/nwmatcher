@@ -72,7 +72,7 @@ new Test.Unit.Runner({
   
   testSelectorWithTagNameAndSpecificAttributeValue: function() {
     this.assertEnumEqual($('link_1', 'link_2', 'link_3'), $$('a[href="#"]'));
-    this.assertEnumEqual($('link_1', 'link_2', 'link_3'), $$('a[href=#]'));
+    this.assertEnumEqual($('link_1', 'link_2', 'link_3'), $$("a[href='#']"));
   },
   
   testSelectorWithTagNameAndWhitespaceTokenizedAttributeValue: function() {
@@ -107,8 +107,8 @@ new Test.Unit.Runner({
   testSelectorWithBracketAttributeValue: function() {
     this.assertEnumEqual($('chk_1', 'chk_2'), $$('#troubleForm2 input[name="brackets[5][]"]'));
     this.assertEnumEqual([$('chk_1')], $$('#troubleForm2 input[name="brackets[5][]"]:checked'));
-    this.assertEnumEqual([$('chk_2')], $$('#troubleForm2 input[name="brackets[5][]"][value=2]'));
-    this.assertEnumEqual([], $$('#troubleForm2 input[name=brackets[5][]]'));
+    this.assertEnumEqual([$('chk_2')], $$('#troubleForm2 input[name="brackets[5][]"][value="2"]'));
+    this.assertRaise('DOMException SYNTAX_ERR', $$, '#troubleForm2 input[name=brackets[5][]]');
   },
   
   test$$WithNestedAttributeSelectors: function() {
@@ -235,7 +235,7 @@ new Test.Unit.Runner({
     this.assertEnumEqual($('level2_1', 'level3_1'), $$('#level1 *[id$="_1"]'));
     this.assertEnumEqual($('level2_1', 'level3_1'), $$('#level1 *[id$=_1]'));
     this.assertEnumEqual($('level2_1', 'level3_2', 'level2_2', 'level2_3'), $$('#level1 *[id*="2"]'));
-    this.assertEnumEqual($('level2_1', 'level3_2', 'level2_2', 'level2_3'), $$('#level1 *[id*=2]'));
+    this.assertEnumEqual($('level2_1', 'level3_2', 'level2_2', 'level2_3'), $$("#level1 *[id*='2']"));
     $RunBenchmarks && this.wait(500, function() {
       this.benchmark(function() { $$('#level1 *[id^=level2_]') }, 1000, '[^=]');
       this.benchmark(function() { $$('#level1 *[id$=_1]') }, 1000, '[$=]');
@@ -286,18 +286,18 @@ new Test.Unit.Runner({
   },
   
   testSelectorWithNot: function() {
-    this.assertEnumEqual([$('link_2')], $$('#p a:not(a:first-of-type)'), 'first-of-type');
-    this.assertEnumEqual([$('link_1')], $$('#p a:not(a:last-of-type)'), 'last-of-type');
-    this.assertEnumEqual([$('link_2')], $$('#p a:not(a:nth-of-type(1))'), 'nth-of-type');
-    this.assertEnumEqual([$('link_1')], $$('#p a:not(a:nth-last-of-type(1))'), 'nth-last-of-type');
+    this.assertEnumEqual([$('link_2')], $$('#p a:not(:first-of-type)'), 'first-of-type');
+    this.assertEnumEqual([$('link_1')], $$('#p a:not(:last-of-type)'), 'last-of-type');
+    this.assertEnumEqual([$('link_2')], $$('#p a:not(:nth-of-type(1))'), 'nth-of-type');
+    this.assertEnumEqual([$('link_1')], $$('#p a:not(:nth-last-of-type(1))'), 'nth-last-of-type');
     this.assertEnumEqual([$('link_2')], $$('#p a:not([rel~=nofollow])'), 'attribute 1');
-    this.assertEnumEqual([$('link_2')], $$('#p a:not(a[rel^=external])'), 'attribute 2');
-    this.assertEnumEqual([$('link_2')], $$('#p a:not(a[rel$=nofollow])'), 'attribute 3');
-    this.assertEnumEqual([$('em')], $$('#p a:not(a[rel$="nofollow"]) > em'), 'attribute 4')
+    this.assertEnumEqual([$('link_2')], $$('#p a:not([rel^=external])'), 'attribute 2');
+    this.assertEnumEqual([$('link_2')], $$('#p a:not([rel$=nofollow])'), 'attribute 3');
+    this.assertEnumEqual([$('em')], $$('#p a:not([rel$="nofollow"]) > em'), 'attribute 4')
     this.assertEnumEqual([$('item_2')], $$('#list li:not(#item_1):not(#item_3)'), 'adjacent :not clauses');
     this.assertEnumEqual([$('son')], $$('#grandfather > div:not(#uncle) #son'));
-    this.assertEnumEqual([$('em')], $$('#p a:not(a[rel$="nofollow"]) em'), 'attribute 4 + all descendants');
-    this.assertEnumEqual([$('em')], $$('#p a:not(a[rel$="nofollow"])>em'), 'attribute 4 (without whitespace)');
+    this.assertEnumEqual([$('em')], $$('#p a:not([rel$="nofollow"]) em'), 'attribute 4 + all descendants');
+    this.assertEnumEqual([$('em')], $$('#p a:not([rel$="nofollow"])>em'), 'attribute 4 (without whitespace)');
   },
   
   testSelectorWithEnabledDisabledChecked: function() {
@@ -325,7 +325,7 @@ new Test.Unit.Runner({
     this.assertEnumEqual($$('ul > li:last-child'), $$('ul > li:nth-last-child(1)'));
     this.assertEnumEqual($$('ul > li:nth-child(n-999)'), $$('ul > li'));
     this.assertEnumEqual($$('ul>li'), $$('ul > li'));
-    this.assertEnumEqual($$('#p a:not(a[rel$="nofollow"])>em'), $$('#p a:not(a[rel$="nofollow"]) > em'))
+    this.assertEnumEqual($$('#p a:not([rel$="nofollow"])>em'), $$('#p a:not([rel$="nofollow"]) > em'))
   },
   
   testSelectorsThatShouldReturnNothing: function() {
