@@ -106,10 +106,8 @@
     "|" + quotedvalue +
     // HTML attribute selector
     "|\\[" + attributes + "\\]" +
-    // "|\\[.+\\]" + // faster
     // pseudo-classes parameters
     "|\\(" + pseudoclass + "\\)" +
-    // "|\\(.+\\)" + // faster
     // dom properties selector (extension)
     "|\\{" + extensions + "\\}" +
     // selector group separator (comma)
@@ -123,8 +121,7 @@
   // validator for complex selectors in :not() pseudo-classes
   extendedValidator = standardValidator.replace(pseudoclass, '.*'),
 
-  // only five chars can occur in whitespace, they are:
-  // \x20 \t \n \r \f, checks now uniformed in the code
+  // whitespace is any combination of these 5 character [\x20\t\n\r\f]
   // http://www.w3.org/TR/css3-selectors/#selector-syntax
   reTrimSpaces = new RegExp("^" +
     whitespace + "|" + whitespace + "$", "g"),
