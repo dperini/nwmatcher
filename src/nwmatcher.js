@@ -82,7 +82,7 @@
     // id, class, pseudo-class selector
     prefixes + '|' + encoding + '|' +
     // nested HTML attribute selector
-    '\\[' + attributes + '\\]|'+
+    '\\[' + attributes + '\\]|' +
     // nested pseudo-class selector
     '\\(.+\\)|' + whitespace + '|' +
     // nested pseudos/separators
@@ -101,10 +101,8 @@
     "(" +
     //universal selector
     "\\*" +
-    // id, class/pseudo-class
-    "|(?:" + prefixes +
-    // identifier/tag selector
-    identifier + ")" +
+    // id/class/tag/pseudo-class identifier
+    "|(?:" + prefixes + identifier + ")" +
     // combinator selector
     "|" + combinators +
     // quoted values selector
