@@ -49,7 +49,7 @@
 
   // attribute operators
   // ! invalid but compat !
-  operators = '([~*^$|!]?=+)',
+  operators = '([~*^$|!]?={1})',
 
   // whitespace characters
   whitespace = '[\\x20\\t\\n\\r\\f]*',
