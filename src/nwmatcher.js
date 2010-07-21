@@ -44,9 +44,6 @@
   // use a negated character range class instead
   encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)+',
 
-  // used to skip [ ] or ( ) groups in token tails
-  skipgroup = '\\[.*\\]|\\(.*\\)',
-
   // prefixes identifying id, class & pseudo-class
   prefixes = '[.:#]?',
 
@@ -137,10 +134,27 @@
     whitespace + prefixes + encoding +
     "|\\[" + attributes + "\\])$"),
 
-  // split comma groups, exclude commas in '' "" () []
+  // skip group of round brackets
+  skipround = '\\([^()]+\\)|\\(.*\\)',
+  // skip group of curly brackets
+  skipcurly = '\\{[^{}]+\\}|\\{.*\\}',
+  // skip group of square brackets
+  skipsquare = '\\[[^[\\]]*\\]|\\[.*\\]',
+
+  // skip [ ], ( ), { } groups in token tails
+  skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
+
+  // split comma groups, exclude commas from
+  // quotes '' "" and from brackets () [] {}
   reSplitGroup = new RegExp("(" +
-    "[^(,)\\\\]|\\[\\([^()]+\\)|[^[\\]]+\\]|" +
-    skipgroup + "|\\\\.)+", "g"),
+    "[^(,)\\\\\\[\\]]+" +
+    "|\\[(?:" + skipsquare +
+    "|" + quotedvalue +
+    "|[^\\[\\]]+)+\\]" +
+    "|" + skipround +
+    "|" + skipcurly +
+    "|\\\\." +
+    ")+", "g"),
 
   // split last, right most, selector group token
   reSplitToken = new RegExp("(" +
