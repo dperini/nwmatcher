@@ -133,7 +133,7 @@
     "|" + identifier +
     "|\\([^()]*\\))+" +
     "|\\[" + attributes + "\\]" +
-	")$"),
+    ")$"),
 
   // skip group of round brackets
   skipround = '\\([^()]+\\)|\\(.*\\)',
@@ -683,7 +683,8 @@
   // @return array
   byClass = !BUGGY_GEBCN && NATIVE_SLICE_PROTO ?
     function(className, from) {
-      return slice.call((from || doc).getElementsByClassName(className.replace(/\\/g, '')), 0);
+      return slice.call((from || doc).
+        getElementsByClassName(className.replace(/\\/g, '')), 0);
     } :
     function(className, from) {
       from || (from = doc);
