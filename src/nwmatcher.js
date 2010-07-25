@@ -228,7 +228,6 @@
   isXMLDocument = isXML(doc),
 
   // NATIVE_XXXXX true if method exist and is callable
-
   // detect if DOM methods are native in browsers
   NATIVE_FOCUS = isNative(doc, 'hasFocus'),
   NATIVE_QSAPI = isNative(doc, 'querySelector'),
@@ -261,7 +260,6 @@
     'nextElementSibling' in root && 'previousElementSibling' in root,
 
   // BUGGY_XXXXX true if method is feature tested and has known bugs
-
   // detect buggy gEBID
   BUGGY_GEBID = NATIVE_GEBID ?
     (function() {
@@ -363,7 +361,7 @@
       if (isQuirks(doc) &&
         (div.querySelectorAll('[class~=xxx]').length != 2 ||
         div.querySelectorAll('.xXx').length != 2)) {
-        pattern.push('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + encoding + ')');
+        pattern.push('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + identifier + ')');
       }
       div.removeChild(div.firstChild);
       div.removeChild(div.firstChild);
@@ -1012,7 +1010,7 @@
           source = 'if((n=' + (isXMLDocument ?
             's.getAttribute(e,"class")' : 'e.className') +
             ')&&n.length&&(" "+' + (isQuirksMode ? 'n.toLowerCase()' : 'n') +
-            '.replace(' + reWhiteSpace +'," ")+" ").indexOf(" ' +
+            '.replace(' + reWhiteSpace + '," ")+" ").indexOf(" ' +
             (isQuirksMode ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
             '){' + source + '}';
         }
@@ -1490,8 +1488,6 @@
           return [ ];
         }
       }
-
-      // pre-filtering pass allow to scale proportionally with big DOM trees
 
       // commas separators are treated sequentially to maintain order
       if (isSingleSelect && from.nodeType != 11) {
