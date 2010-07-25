@@ -299,7 +299,6 @@
       div.appendChild(doc.createElement('span')).
         setAttribute('class', 'x');
 
-      // Opera tests
       isBuggy = !div.getElementsByClassName(test)[0];
 
       // Safari test
