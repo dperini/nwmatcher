@@ -169,8 +169,8 @@
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
   // match missing R/L context
-  reLeftContext = /^\s*[>+~]+/,
-  reRightContext = /[>+~]+\s*$/,
+  reLeftContext = /^\s*[>+~]{1}/,
+  reRightContext = /[>+~]{1}\s*$/,
 
   /*----------------------------- UTILITY METHODS ----------------------------*/
 
