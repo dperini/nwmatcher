@@ -161,7 +161,7 @@
   reSplitToken = new RegExp("(" +
     "\\(" + pseudoclass + "\\)|" +
     "\\[" + attributes + "\\]|" +
-    "[^ >+~]|\\\\.)+", "g"),
+    "[^\x20>+~]|\\\\.)+", "g"),
 
   // for pseudos, ids and in excess whitespace removal
   reClassValue = new RegExp("(" + identifier + ")"),
@@ -974,7 +974,7 @@
         if ((match = selector.match(Patterns.universal))) {
           // do nothing, handled in the compiler where
           // BUGGY_GEBTN return comment nodes (ex: IE)
-          true;
+          i = true;
         }
 
         // *** ID selector
