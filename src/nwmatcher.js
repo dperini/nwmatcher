@@ -873,11 +873,12 @@
         // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
         if (typeof global.DOMException !== 'undefined') {
           var err = new Error();
-          err.message = message; err.code = 12;
-          err.name = 'DOMException SYNTAX_ERR';
+          err.name = 'SYNTAX_ERR';
+          err.message = '(Selectors) ' + message;
+          err.code = 12;
           throw err;
         } else {
-          throw new Error(12, 'DOMException: ' + message);
+          throw new Error(12, 'SYNTAX_ERR: (Selectors) ' + message);
         }
       } else {
         var console = global.console;
@@ -1030,7 +1031,7 @@
           expr = expr.length == 2 ? expr[1] : expr[0] + '';
 
           if (match[2] && !Operators[match[2]]) {
-            emit('unsupported operator in attribute selectors "' + selector + '"');
+            emit('Unsupported operator in attribute selectors "' + selector + '"');
             return '';
           }
 
@@ -1189,7 +1190,7 @@
 
               if (SIMPLENOT && !reSimpleNot.test(expr)) {
                 // see above, log error but continue execution
-                emit('negation pseudo-class only accepts simple selectors "' + selector + '"');
+                emit('Negation pseudo-class only accepts simple selectors "' + selector + '"');
                 return '';
               } else {
                 if ('compatMode' in doc) {
@@ -1292,13 +1293,13 @@
           if (!status) {
             // log error but continue execution, don't throw real exceptions
             // because blocking following processes maybe is not a good idea
-            emit('unknown pseudo selector "' + selector + '"');
+            emit('Unknown pseudo-class selector "' + selector + '"');
             return '';
           }
 
           if (!expr) {
             // see above, log error but continue execution
-            emit('unknown token in selector "' + selector + '"');
+            emit('Unknown token in selector "' + selector + '"');
             return '';
           }
 
@@ -1306,7 +1307,7 @@
 
         // error if no matches found by the pattern scan
         if (!match) {
-          emit('invalid syntax in selector "' + selector + '"');
+          emit('Invalid syntax in selector "' + selector + '"');
           return '';
         }
 
@@ -1357,7 +1358,7 @@
           lastMatcher = selector;
           isSingleMatch = (parts = selector.match(reSplitGroup)).length < 2;
         } else {
-          emit('"' + selector + '" is not a valid CSS selector.');
+          emit('The string "' + selector + '", is not a valid CSS selector');
           return false;
         }
       }
@@ -1392,10 +1393,10 @@
       var i, changed, element, elements, parts, resolver, token;
 
       if (arguments.length === 0) {
-        emit('missing required selector parameters');
+        emit('Missing required selector parameters');
         return [ ];
       } else if (selector === '') {
-        emit('empty selector string');
+        emit('Empty selector string');
         return [ ];
       } else if (typeof selector != 'string') {
         // QSA capable browsers do not throw
@@ -1488,7 +1489,7 @@
           lastSelector = selector;
           isSingleSelect = (parts = selector.match(reSplitGroup)).length < 2;
         } else {
-          emit('"' + selector + '" is not a valid CSS selector.');
+          emit('The string "' + selector + '", is not a valid CSS selector');
           return [ ];
         }
       }
