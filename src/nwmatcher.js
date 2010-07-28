@@ -102,8 +102,6 @@
     "|(?:" + prefixes + identifier + ")" +
     // combinator selector
     "|" + combinators +
-    // quoted values selector
-    "|" + quotedvalue +
     // HTML attribute selector
     "|\\[" + attributes + "\\]" +
     // pseudo-classes parameters
@@ -633,12 +631,18 @@
     },
 
   // elements by tag (raw)
-  byTagRaw = function(tag, node) {
-    var elements = [], i = 0, anyTag = tag === "*", next = node.firstChild;
-    while ((node = next)) {
-      if (node.nodeName > '@') elements[i++] = node;
-      next = node.firstChild || node.nextSibling;
-      while (!next && (node = node.parentNode)) next = node.nextSibling;
+  // @return array
+  byTagRaw = function(tag, from) {
+    var any = tag == '*', element = from, elements = [ ], next = element.firstChild;
+    any || (tag = tag.toUpperCase());
+    while ((element = next)) {
+      if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
+        elements[elements.length] = element;
+      }
+      if (next = element.firstChild || element.nextSibling) continue;
+      while (!next && (element = element.parentNode) && element != from) {
+        next = element.nextSibling;
+      };
     }
     return elements;
   },
@@ -687,8 +691,8 @@
       from || (from = doc);
       var i = -1, j = i,
         data = [ ], element,
+        elements = byTag('*', from),
         host = from.ownerDocument || from,
-        elements = from.getElementsByTagName('*'),
         quirks = isQuirks(host), xml = isXML(host),
         n = quirks ? className.toLowerCase() : className;
       className = ' ' + n.replace(/\\/g, '') + ' ';
@@ -1533,7 +1537,7 @@
         } else {
           // RTL optimization for browser without GEBCN, TAG first CLASS second
           if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
-            if ((elements = from.getElementsByTagName(token)).length === 0) { return [ ]; }
+            if ((elements = byTag(token, from)).length === 0) { return [ ]; }
           } else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
             if ((elements = byClass(token, from)).length === 0) { return [ ]; }
           }
