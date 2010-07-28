@@ -25,6 +25,9 @@
   // context root element
   root = doc.documentElement,
 
+  // save method reference
+  slice = Array.prototype.slice,
+
   // persist last selector/matcher parsing data
   lastError = '',
   lastSlice = '',
@@ -36,13 +39,6 @@
   // initialize selector/matcher loading context
   lastMatchContext = doc,
   lastSelectContext = doc,
-
-  // http://www.w3.org/TR/css3-syntax/#characters
-  // unicode/ISO 10646 characters 161 and higher
-  // NOTE: Safari 2.0.x crashes with escaped (\\)
-  // Unicode ranges in regular expressions so we
-  // use a negated character range class instead
-  encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)+',
 
   // prefixes identifying id, class & pseudo-class
   prefixes = '[.:#]?',
@@ -62,6 +58,13 @@
 
   // CSS quoted string values
   quotedvalue = '"[^"]*"' + "|'[^']*'",
+
+  // http://www.w3.org/TR/css3-syntax/#characters
+  // unicode/ISO 10646 characters 161 and higher
+  // NOTE: Safari 2.0.x crashes with escaped (\\)
+  // Unicode ranges in regular expressions so we
+  // use a negated character range class instead
+  encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)+',
 
   // CSS identifiers
   identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)',
@@ -171,8 +174,6 @@
   reRightContext = /[>+~]{1}\s*$/,
 
   /*----------------------------- UTILITY METHODS ----------------------------*/
-
-  slice = Array.prototype.slice,
 
   // Safari 2 bug with innerText (gasp!)
   // used to strip tags from innerHTML
