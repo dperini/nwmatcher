@@ -534,25 +534,16 @@
   CSS3PseudoClasses = {
     Structural: {
       'root': 3, 'empty': 3,
+      'nth-child': 3, 'nth-last-child': 3,
+      'nth-of-type': 3, 'nth-last-of-type': 3,
       'first-child': 3, 'last-child': 3, 'only-child': 3,
-      'first-of-type': 3, 'last-of-type': 3, 'only-of-type': 3,
-      'first-child-of-type': 3, 'last-child-of-type': 3, 'only-child-of-type': 3,
-      'nth-child': 3, 'nth-last-child': 3, 'nth-of-type': 3, 'nth-last-of-type': 3
-      // (the 4rd line is not in W3C CSS specs but is an accepted alias of 3nd line)
+      'first-of-type': 3, 'last-of-type': 3, 'only-of-type': 3
     },
-
-    // originally separated in different pseudo-classes
-    // we have grouped them to optimize a bit size+speed
-    // all are going through the same code path (switch)
     Others: {
-      // UIElementStates (grouped to optimize)
-      'checked': 3, 'disabled': 3, 'enabled': 3, 'selected': 2, 'indeterminate': '?',
-      // Dynamic pseudo classes
-      'active': 3, 'focus': 3, 'hover': 3, 'link': 3, 'visited': 3,
-      // Target, Language and Negated pseudo classes
+      'link': 3, 'visited': 3,
       'target': 3, 'lang': 3, 'not': 3,
-      // http://www.w3.org/TR/2001/CR-css3-selectors-20011113/#content-selectors
-      'contains': '?'
+      'active': 3, 'focus': 3, 'hover': 3,
+      'checked': 3, 'disabled': 3, 'enabled': 3
     }
   },
 
