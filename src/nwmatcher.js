@@ -173,14 +173,6 @@
   reLeftContext = /^\s*[>+~]{1}/,
   reRightContext = /[>+~]{1}\s*$/,
 
-  /*----------------------------- UTILITY METHODS ----------------------------*/
-
-  // Safari 2 bug with innerText (gasp!)
-  // used to strip tags from innerHTML
-  stripTags = function(s) {
-    return s.replace(/<\/?("[^\"]*"|'[^\']*'|[^>])+>/gi, '');
-  },
-
   /*----------------------------- FEATURE TESTING ----------------------------*/
 
   // detect native methods
@@ -331,15 +323,6 @@
     })() :
     true,
 
-  // detect Safari bug with selected option elements
-  BUGGY_SELECTED =
-    (function() {
-      var isBuggy, select = doc.createElement('select');
-      select.appendChild(doc.createElement('option'));
-      isBuggy = !select.firstChild.selected;
-      return isBuggy;
-    })(),
-
   // check Seletor API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
@@ -398,10 +381,6 @@
       div.appendChild(doc.createElement('a')).setAttribute('href', 'x');
       div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
       div.removeChild(div.firstChild);
-
-      // Chrome and Safari 4.0 fail :target resolution
-      // :selected and :contains are for legacy support
-      pattern.push(':target', ':selected', ':contains');
 
       // avoid following selectors for IE QSA
       if (BUGGY_HAS_ATTRIBUTE) {
@@ -829,18 +808,6 @@
       return hasAttribute(element,'href') && LINK_NODES[element.nodeName];
     },
 
-  // fix for reading the selected property
-  // in older Safari 2 and Opera 8 browsers
-  isSelected = BUGGY_SELECTED ?
-    function(element) {
-      var parent = element.parentNode;
-      return element.defaultSelected ||
-        parent.options[parent.selectedIndex] === element;
-    } :
-    function(element) {
-      return element.selected;
-    },
-
   /*------------------------------- DEBUGGING --------------------------------*/
 
   // compile selectors to ad-hoc functions resolvers
@@ -927,22 +894,6 @@
   // checks if nodeName comparisons need to be uppercased
   TO_UPPER_CASE = doc.createElement('nAv').nodeName == 'nAv' ?
     '.toUpperCase()' : '',
-
-  // use the textContent or innerText property to check CSS3 :contains
-  // Safari 2 have a bug with innerText and hidden content, so we need
-  // to use an internal stripTags and the innerHTML property
-  CONTAINS_TEXT =
-    'textContent' in root ?
-    'e.textContent' :
-    (function() {
-      var div = doc.createElement('div'), p;
-      div.appendChild(p = doc.createElement('p'));
-      p.appendChild(doc.createTextNode('p'));
-      div.style.display = 'none';
-      return div.innerText ?
-        'e.innerText' :
-        's.stripTags(e.innerHTML)';
-    })(),
 
   // compile a comma separated group of selector
   // @mode boolean true for select, false for match
@@ -1266,16 +1217,6 @@
               source = NATIVE_FOCUS ?
                 'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href)){' + source + '}' :
                 'if(e===d.activeElement&&(e.type||e.href)){' + source + '}';
-              break;
-
-            // CSS2 :contains and :selected pseudo-classes
-            // not currently part of CSS3 drafts
-            case 'contains':
-              source = 'if(' + CONTAINS_TEXT + '.indexOf("' + match[3] + '")>-1){' + source + '}';
-              break;
-            case 'selected':
-              // isSelected needed for Safari 2/Opera 8 problems with the 'selected' property
-              source = 'if(e.nodeName.toUpperCase()=="OPTION"&&s.isSelected(e)){' + source + '}';
               break;
 
             default:
@@ -1622,8 +1563,6 @@
     byId: byId,
 
     // helper/check methods
-    isSelected: isSelected,
-    stripTags: stripTags,
     isEmpty: isEmpty,
     isLink: isLink,
 
