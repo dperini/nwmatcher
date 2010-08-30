@@ -89,52 +89,52 @@
     ',)+)',
 
   // placeholder for extensions
-  extensions = ".+",
+  extensions = '.+',
 
   // CSS3: syntax scanner and
   // one pass validation only
   // using regular expression
   standardValidator =
     // discard start
-    "(?=\s*[^>+~(){}<>])" +
+    '(?=\s*[^>+~(){}<>])' +
     // open match group
-    "(" +
+    '(' +
     //universal selector
-    "\\*" +
+    '\\*' +
     // id/class/tag/pseudo-class identifier
-    "|(?:" + prefixes + identifier + ")" +
+    '|(?:' + prefixes + identifier + ')' +
     // combinator selector
-    "|" + combinators +
+    '|' + combinators +
     // HTML attribute selector
-    "|\\[" + attributes + "\\]" +
+    '|\\[' + attributes + '\\]' +
     // pseudo-classes parameters
-    "|\\(" + pseudoclass + "\\)" +
+    '|\\(' + pseudoclass + '\\)' +
     // dom properties selector (extension)
-    "|\\{" + extensions + "\\}" +
+    '|\\{' + extensions + '\\}' +
     // selector group separator (comma)
-    "|," +
+    '|,' +
     // close match group
-    ")+",
+    ')+',
 
   // validator for standard selectors as default
-  reValidator = new RegExp(standardValidator, "g"),
+  reValidator = new RegExp(standardValidator, 'g'),
 
   // validator for complex selectors in ':not()' pseudo-classes
   extendedValidator = standardValidator.replace(pseudoclass, '.*'),
 
   // whitespace is any combination of these 5 character [\x20\t\n\r\f]
   // http://www.w3.org/TR/css3-selectors/#selector-syntax
-  reTrimSpaces = new RegExp("^" +
-    whitespace + "|" + whitespace + "$", "g"),
+  reTrimSpaces = new RegExp('^' +
+    whitespace + '|' + whitespace + '$', 'g'),
 
   // only allow simple selectors nested in ':not()' pseudo-classes
-  reSimpleNot = new RegExp("^(" +
-    "(?!:not)" +
-    "(" + prefixes +
-    "|" + identifier +
-    "|\\([^()]*\\))+" +
-    "|\\[" + attributes + "\\]" +
-    ")$"),
+  reSimpleNot = new RegExp('^(' +
+    '(?!:not)' +
+    '(' + prefixes +
+    '|' + identifier +
+    '|\\([^()]*\\))+' +
+    '|\\[' + attributes + '\\]' +
+    ')$'),
 
   // skip group of round brackets
   skipround = '\\([^()]+\\)|\\(.*\\)',
@@ -148,25 +148,25 @@
 
   // split comma groups, exclude commas from
   // quotes '' "" and from brackets () [] {}
-  reSplitGroup = new RegExp("(" +
-    "[^(,)\\\\\\[\\]]+" +
-    "|\\[(?:" + skipsquare +
-    "|" + quotedvalue +
-    "|[^\\[\\]]+)+\\]" +
-    "|" + skipround +
-    "|" + skipcurly +
-    "|\\\\." +
-    ")+", "g"),
+  reSplitGroup = new RegExp('(' +
+    '[^(,)\\\\\\[\\]]+' +
+    '|\\[(?:' + skipsquare +
+    '|' + quotedvalue +
+    '|[^\\[\\]]+)+\\]' +
+    '|' + skipround +
+    '|' + skipcurly +
+    '|\\\\.' +
+    ')+', 'g'),
 
   // split last, right most, selector group token
-  reSplitToken = new RegExp("(" +
-    "\\(" + pseudoclass + "\\)|" +
-    "\\[" + attributes + "\\]|" +
-    "[^\x20>+~]|\\\\.)+", "g"),
+  reSplitToken = new RegExp('(' +
+    '\\(' + pseudoclass + '\\)|' +
+    '\\[' + attributes + '\\]|' +
+    '[^\x20>+~]|\\\\.)+', 'g'),
 
   // for pseudos, ids and in excess whitespace removal
-  reClassValue = new RegExp("(" + identifier + ")"),
-  reIdSelector = new RegExp("#(" + identifier + ")"),
+  reClassValue = new RegExp('(' + identifier + ')'),
+  reIdSelector = new RegExp('#(' + identifier + ')'),
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
   // match missing R/L context
@@ -494,9 +494,9 @@
 
   // optimization expressions
   Optimize = {
-    ID: new RegExp("^#(" + encoding + ")|" + skipgroup),
-    TAG: new RegExp("^(" + encoding + ")|" + skipgroup),
-    CLASS: new RegExp("^\\.(" + encoding + "$)|" + skipgroup),
+    ID: new RegExp('^#(' + encoding + ')|' + skipgroup),
+    TAG: new RegExp('^(' + encoding + ')|' + skipgroup),
+    CLASS: new RegExp('^\\.(' + encoding + '$)|' + skipgroup),
     NAME: /\[\s*name\s*=\s*((["']*)([^'"()]*?)\2)?\s*\]/
   },
 
@@ -507,7 +507,7 @@
     // uistates + dynamic + negation pseudo-classes
     dpseudos: /^\:([\w]+|[^\x00-\xa0]+)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
     // element attribute matcher
-    attribute: new RegExp("^\\[" + attributes + "\\](.*)"),
+    attribute: new RegExp('^\\[' + attributes + '\\](.*)'),
     // E > F
     children: /^[\x20\t\n\r\f]*\>[\x20\t\n\r\f]*(.*)/,
     // E + F
@@ -519,11 +519,11 @@
     // all
     universal: /^\*(.*)/,
     // id
-    id: new RegExp("^#(" + encoding + ")(.*)"),
+    id: new RegExp('^#(' + encoding + ')(.*)'),
     // tag
-    tagName: new RegExp("^(" + encoding + ")(.*)"),
+    tagName: new RegExp('^(' + encoding + ')(.*)'),
     // class
-    className: new RegExp("^\\.(" + encoding + ")(.*)")
+    className: new RegExp('^\\.(' + encoding + ')(.*)')
   },
 
   // current CSS3 grouping of Pseudo-Classes
@@ -823,12 +823,12 @@
           HTMLMatchers = { };
           XMLMatchers = { };
           USE_QSAPI = false;
-          reValidator = new RegExp(extendedValidator, "g");
+          reValidator = new RegExp(extendedValidator, 'g');
         } else if (i == 'SHORTCUTS') {
           SHORTCUTS = !!options[i];
         } else if (i == 'USE_QSAPI') {
           USE_QSAPI = !!options[i] && NATIVE_QSAPI;
-          reValidator = new RegExp(standardValidator, "g");
+          reValidator = new RegExp(standardValidator, 'g');
         }
       }
     },
