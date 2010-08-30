@@ -66,16 +66,16 @@
   // use a negated character range class instead
   encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)+',
 
-  // CSS identifiers
-  identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)',
+  // CSS identifier syntax
+  identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)+',
 
-  // build attribute RE
+  // build attribute string
   attributes =
     whitespace + '(' + encoding + ':?' + encoding + ')' +
     whitespace + '(?:' + operators + whitespace + '(' +
     quotedvalue + '|' + identifier + '))?' + whitespace,
 
-  // build pseudo-class RE
+  // build pseudoclass string
   pseudoclass = '((?:' +
     // an+b parameters or quoted string
     pseudoparms + '|' + quotedvalue + '|' +
