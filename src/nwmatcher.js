@@ -43,7 +43,7 @@
   // prefixes identifying id, class & pseudo-class
   prefixes = '[.:#]?',
 
-  // attribute operators
+  // attributes operators
   // ! invalid but compat !
   operators = '([~*^$|!]?={1})',
 
@@ -618,7 +618,7 @@
       if (next = element.firstChild || element.nextSibling) continue;
       while (!next && (element = element.parentNode) && element != from) {
         next = element.nextSibling;
-      };
+      }
     }
     return elements;
   },
@@ -811,6 +811,7 @@
       return compileGroup(selector, '', mode || false);
     },
 
+  // set working mode
   configure =
     function(options) {
       for (var i in options) {
@@ -1597,7 +1598,10 @@
     // compile selector into ad-hoc javascript resolver
     compile: compile,
 
-    // engine configuration helper
+    // check that two elements are ancestor/descendant
+    contains: contains,
+
+    // handle selector engine configuration settings
     configure: configure,
 
     // add or overwrite user defined operators
