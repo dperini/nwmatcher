@@ -229,9 +229,9 @@ test("attributes", function() {
 	t( "Attribute Ends With", "a[href $= 'org/']", ["mark"] );
 	t( "Attribute Contains", "a[href *= 'google']", ["google","groups"] );
 	
-	t("Select options via :selected", "#select1 option:selected", ["option1a"] );
-	t("Select options via :selected", "#select2 option:selected", ["option2d"] );
-	t("Select options via :selected", "#select3 option:selected", ["option3b", "option3c"] );
+	t("Select options via [selected]", "#select1 option:checked", ["option1a"] );
+	t("Select options via [selected]", "#select2 option:checked", ["option2d"] );
+	t("Select options via [selected]", "#select3 option:checked", ["option3b", "option3c"] );
 	
 	t( "Grouped Form Elements", "input[name='foo[bar]']", ["hidden2"] );
 	
@@ -241,7 +241,7 @@ test("attributes", function() {
 });
 
 test("pseudo (:) selectors", function() {
-	expect(32);
+	expect(30);
 	t( "First Child", "p:first-child", ["firstp","sndp"] );
 	t( "Last Child", "p:last-child", ["sap"] );
 	t( "Only Child", "a:only-child", ["simon1","anchor1","yahoo","anchor2"] );
@@ -249,9 +249,9 @@ test("pseudo (:) selectors", function() {
 	t( "Enabled UI Element", "#form input:not([type=hidden]):enabled", ["text1","radio1","radio2","check1","check2","hidden2","name"] );
 	t( "Disabled UI Element", "#form input:disabled", ["text2"] );
 	t( "Checked UI Element", "#form input:checked", ["radio2","check1"] );
-	t( "Selected Option Element", "#form option:selected", ["option1a","option2d","option3b","option3c"] );
-	t( "Text Contains", "a:contains('Google')", ["google","groups"] );
-	t( "Text Contains", "a:contains('Google Groups')", ["groups"] );
+	t( "Selected Option Element", "#form option:checked", ["option1a","option2d","option3b","option3c"] );
+	//t( "Text Contains", "a:contains('Google')", ["google","groups"] );
+	//t( "Text Contains", "a:contains('Google Groups')", ["groups"] );
 	t( "Element Preceded By", "p ~ div", ["foo","fx-queue","fx-tests", "moretests"] );
 	t( "Not", "a.blog:not(.link)", ["mark"] );
 	//t( "Not - multiple", "#form option:not(:contains('Nothing'),#option1b,:selected)", ["option1c", "option1d", "option2b", "option2c", "option3d", "option3e"] );
