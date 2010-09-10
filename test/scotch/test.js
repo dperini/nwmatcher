@@ -128,7 +128,7 @@ function getById(element){
     },
     'E[foo="bar"]': function(){
       this.assertEquivalent(select('a[href="#"]'), getById('link_1', 'link_2', 'link_3'));
-      this.assertThrowsException("DOMException SYNTAX_ERR", function(){
+      this.assertThrowsException("SYNTAX_ERR", function(){
         select('a[href=#]');
       });
       this.assertEqual(select('#troubleForm2 input[name="brackets[5][]"][value="2"]')[0], getById('chk_2'));
@@ -169,17 +169,57 @@ function getById(element){
     'E[foo*="bar"]': function(){
       this.assertEquivalent(select('div[class*="ers m"]'), getById('father', 'uncle'), 'matching substring');
       this.assertEquivalent(select('#level1 *[id*="2"]'), getById('level2_1', 'level3_2', 'level2_2', 'level2_3'));
-      this.assertThrowsException("DOMException SYNTAX_ERR", function(){
+      this.assertThrowsException("SYNTAX_ERR", function(){
         select('#level1 *[id*=2]');
       });
       if(RUN_BENCHMARKS){
         this.wait(function(){
           this.benchmark(function(){
-            select('#level1 *[id*=_2]');
+            select('#level1 *[id*=2]');
           }, 1000);
         }, 500);
       }
-    }
+    },
+
+	// *** these should throw SYNTAX_ERR ***
+
+    'E[id=-1]': function(){
+      this.assertThrowsException("SYNTAX_ERR", function(){
+        select('#level1 *[id=-1]');
+      });
+      if(RUN_BENCHMARKS){
+        this.wait(function(){
+          this.benchmark(function(){
+            select('#level1 *[id=9]');
+          }, 1000);
+        }, 500);
+      }
+    },
+    'E[class=-45deg]': function(){
+      this.assertThrowsException("SYNTAX_ERR", function(){
+        select('#level1 *[class=-45deg]');
+      });
+      if(RUN_BENCHMARKS){
+        this.wait(function(){
+          this.benchmark(function(){
+            select('#level1 *[class=-45deg]');
+          }, 1000);
+        }, 500);
+      }
+    },
+    'E[class=8mm]': function(){
+      this.assertThrowsException("SYNTAX_ERR", function(){
+        select('#level1 *[class=8mm]');
+      });
+      if(RUN_BENCHMARKS){
+        this.wait(function(){
+          this.benchmark(function(){
+            select('#level1 *[class=8mm]');
+          }, 1000);
+        }, 500);
+      }
+    },
+
   });
   
   runner.addGroup("Structural pseudo-classes").addTests(null, {
