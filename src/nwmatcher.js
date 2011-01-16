@@ -5,9 +5,9 @@
  * nwmatcher.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.2.3
+ * Version: 1.2.4beta
  * Created: 20070722
- * Release: 20100901
+ * Release: 20110116
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -17,7 +17,7 @@
 
 (function(global) {
 
-  var version = 'nwmatcher-1.2.3',
+  var version = 'nwmatcher-1.2.4beta', 
 
   // processing context
   doc = global.document,
@@ -881,7 +881,7 @@
 
   // do not change this, it is searched & replaced
   // in multiple places to build compiled functions
-  ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
+  ACCEPT_NODE = 'r[r.length]=c[k];continue main;',
 
   // checks if nodeName comparisons need to be uppercased
   TO_UPPER_CASE = doc.createElement('nAv').nodeName == 'nAv' ?
@@ -891,18 +891,17 @@
   // @mode boolean true for select, false for match
   // return a compiled function
   compileGroup =
-    function(selector, source, mode) {
-      var i = -1, seen = { }, parts, token;
-      if ((parts = selector.match(reSplitGroup))) {
-        // for each selector in the group
-        while ((token = parts[++i])) {
-          token = token.replace(reTrimSpaces, '');
-          // avoid repeating the same token in comma separated group (p, p)
-          if (!seen[token]) {
-            seen[token] = true;
-            source += i > 0 ? (mode ? 'e=c[k];': 'e=k;') : '';
-            source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
-          }
+    function(selector, source, mode, callback) {
+      var i = -1, seen = { }, token, parts = typeof selector == 'string' ?
+        selector.match(reSplitGroup) : selector;
+      // for each selector in the group
+      while ((token = parts[++i])) {
+        token = token.replace(reTrimSpaces, '');
+        // avoid repeating the same token in comma separated group (p, p)
+        if (!seen[token]) {
+          seen[token] = true;
+          source += (i > 0 ? (mode ? 'e=c[k];': 'e=k;') : '') +
+            compileSelector(token, (callback ? 'f&&f(e);' : '') + (mode ? ACCEPT_NODE : 'return true;'), callback);
         }
       }
       if (mode) {
@@ -919,7 +918,7 @@
   // compile a CSS3 string selector into ad-hoc javascript matching function
   // @return string (to be compiled)
   compileSelector =
-    function(selector, source) {
+    function(selector, source, callback) {
 
       var i, a, b, n, k, expr, match, result, status, test, type;
 
@@ -1146,7 +1145,7 @@
                 return '';
               } else {
                 if ('compatMode' in doc) {
-                  source = 'N=' + compileGroup(expr, '', false) + '(e,s,r,d,h,g);if(!N){' + source + '}';
+                  source = 'N=' + compileGroup(expr, '', false, callback) + '(e,s,r,d,h,g);if(!N){' + source + '}';
                 } else {
                   source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",r)){' + source +'}';
                 }
@@ -1306,17 +1305,12 @@
       }
 
       // compile matcher resolver if necessary
-      if (isXMLDocument && !(resolver = XMLMatchers[selector])) {
-        resolver = XMLMatchers[selector] = isSingleMatch ?
-          new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
-            compileSelector(selector, 'f&&f(k);return true;') +
-            'return false;') : compileGroup(selector, '', false);
-      } else if (!(resolver = HTMLMatchers[selector])) {
-        resolver = HTMLMatchers[selector] = isSingleMatch ?
-          new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
-            compileSelector(selector, 'f&&f(k);return true;') +
-            'return false;') : compileGroup(selector, '', false);
-      }
+      resolver = (isXMLDocument && XMLMatchers[selector]) ?
+        XMLMatchers[selector] : HTMLMatchers[selector] ?
+          HTMLMatchers[selector] : (isXMLDocument ? XMLMatchers : HTMLMatchers)[selector] =
+          isSingleSelect ? new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
+            compileSelector(selector, (callback ? 'f&&f(k);' : '') + 'return true;', callback) + 'return false;') :
+            compileGroup(parts, '', false, callback);
 
       // reinitialize indexes
       indexesByNodeType = { };
@@ -1495,19 +1489,12 @@
       // end of prefiltering pass
 
       // compile selector resolver if necessary
-      if (isXMLDocument && !(resolver = XMLResolvers[selector])) {
-        resolver = XMLResolvers[selector] = isSingleSelect ?
-          new Function('c,s,r,d,h,g,f',
-            'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
-            compileSelector(selector, ACCEPT_NODE) + '}return r;') :
-          compileGroup(selector, '', true);
-      } else if (!(resolver = HTMLResolvers[selector])) {
-        resolver = HTMLResolvers[selector] = isSingleSelect ?
-          new Function('c,s,r,d,h,g,f',
-            'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
-            compileSelector(selector, ACCEPT_NODE) + '}return r;') :
-          compileGroup(selector, '', true);
-      }
+      resolver = (isXMLDocument && XMLResolvers[selector]) ?
+        XMLResolvers[selector] : HTMLResolvers[selector] ?
+          HTMLResolvers[selector] : (isXMLDocument ? XMLResolvers : HTMLResolvers)[selector] =
+          isSingleSelect ? new Function('c,s,r,d,h,g,f', 'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
+            compileSelector(selector, (callback ? 'f&&f(c[k]);' : '') + ACCEPT_NODE, callback) + '}return r;') :
+            compileGroup(parts, '', true, callback);
 
       // reinitialize indexes
       indexesByNodeType = { };

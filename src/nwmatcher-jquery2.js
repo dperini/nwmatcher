@@ -30,7 +30,7 @@ NW.Dom.registerSelector(
 
   var status = true,
   // do not change this, it is searched & replaced
-  ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;';
+  ACCEPT_NODE = 'r[r.length]=c[k];continue main;';
 
   switch (match[1]) {
     case 'even':
@@ -78,7 +78,7 @@ NW.Dom.registerSelector(
 
   var status = true,
   // do not change this, it is searched & replaced
-  ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;';
+  ACCEPT_NODE = 'r[r.length]=c[k];continue main;';
 
   switch(match[1]) {
     case 'has':
