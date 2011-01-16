@@ -17,7 +17,7 @@
 
 (function(global) {
 
-  var version = 'nwmatcher-1.2.4beta', 
+  var version = 'nwmatcher-1.2.4beta',
 
   // processing context
   doc = global.document,
@@ -65,14 +65,14 @@
   // NOTE: Safari 2.0.x crashes with escaped (\\)
   // Unicode ranges in regular expressions so we
   // use a negated character range class instead
-  encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)+',
+  encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)',
 
   // CSS identifier syntax
   identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)+',
 
   // build attribute string
   attributes =
-    whitespace + '(' + encoding + ':?' + encoding + ')' +
+    whitespace + '(' + encoding + '+:?' + encoding + '+)' +
     whitespace + '(?:' + operators + whitespace + '(' +
     quotedvalue + '|' + identifier + '))?' + whitespace,
 
@@ -81,7 +81,7 @@
     // an+b parameters or quoted string
     pseudoparms + '|' + quotedvalue + '|' +
     // id, class, pseudo-class selector
-    prefixes + '|' + encoding + '|' +
+    prefixes + '|' + encoding + '+|' +
     // nested HTML attribute selector
     '\\[' + attributes + '\\]|' +
     // nested pseudo-class selector
@@ -409,8 +409,8 @@
   // matches simple id, tag & class selectors
   RE_SIMPLE_SELECTOR = new RegExp(
     !(BUGGY_GEBTN && BUGGY_GEBCN) ?
-      '^(?:\\*|[.#]?-?[_a-zA-Z]{1}' + encoding + ')$' :
-      '^#?-?[_a-zA-Z]{1}' + encoding + '$'),
+      '^(?:\\*|[.#]?-?[_a-zA-Z]{1}' + encoding + '*)$' :
+      '^#?-?[_a-zA-Z]{1}' + encoding + '*$'),
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
@@ -497,9 +497,9 @@
 
   // optimization expressions
   Optimize = {
-    ID: new RegExp('^#(' + encoding + ')|' + skipgroup),
-    TAG: new RegExp('^(' + encoding + ')|' + skipgroup),
-    CLASS: new RegExp('^\\.(' + encoding + '$)|' + skipgroup),
+    ID: new RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
+    TAG: new RegExp('^(' + encoding + '+)|' + skipgroup),
+    CLASS: new RegExp('^\\*?\\.(' + encoding + '+)|' + skipgroup),
     NAME: /\[\s*name\s*=\s*((["']*)([^'"()]*?)\2)?\s*\]/
   },
 
@@ -522,11 +522,11 @@
     // all
     universal: /^\*(.*)/,
     // id
-    id: new RegExp('^#(' + encoding + ')(.*)'),
+    id: new RegExp('^#(' + encoding + '+)(.*)'),
     // tag
-    tagName: new RegExp('^(' + encoding + ')(.*)'),
+    tagName: new RegExp('^(' + encoding + '+)(.*)'),
     // class
-    className: new RegExp('^\\.(' + encoding + ')(.*)')
+    className: new RegExp('^\\.(' + encoding + '+)(.*)')
   },
 
   // current CSS3 grouping of Pseudo-Classes
@@ -1342,23 +1342,8 @@
         return [ ];
       }
 
-      selector = selector.replace(reTrimSpaces, '');
-
       // ensure context is set
       from || (from = doc);
-
-      if (SHORTCUTS) {
-        // add left context if missing
-        if (reLeftContext.test(selector)) {
-          selector = from.nodeType == 9 ? '* ' + selector :
-            from.id ? '#' + from.id + ' ' + selector :
-              selector;
-        }
-        // add right context if missing
-        if (reRightContext.test(selector)) {
-          selector = selector + ' *';
-        }
-      }
 
       if (RE_SIMPLE_SELECTOR.test(selector)) {
         switch (selector.charAt(0)) {
@@ -1408,6 +1393,21 @@
                   slice.call(elements) :
                   concatList([ ], elements);
           }
+        }
+      }
+
+      selector = selector.replace(reTrimSpaces, '');
+
+      if (SHORTCUTS) {
+        // add left context if missing
+        if (reLeftContext.test(selector)) {
+          selector = from.nodeType == 9 ? '* ' + selector :
+            from.id ? '#' + from.id + ' ' + selector :
+              selector;
+        }
+        // add right context if missing
+        if (reRightContext.test(selector)) {
+          selector = selector + ' *';
         }
       }
 
