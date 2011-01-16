@@ -31,6 +31,7 @@
   // persist last selector/matcher parsing data
   lastError = '',
   lastSlice = '',
+  lastPosition = 0,
   lastMatcher = '',
   lastSelector = '',
   isSingleMatch = false,
@@ -172,6 +173,8 @@
   // match missing R/L context
   reLeftContext = /^\s*[>+~]{1}/,
   reRightContext = /[>+~]{1}\s*$/,
+
+  reOptimizeSelector = new RegExp(identifier + '|^$'),
 
   /*----------------------------- FEATURE TESTING ----------------------------*/
 
@@ -1438,6 +1441,9 @@
           parts = selector.match(reSplitToken);
           token = parts[parts.length - 1];
 
+          // position where token was found
+          lastPosition = selector.length - token.length;
+
           // only last slice before :not rules
           lastSlice = token.split(':not')[0];
         }
@@ -1460,25 +1466,42 @@
               from = element.parentNode;
             } else {
               selector = selector.replace('#' + token, '*');
+              lastPosition -= token.length + 1;
               from = element;
             }
           } else return [ ];
         }
 
-        if (NATIVE_GEBCN) {
-          // RTL optimization for browsers with GEBCN, CLASS first TAG second
-          if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-            if ((elements = byClass(token, from)).length === 0) { return [ ]; }
-          } else if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
-            if ((elements = byTag(token, from)).length === 0) { return [ ]; }
+        if (!NATIVE_GEBCN && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
+          if ((elements = byTag(token, from)).length === 0) { return [ ]; }
+          selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace(token, '*');
+        }
+
+        else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
+          if ((elements = byClass(token, from)).length === 0) { return [ ]; }
+          if (reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1))) {
+            selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '');
+          } else {
+            selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '*');
           }
-        } else {
-          // RTL optimization for browser without GEBCN, TAG first CLASS second
-          if ((parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
-            if ((elements = byTag(token, from)).length === 0) { return [ ]; }
-          } else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-            if ((elements = byClass(token, from)).length === 0) { return [ ]; }
+        }
+
+        else if ((parts = selector.match(Optimize.CLASS)) && (token = parts[1])) {
+          if ((elements = byClass(token, from)).length === 0) { return [ ]; }
+          for (var z = 0, els = [ ]; elements.length > z; ++z) {
+            els = concatList(els, elements[z].getElementsByTagName('*'));
           }
+          elements = els;
+          if (reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1))) {
+            selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '');
+          } else {
+            selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '*');
+          }
+        }
+
+        else if (NATIVE_GEBCN && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
+          if ((elements = byTag(token, from)).length === 0) { return [ ]; }
+          selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace(token, '*');
         }
 
       }
