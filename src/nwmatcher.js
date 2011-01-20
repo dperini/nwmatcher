@@ -1311,7 +1311,7 @@
       resolver = (isXMLDocument && XMLMatchers[selector]) ?
         XMLMatchers[selector] : HTMLMatchers[selector] ?
           HTMLMatchers[selector] : (isXMLDocument ? XMLMatchers : HTMLMatchers)[selector] =
-          isSingleSelect ? new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
+          isSingleMatch ? new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
             compileSelector(selector, (callback ? 'f&&f(k);' : '') + 'return true;', callback) + 'return false;') :
             compileGroup(parts, '', false, callback);
 
