@@ -884,7 +884,7 @@
 
   // do not change this, it is searched & replaced
   // in multiple places to build compiled functions
-  ACCEPT_NODE = 'r[r.length]=c[k];continue main;',
+  ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
 
   // checks if nodeName comparisons need to be uppercased
   TO_UPPER_CASE = doc.createElement('nAv').nodeName == 'nAv' ?
@@ -894,7 +894,7 @@
   // @mode boolean true for select, false for match
   // return a compiled function
   compileGroup =
-    function(selector, source, mode, callback) {
+    function(selector, source, mode) {
       var i = -1, seen = { }, token, parts = typeof selector == 'string' ?
         selector.match(reSplitGroup) : selector;
       // for each selector in the group
@@ -904,7 +904,7 @@
         if (!seen[token]) {
           seen[token] = true;
           source += (i > 0 ? (mode ? 'e=c[k];': 'e=k;') : '') +
-            compileSelector(token, (callback ? 'f&&f(e);' : '') + (mode ? ACCEPT_NODE : 'return true;'), callback);
+            compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
         }
       }
       if (mode) {
@@ -921,7 +921,7 @@
   // compile a CSS3 string selector into ad-hoc javascript matching function
   // @return string (to be compiled)
   compileSelector =
-    function(selector, source, callback) {
+    function(selector, source) {
 
       var i, a, b, n, k, expr, match, result, status, test, type;
 
@@ -1148,7 +1148,7 @@
                 return '';
               } else {
                 if ('compatMode' in doc) {
-                  source = 'N=' + compileGroup(expr, '', false, callback) + '(e,s,r,d,h,g);if(!N){' + source + '}';
+                  source = 'N=' + compileGroup(expr, '', false) + '(e,s,r,d,h,g);if(!N){' + source + '}';
                 } else {
                   source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",r)){' + source +'}';
                 }
@@ -1312,8 +1312,8 @@
         XMLMatchers[selector] : HTMLMatchers[selector] ?
           HTMLMatchers[selector] : (isXMLDocument ? XMLMatchers : HTMLMatchers)[selector] =
           isSingleMatch ? new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
-            compileSelector(selector, (callback ? 'f&&f(k);' : '') + 'return true;', callback) + 'return false;') :
-            compileGroup(parts, '', false, callback);
+            compileSelector(selector, 'f&&f(k);return true;') + 'return false;') :
+            compileGroup(parts, '', false);
 
       // reinitialize indexes
       indexesByNodeType = { };
@@ -1516,8 +1516,8 @@
         XMLResolvers[selector] : HTMLResolvers[selector] ?
           HTMLResolvers[selector] : (isXMLDocument ? XMLResolvers : HTMLResolvers)[selector] =
           isSingleSelect ? new Function('c,s,r,d,h,g,f', 'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
-            compileSelector(selector, (callback ? 'f&&f(c[k]);' : '') + ACCEPT_NODE, callback) + '}return r;') :
-            compileGroup(parts, '', true, callback);
+            compileSelector(selector, ACCEPT_NODE) + '}return r;') :
+            compileGroup(parts, '', true);
 
       // reinitialize indexes
       indexesByNodeType = { };
