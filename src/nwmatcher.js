@@ -499,7 +499,7 @@
   Optimize = {
     ID: new RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
     TAG: new RegExp('^(' + encoding + '+)|' + skipgroup),
-    CLASS: new RegExp('^\\*?\\.(' + encoding + '+)|' + skipgroup),
+    CLASS: new RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup),
     NAME: /\[\s*name\s*=\s*((["']*)([^'"()]*?)\2)?\s*\]/
   },
 
@@ -700,50 +700,6 @@
       return false;
     },
 
-  // children position by nodeType
-  // @return number
-  getIndexesByNodeType =
-    function(element) {
-      var i = 0, indexes,
-        id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
-      if (!indexesByNodeType[id]) {
-        indexes = { };
-        element = element.firstChild;
-        while (element) {
-          if (element.nodeName > '@') {
-            indexes[element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID)] = ++i;
-          }
-          element = element.nextSibling;
-        }
-        indexes.length = i;
-        indexesByNodeType[id] = indexes;
-      }
-      return indexesByNodeType[id];
-    },
-
-  // children position by nodeName
-  // @return number
-  getIndexesByNodeName =
-    function(element, name) {
-      var i = 0, indexes,
-        id = element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID);
-      if (!indexesByNodeName[id] || !indexesByNodeName[id][name]) {
-        indexes = { };
-        element = element.firstChild;
-        while (element) {
-          if (element.nodeName.toUpperCase() == name) {
-            indexes[element[CSS_INDEX] || (element[CSS_INDEX] = ++CSS_ID)] = ++i;
-          }
-          element = element.nextSibling;
-        }
-        indexes.length = i;
-        indexesByNodeName[id] ||
-          (indexesByNodeName[id] = { });
-        indexesByNodeName[id][name] = indexes;
-      }
-      return indexesByNodeName[id];
-    },
-
   // attribute value
   // @return string
   getAttribute = !BUGGY_GET_ATTRIBUTE ?
@@ -800,6 +756,28 @@
   isLink =
     function(element) {
       return hasAttribute(element,'href') && LINK_NODES[element.nodeName];
+    },
+
+  // child position by nodeType
+  // @return number
+  nthElement =
+    function(element, last) {
+      var count = 1, succ = last ? 'nextSibling' : 'previousSibling';
+      while ((element = element[succ])) {
+        if (element.nodeName > '@') ++count;
+      }
+      return count;
+    },
+
+  // child position by nodeName
+  // @return number
+  nthOfType =
+    function(element, last) {
+      var count = 1, succ = last ? 'nextSibling' : 'previousSibling', type = element.nodeName;
+      while ((element = element[succ])) {
+        if (element.nodeName == type) ++count;
+      }
+      return count;
     },
 
   /*------------------------------- DEBUGGING --------------------------------*/
@@ -1086,31 +1064,23 @@
                   if (n && n[1] == '-') a = -1;
                 }
 
-                // executed after the count is computed
-                type = match[4] ? 'n[N]' : 'n';
-                expr = match[2] == 'last' && b >= 0 ? type + '.length-(' + (b - 1) + ')' : b;
-
-                // shortcut check for of-type selectors
-                type = type + '[e.' + CSS_INDEX + ']';
-
                 // build test expression out of structural pseudo (an+b) parameters
                 // see here: http://www.w3.org/TR/css3-selectors/#nth-child-pseudo
-                test =  b < 1 && a > 1 ? '(' + type + '-(' + expr + '))%' + a + '==0' : a > +1 ?
-                  (match[2] == 'last') ? '(' + type + '-(' + expr + '))%' + a + '==0' :
-                  type + '>=' + expr + '&&(' + type + '-(' + expr + '))%' + a + '==0' : a < -1 ?
-                  (match[2] == 'last') ? '(' + type + '-(' + expr + '))%' + a + '==0' :
-                  type + '<=' + expr + '&&(' + type + '-(' + expr + '))%' + a + '==0' : a=== 0 ?
-                  type + '==' + expr :
+                test =  b < 1 && a > 1 ? '(n-(' + b + '))%' + a + '==0' : a > +1 ?
+                  (match[2] == 'last') ? '(n-(' + b + '))%' + a + '==0' :
+                  'n>=' + b + '&&(n-(' + b + '))%' + a + '==0' : a < -1 ?
+                  (match[2] == 'last') ? '(n-(' + b + '))%' + a + '==0' :
+                  'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a=== 0 ?
+                  'n==' + b :
                   (match[2] == 'last') ?
-                    a == -1 ? type + '>=' + expr : type + '<=' + expr :
-                    a == -1 ? type + '<=' + expr : type + '>=' + expr;
+                    a == -1 ? 'n>=' + b : 'n<=' + b :
+                    a == -1 ? 'n<=' + b : 'n>=' + b;
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
                 source =
-                  (match[4] ? 'N=e.nodeName' + TO_UPPER_CASE + ';' : '') +
                   'if(e!==h){' +
-                    'n=s.getIndexesBy' + (match[4] ? 'NodeName' : 'NodeType') +
-                    '(e.parentNode' + (match[4] ? ',N' : '') + ');' +
+                    'n=s[' + (match[4] ? '"nthOfType"' : '"nthElement"') + ']' +
+                      '(e,' + (match[2] == 'last' ? 'true' : 'false') + ');' +
                     'if(' + test + '){' + source + '}' +
                   '}';
 
@@ -1320,10 +1290,6 @@
                 compileSelector(selector, 'f&&f(k);return true;') + 'return false;') :
               compileGroup(parts, '', false);
 
-      // reinitialize indexes
-      indexesByNodeType = { };
-      indexesByNodeName = { };
-
       return resolver(element, snap, [ ], doc, root, from || doc, callback);
     },
 
@@ -1525,25 +1491,10 @@
                 compileSelector(selector, ACCEPT_NODE) + '}return r;') :
               compileGroup(parts, '', true);
 
-      // reinitialize indexes
-      indexesByNodeType = { };
-      indexesByNodeName = { };
-
       return resolver(elements, snap, [ ], doc, root, from, callback);
     },
 
   /*-------------------------------- STORAGE ---------------------------------*/
-
-  // CSS_ID expando on elements
-  // used to keep child indexes
-  // during a selection session
-  CSS_ID = 1,
-
-  CSS_INDEX = 'uniqueID' in root ? 'uniqueID' : 'CSS_ID',
-
-  // ordinal position by nodeType or nodeName
-  indexesByNodeType = { },
-  indexesByNodeName = { },
 
   // compiled select functions returning collections
   HTMLResolvers = { },
@@ -1556,9 +1507,9 @@
   // used to pass methods to compiled functions
   snap = {
 
-    // element indexing methods (nodeType/nodeName)
-    getIndexesByNodeType: getIndexesByNodeType,
-    getIndexesByNodeName: getIndexesByNodeName,
+    // element indexing methods
+    nthElement: nthElement,
+    nthOfType: nthOfType,
 
     // element inspection methods
     getAttribute: getAttribute,
