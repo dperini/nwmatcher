@@ -383,8 +383,8 @@
       // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
       // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
       // IE8 QSA has problems too and throws error with these dynamic pseudos
-      (input = doc.createElement('input')).setAttribute('type', 'hidden');
-      div.appendChild(input);
+      (element = doc.createElement('input')).setAttribute('type', 'hidden');
+      div.appendChild(element);
       try {
         div.querySelectorAll(':enabled').length === 1 &&
           pattern.push(':enabled', ':disabled');
