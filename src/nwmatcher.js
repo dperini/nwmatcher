@@ -329,7 +329,7 @@
   // check Seletor API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
-      var pattern = [ ], div = doc.createElement('div'), input;
+      var pattern = [ ], div = doc.createElement('div'), element;
 
       // In quirks mode css class names are case insensitive.
       // In standards mode they are case sensitive. See docs:
@@ -358,11 +358,22 @@
       } catch(e) { }
       div.removeChild(div.firstChild);
 
-      // :checked bugs whith checkbox (Opera 10 to 10.53)
-      input = doc.createElement('input');
-      input.setAttribute('type', 'checkbox');
-      input.setAttribute('checked', 'checked');
-      div.appendChild(input);
+      // :checked bugs whith checkbox elements (Opera 10 to 10.53)
+      element = doc.createElement('input');
+      element.setAttribute('type', 'checkbox');
+      element.setAttribute('checked', 'checked');
+      div.appendChild(element);
+      try {
+        div.querySelectorAll(':checked').length !== 1 &&
+          pattern.push(':checked');
+      } catch(e) { }
+      div.removeChild(div.firstChild);
+
+      // :checked not implemented for option elements in Opera/Safari/Chrome
+      // while Firefox implements both 'checked' and 'selected' properties
+      element = doc.createElement('option');
+      element.setAttribute('selected', 'selected');
+      div.appendChild(element);
       try {
         div.querySelectorAll(':checked').length !== 1 &&
           pattern.push(':checked');
