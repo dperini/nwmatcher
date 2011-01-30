@@ -1056,7 +1056,11 @@
           switch (match[1]) {
             case 'root':
               // element root of the document
-              source = 'if(e===h){' + source + '}';
+              if (match[6]) {
+                source = 'if(s.contains(e.ownerDocument.documentElement,e)){' + source + '}';
+              } else {
+                source = 'if(e===h){' + source + '}';
+              }
               break;
 
             case 'empty':
@@ -1310,10 +1314,11 @@
       // compile matcher resolver if necessary
       resolver = (isXMLDocument && XMLMatchers[selector]) ?
         XMLMatchers[selector] : HTMLMatchers[selector] ?
-          HTMLMatchers[selector] : (isXMLDocument ? XMLMatchers : HTMLMatchers)[selector] =
-          isSingleMatch ? new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
-            compileSelector(selector, 'f&&f(k);return true;') + 'return false;') :
-            compileGroup(parts, '', false);
+          HTMLMatchers[selector] : (isXMLDocument ?
+            XMLMatchers : HTMLMatchers)[selector] = isSingleMatch ?
+              new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
+                compileSelector(selector, 'f&&f(k);return true;') + 'return false;') :
+              compileGroup(parts, '', false);
 
       // reinitialize indexes
       indexesByNodeType = { };
@@ -1514,10 +1519,11 @@
       // compile selector resolver if necessary
       resolver = (isXMLDocument && XMLResolvers[selector]) ?
         XMLResolvers[selector] : HTMLResolvers[selector] ?
-          HTMLResolvers[selector] : (isXMLDocument ? XMLResolvers : HTMLResolvers)[selector] =
-          isSingleSelect ? new Function('c,s,r,d,h,g,f', 'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
-            compileSelector(selector, ACCEPT_NODE) + '}return r;') :
-            compileGroup(parts, '', true);
+          HTMLResolvers[selector] : (isXMLDocument ?
+            XMLResolvers : HTMLResolvers)[selector] = isSingleSelect ?
+              new Function('c,s,r,d,h,g,f', 'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
+                compileSelector(selector, ACCEPT_NODE) + '}return r;') :
+              compileGroup(parts, '', true);
 
       // reinitialize indexes
       indexesByNodeType = { };
@@ -1565,6 +1571,7 @@
     byId: byId,
 
     // helper/check methods
+    contains: contains,
     isEmpty: isEmpty,
     isLink: isLink,
 
