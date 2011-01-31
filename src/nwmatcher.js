@@ -1444,6 +1444,10 @@
         // ID optimization LTR, to reduce selection context searches
         else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
           if ((element = byId(token, doc))) {
+            if ('#' + token == selector) {
+              callback && callback(element);
+              return [ element ];
+            }
             if (/[>+~]/.test(selector)) {
               from = element.parentNode;
             } else {
