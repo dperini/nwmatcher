@@ -253,6 +253,13 @@
   NATIVE_TRAVERSAL_API =
     'nextElementSibling' in root && 'previousElementSibling' in root,
 
+  // select Matches Selector API to use if available
+  NATIVE_MATCHES_SELECTOR =
+    isNative(root, 'matchesSelector') ? 'matchesSelector' :
+    isNative(root, 'msMatchesSelector') ? 'msMatchesSelector' :
+    isNative(root, 'mozMatchesSelector') ? 'mozMatchesSelector' :
+    isNative(root, 'webkitMatchesSelector') ? 'webkitMatchesSelector' : null,
+
   // BUGGY_XXXXX true if method is feature tested and has known bugs
   // detect buggy gEBID
   BUGGY_GEBID = NATIVE_GEBID ?
@@ -322,6 +329,18 @@
       var isBuggy, option = doc.createElement('option');
       option.setAttribute('selected', 'selected');
       isBuggy = !option.hasAttribute('selected');
+      return isBuggy;
+    })() :
+    true,
+
+  // detect matchesSelector correctly throw errors
+  BUGGY_PSEUDOS = NATIVE_MATCHES_SELECTOR ?
+    (function() {
+      var isBuggy = false;
+      try {
+        root[NATIVE_MATCHES_SELECTOR](':buggy');
+        isBuggy = true;
+      } catch(e) { }
       return isBuggy;
     })() :
     true,
@@ -416,6 +435,9 @@
         { 'test': function() { return false; } };
     })() :
     true,
+
+  // matches pseudo-classes
+  RE_PSEUDOS = new RegExp(':[-\\w]+'),
 
   // matches simple id, tag & class selectors
   RE_SIMPLE_SELECTOR = new RegExp(
@@ -1262,12 +1284,24 @@
 
       var changed, parts, resolver;
 
-      // ensures a valid element node and selector was passed
-      if (!element || element.nodeName < 'A' || !selector) return false;
+      // ensures a valid element node was passed
+      if (!(element && element.nodeName > '@')) {
+        emit("Invalid element argument");
+        return false;
+      }
+
+      // ensures a valid selector string was passed
+      if (!selector || typeof selector != 'string') {
+        emit("Invalid selector argument");
+        return false;
+      }
 
       // if passed, check context contains element
       if (from && from.nodeType == 1) {
         if (!contains(from, element)) return false;
+      } else if (from) {
+        emit("Invalid context argument");
+        return false;
       }
 
       selector = selector.replace(reTrimSpaces, '');
@@ -1295,6 +1329,21 @@
           emit('The string "' + selector + '", is not a valid CSS selector');
           return false;
         }
+      }
+
+      // use matchesSelector API if available
+      if (USE_QSAPI && element[NATIVE_MATCHES_SELECTOR] &&
+        !(BUGGY_PSEUDOS && RE_PSEUDOS.test(selector)) &&
+        !RE_BUGGY_QSAPI.test(selector)) {
+        try {
+          if (element[NATIVE_MATCHES_SELECTOR](selector)) {
+            if (typeof callback == 'function') {
+              callback(element);
+            }
+            return true;
+          }
+          return false;
+        } catch(e) { }
       }
 
       // compile matcher resolver if necessary
