@@ -884,18 +884,23 @@
   // return a compiled function
   compileGroup =
     function(selector, source, mode) {
-      var i = -1, seen = { }, token, parts = typeof selector == 'string' ?
-        selector.match(reSplitGroup) : selector;
+
+      var i = -1, seen = { }, token,
+        parts = typeof selector == 'string' ?
+          selector.match(reSplitGroup) : selector;
+
       // for each selector in the group
       while ((token = parts[++i])) {
         token = token.replace(reTrimSpaces, '');
-        // avoid repeating the same token in comma separated group (p, p)
+        // avoid repeating the same token
+        // in comma separated group (p, p)
         if (!seen[token]) {
           seen[token] = true;
           source += (i > 0 ? (mode ? 'e=c[k];': 'e=k;') : '') +
             compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
         }
       }
+
       if (mode) {
         // for select method
         return new Function('c,s,r,d,h,g,f',
