@@ -1133,7 +1133,7 @@
                 return '';
               } else {
                 if ('compatMode' in doc) {
-                  source = 'N=' + compileGroup(expr, '', false) + '(e,s,r,d,h,g);if(!N){' + source + '}';
+                  source = 'if(!' + compileGroup(expr, '', false) + '(e,s,r,d,h,g)){' + source + '}';
                 } else {
                   source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",r)){' + source +'}';
                 }
@@ -1299,7 +1299,7 @@
             XMLMatchers : HTMLMatchers)[selector] = isSingleMatch ?
               new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
                 compileSelector(selector, 'f&&f(k);return true;') + 'return false;') :
-              compileGroup(parts, '', false);
+              compileGroup(parts || selector, '', false);
 
       return resolver(element, snap, [ ], doc, root, from || doc, callback);
     },
@@ -1500,7 +1500,7 @@
             XMLResolvers : HTMLResolvers)[selector] = isSingleSelect ?
               new Function('c,s,r,d,h,g,f', 'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
                 compileSelector(selector, ACCEPT_NODE) + '}return r;') :
-              compileGroup(parts, '', true);
+              compileGroup(parts || selector, '', true);
 
       return resolver(elements, snap, [ ], doc, root, from, callback);
     },
