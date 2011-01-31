@@ -345,6 +345,15 @@
     })() :
     true,
 
+  // detect Safari bug with selected option elements
+  BUGGY_SELECTED =
+    (function() {
+      var isBuggy, select = doc.createElement('select');
+      select.appendChild(doc.createElement('option'));
+      isBuggy = !select.firstChild.selected;
+      return isBuggy;
+    })(),
+
   // check Seletor API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
@@ -372,7 +381,7 @@
       // ^= $= *= operators bugs whith empty values (Opera 10 / IE8)
       div.appendChild(doc.createElement('p')).setAttribute('class', '');
       try {
-        div.querySelectorAll('[class^=""]').length === 1 &&
+        div.querySelectorAll('[class^=""]').length == 1 &&
           pattern.push('\\[\\s*.*(?=\\^=|\\$=|\\*=).*]');
       } catch(e) { }
       div.removeChild(div.firstChild);
@@ -383,18 +392,18 @@
       element.setAttribute('checked', 'checked');
       div.appendChild(element);
       try {
-        div.querySelectorAll(':checked').length !== 1 &&
+        div.querySelectorAll(':checked').length == 1 ||
           pattern.push(':checked');
       } catch(e) { }
       div.removeChild(div.firstChild);
 
-      // :checked not implemented for option elements in Opera/Safari/Chrome
-      // while Firefox implements both 'checked' and 'selected' properties
+      // :checked bug with option elements (Firefox 3.6.x)
+      // it wrongly includes 'selected' options elements
       element = doc.createElement('option');
       element.setAttribute('selected', 'selected');
       div.appendChild(element);
       try {
-        div.querySelectorAll(':checked').length !== 1 &&
+        div.querySelectorAll(':checked').length == 1 &&
           pattern.push(':checked');
       } catch(e) { }
       div.removeChild(div.firstChild);
@@ -579,7 +588,7 @@
       'link': 3, 'visited': 3,
       'target': 3, 'lang': 3, 'not': 3,
       'active': 3, 'focus': 3, 'hover': 3,
-      'checked': 3, 'disabled': 3, 'enabled': 3
+      'checked': 3, 'disabled': 3, 'enabled': 3, 'selected': 2
     }
   },
 
@@ -1169,16 +1178,16 @@
 
             // CSS3 UI element states
             case 'checked':
-              // only radio buttons, check boxes and option elements
-              source = 'if(((typeof e.form!=="undefined"&&(/radio|checkbox/i).test(e.type))||/option/i.test(e.nodeName))&&(e.checked||e.selected)){' + source + '}';
-              break;
-            case 'enabled':
-              // does not consider hidden input fields
-              source = 'if(((typeof e.form!=="undefined"&&!(/hidden/i).test(e.type))||s.isLink(e))&&!e.disabled){' + source + '}';
+              // only available for radio buttons and checkboxes
+              source = 'if(typeof e.form!=="undefined"&&(/radio|checkbox/i).test(e.type)&&e.checked){' + source + '}';
               break;
             case 'disabled':
               // does not consider hidden input fields
               source = 'if(((typeof e.form!=="undefined"&&!(/hidden/i).test(e.type))||s.isLink(e))&&e.disabled){' + source + '}';
+              break;
+            case 'enabled':
+              // does not consider hidden input fields
+              source = 'if(((typeof e.form!=="undefined"&&!(/hidden/i).test(e.type))||s.isLink(e))&&!e.disabled){' + source + '}';
               break;
 
             // CSS3 lang pseudo-class
@@ -1223,6 +1232,14 @@
               source = NATIVE_FOCUS ?
                 'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href)){' + source + '}' :
                 'if(e===d.activeElement&&(e.type||e.href)){' + source + '}';
+              break;
+
+            // CSS2 selected pseudo-classes, not part of current CSS3 drafts
+            // the 'selected' property is only available for option elements
+            case 'selected':
+              // fix Safari selectedIndex property bug
+              expr = BUGGY_SELECTED ? '||(n=e.parentNode)&&n.options[n.selectedIndex]===e' : '';
+              source = 'if(e.nodeName=="OPTION"&&(e.selected' + expr + ')){' + source + '}';
               break;
 
             default:
