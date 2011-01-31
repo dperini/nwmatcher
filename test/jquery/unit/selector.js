@@ -229,9 +229,9 @@ test("attributes", function() {
 	t( "Attribute Ends With", "a[href $= 'org/']", ["mark"] );
 	t( "Attribute Contains", "a[href *= 'google']", ["google","groups"] );
 	
-	t("Select options via [selected]", "#select1 option:checked", ["option1a"] );
-	t("Select options via [selected]", "#select2 option:checked", ["option2d"] );
-	t("Select options via [selected]", "#select3 option:checked", ["option3b", "option3c"] );
+	t("Select options via [selected]", "#select1 option:selected", ["option1a"] );
+	t("Select options via [selected]", "#select2 option:selected", ["option2d"] );
+	t("Select options via [selected]", "#select3 option:selected", ["option3b", "option3c"] );
 	
 	t( "Grouped Form Elements", "input[name='foo[bar]']", ["hidden2"] );
 	
@@ -249,7 +249,7 @@ test("pseudo (:) selectors", function() {
 	t( "Enabled UI Element", "#form input:not([type=hidden]):enabled", ["text1","radio1","radio2","check1","check2","hidden2","name"] );
 	t( "Disabled UI Element", "#form input:disabled", ["text2"] );
 	t( "Checked UI Element", "#form input:checked", ["radio2","check1"] );
-	t( "Selected Option Element", "#form option:checked", ["option1a","option2d","option3b","option3c"] );
+	t( "Selected Option Element", "#form option:selected", ["option1a","option2d","option3b","option3c"] );
 	//t( "Text Contains", "a:contains('Google')", ["google","groups"] );
 	//t( "Text Contains", "a:contains('Google Groups')", ["groups"] );
 	t( "Element Preceded By", "p ~ div", ["foo","fx-queue","fx-tests", "moretests"] );
