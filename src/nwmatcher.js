@@ -180,7 +180,7 @@
 
   // detect native methods
   isNative = (function() {
-    var s = (global.open + '').replace(/open/g, '');
+    var s = (global.toString + '').replace(/toString/g, '');
     return function(object, method) {
       var m = object ? object[method] : false, r = new RegExp(method, 'g');
       return !!(m && typeof m != 'string' && s === (m + '').replace(r, ''));
