@@ -654,7 +654,7 @@
       if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
         elements[elements.length] = element;
       }
-      if (next = element.firstChild || element.nextSibling) continue;
+      if ((next = element.firstChild || element.nextSibling)) continue;
       while (!next && (element = element.parentNode) && element != from) {
         next = element.nextSibling;
       }
@@ -929,7 +929,7 @@
       if (mode) {
         // for select method
         return new Function('c,s,r,d,h,g,f',
-          'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' + source + '}return r;');
+          'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
       } else {
         // for match method
         return new Function('e,s,r,d,h,g,f',
@@ -1330,7 +1330,7 @@
         isXMLDocument = isXML(doc);
       }
 
-      if (changed = lastMatcher != selector) {
+      if ((changed = lastMatcher != selector)) {
         // process valid selector strings
         if ((parts = selector.match(reValidator)) && parts[0] == selector) {
           // save passed selector
@@ -1468,7 +1468,7 @@
         isXMLDocument = isXML(doc);
       }
 
-      if (changed = lastSelector != selector) {
+      if ((changed = lastSelector != selector)) {
         // process valid selector strings
         if ((parts = selector.match(reValidator)) && parts[0] == selector) {
           // save passed selector
@@ -1567,7 +1567,7 @@
         XMLResolvers[selector] : HTMLResolvers[selector] ?
           HTMLResolvers[selector] : (isXMLDocument ?
             XMLResolvers : HTMLResolvers)[selector] = isSingleSelect ?
-              new Function('c,s,r,d,h,g,f', 'var N,n,x=0,k=-1,e;main:while(e=c[++k]){' +
+              new Function('c,s,r,d,h,g,f', 'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' +
                 compileSelector(selector, ACCEPT_NODE) + '}return r;') :
               compileGroup(parts || selector, '', true);
 
