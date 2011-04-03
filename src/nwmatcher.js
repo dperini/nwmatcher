@@ -182,8 +182,8 @@
   isNative = (function() {
     var s = (global.toString + '').replace(/toString/g, '');
     return function(object, method) {
-      var m = object ? object[method] : false, r = new RegExp(method, 'g');
-      return !!(m && typeof m != 'string' && s === (m + '').replace(r, ''));
+      var m = object && object[method], r = new RegExp(method, 'g');
+      return m && typeof m != 'string' && s == (m + '').replace(r, '');
     };
   })(),
 
@@ -858,8 +858,7 @@
         // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
         if (typeof global.DOMException !== 'undefined') {
           var err = new Error();
-          err.name = 'SYNTAX_ERR';
-          err.message = '(Selectors) ' + message;
+          err.message = 'SYNTAX_ERR: (Selectors) ' + message;
           err.code = 12;
           throw err;
         } else {
