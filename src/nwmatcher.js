@@ -382,7 +382,7 @@
       div.appendChild(doc.createElement('p')).setAttribute('class', '');
       try {
         div.querySelectorAll('[class^=""]').length == 1 &&
-          pattern.push('\\[\\s*.*(?=\\^=|\\$=|\\*=).*]');
+          pattern.push('[*^$]=\\s*(?:""|' + "'')");
       } catch(e) { }
       div.removeChild(div.firstChild);
 
@@ -424,18 +424,12 @@
       div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
       div.removeChild(div.firstChild);
 
-      // avoid following selectors for IE QSA
+      // avoid attribute selectors for IE QSA
       if (BUGGY_HAS_ATTRIBUTE) {
-        pattern.push(
-          // IE fails reading original values for input/textarea
-          '\\[\\s*value',
-          // IE fails reading original boolean value for controls
-          '\\[\\s*ismap',
-          '\\[\\s*checked',
-          '\\[\\s*disabled',
-          '\\[\\s*multiple',
-          '\\[\\s*readonly',
-          '\\[\\s*selected');
+        // IE fails in reading:
+        // - original values for input/textarea
+        // - original boolean values for controls
+        pattern.push('\\[\\s*(?:checked|disabled|ismap|multiple|readonly|selected|value)');
       }
 
       div = null;
