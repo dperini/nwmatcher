@@ -82,8 +82,8 @@
     descendants = select('*', element);
     if (isIndex) return descendants[expr] || null;
     index = 0;
-    while ((descendant = descendants[index++])) if (match(descendant, expr)) return descendant;
-    return null;
+    while ((descendant = descendants[index++]) && !match(descendant, expr));
+    return descendant || null;
   }
   D.up = up;
   D.down = down;
