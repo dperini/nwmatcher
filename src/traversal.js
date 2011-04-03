@@ -4,16 +4,23 @@
  */
 
 (function(D){
-  
+
   // TODO: all of this needs tests
-  var match = D.match, UNDEF, root = document.documentElement,
-  nextEl = 'nextElementSibling', prevEl = 'previousElementSibling',
-  nextProperty = root[nextEl] !== UNDEF ? nextEl : 'nextSibling',
-  prevProperty = root[prevEl] !== UNDEF ? prevEl : 'previousSibling';
+  var match = D.match, root = document.documentElement,
+
+  // Use the Element Traversal API if available.
+  nextElement = 'nextElementSibling',
+  previousElement = 'previousElementSibling',
+  parentElement = 'parentElement';
+
+  // Fall back to the DOM Level 1 API.
+  if (!(nextElement in root)) nextElement = 'nextSibling';
+  if (!(previousElement in root)) previousElement = 'previousSibling';
+  if (!(parentElement in root)) parentElement = 'parentNode';
 
   function walkElements(property, element, expr) {
     var i = 0, isIndex = typeof expr == 'number';
-    if (typeof expr == UNDEF) {
+    if (typeof expr == 'undefined') {
       isIndex = true;
       expr = 0;
     }
@@ -30,7 +37,7 @@
     }
     return null;
   }
-  
+
   /**
    * @method up
    * @param {HTMLElement} element element to walk from
@@ -38,7 +45,7 @@
    * @return {HTMLElement | undefined}
    */
   function up(element, expr) {
-    return walkElements('parentNode', element, expr);
+    return walkElements(parentElement, element, expr);
   }
   /**
    * @method next
@@ -47,7 +54,7 @@
    * @return {HTMLElement | undefined}
    */
   function next(element, expr) {
-    return walkElements(nextProperty, element, expr);
+    return walkElements(nextElement, element, expr);
   }
   /**
    * @method previous
@@ -56,7 +63,7 @@
    * @return {HTMLElement | undefined}
    */
   function previous(element, expr) {
-    return walkElements(prevProperty, element, expr);
+    return walkElements(previousElement, element, expr);
   }
   /**
    * @method down
@@ -84,4 +91,3 @@
   D.next = next;
   D.previous = previous;
 })(NW.Dom);
-
