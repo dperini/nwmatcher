@@ -858,8 +858,7 @@
         // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
         if (typeof global.DOMException !== 'undefined') {
           var err = new Error();
-          err.name = 'SYNTAX_ERR';
-          err.message = '(Selectors) ' + message;
+          err.message = 'SYNTAX_ERR: (Selectors) ' + message;
           err.code = 12;
           throw err;
         } else {
