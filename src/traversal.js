@@ -6,7 +6,7 @@
 (function(D){
 
   // TODO: all of this needs tests
-  var match = D.match, root = document.documentElement,
+  var match = D.match, select = D.select, root = document.documentElement,
 
   // Use the Element Traversal API if available.
   nextElement = 'nextElementSibling',
@@ -42,7 +42,7 @@
    * @method up
    * @param {HTMLElement} element element to walk from
    * @param {String | Number} expr CSS expression or an index
-   * @return {HTMLElement | undefined}
+   * @return {HTMLElement | null}
    */
   function up(element, expr) {
     return walkElements(parentElement, element, expr);
@@ -51,7 +51,7 @@
    * @method next
    * @param {HTMLElement} element element to walk from
    * @param {String | Number} expr CSS expression or an index
-   * @return {HTMLElement | undefined}
+   * @return {HTMLElement | null}
    */
   function next(element, expr) {
     return walkElements(nextElement, element, expr);
@@ -60,7 +60,7 @@
    * @method previous
    * @param {HTMLElement} element element to walk from
    * @param {String | Number} expr CSS expression or an index
-   * @return {HTMLElement | undefined}
+   * @return {HTMLElement | null}
    */
   function previous(element, expr) {
     return walkElements(previousElement, element, expr);
@@ -69,21 +69,20 @@
    * @method down
    * @param {HTMLElement} element element to walk from
    * @param {String | Number} expr CSS expression or an index
-   * @return {HTMLElement | undefined}
+   * @return {HTMLElement | null}
    */
   function down(element, expr) {
-    // TODO: implement index-based matching
-    if (match(element, expr)) return element;
-    if (element.childNodes) {
-      for (var i=0, l=element.childNodes.length; i<l; i++) {
-        var child = element.childNodes[i];
-        if (child.nodeType === 1) {
-          var result = match(child, expr);
-          if (result) return child;
-          return down(child, expr);
-        }
-      }
+    var isIndex = typeof expr == 'number', descendants, index, descendant;
+    if (expr == null) {
+      element = element.firstChild;
+      while (element && element.nodeType != 1) element = element[nextElement];
+      return element;
     }
+    if (!isIndex && match(element, expr) || isIndex && expr == 0) return element;
+    descendants = select('*', element);
+    if (isIndex) return descendants[expr] || null;
+    index = 0;
+    while ((descendant = descendants[index++])) if (match(descendant, expr)) return descendant;
     return null;
   }
   D.up = up;
