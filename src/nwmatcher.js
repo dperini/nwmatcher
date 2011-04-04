@@ -1307,17 +1307,14 @@
       }
 
       // if passed, check context contains element
-      if (from && from.nodeType == 1) {
-        if (!contains(from, element)) return false;
-      } else if (from) {
-        emit("Invalid context argument");
+      if (from && from.nodeType == 1 && !contains(from, element)) {
         return false;
       }
 
       selector = selector.replace(reTrimSpaces, '');
 
       // ensure context is set
-      from || (from = doc);
+      from || (from = element.ownerDocument);
 
       // extract context if changed
       if (lastMatchContext != from) {
