@@ -1075,7 +1075,7 @@
             case 'root':
               // element root of the document
               if (match[6]) {
-                source = 'if(s.contains(e.ownerDocument.documentElement,e)){' + source + '}';
+                source = 'if(e===h||s.contains(h,e)){' + source + '}';
               } else {
                 source = 'if(e===h){' + source + '}';
               }
