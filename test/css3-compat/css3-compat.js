@@ -13,9 +13,9 @@ var CDN = 'http://ajax.googleapis.com/ajax/libs/',
 engines = {
   'querySelectorAll':   [ 'document.querySelectorAll(s)',    '' ],
 
-  'nwmatcher-1.2.3':    [ 'NW.Dom.select(s)',                '../../src/nwmatcher.js' ],
-  'base2-2.0alpha1':    [ 'base2.dom.querySelectorAll(c,s)', 'lib/base2+dom.js' ],
+  'nwmatcher-1.2.4beta':    [ 'NW.Dom.select(s)',                '../../src/nwmatcher.js' ]
 
+//  'base2-2.0alpha1':    [ 'base2.dom.querySelectorAll(c,s)', 'lib/base2+dom.js' ],
 //  'prototype-1.6.1':    [ '$$(s)',                           CDN + 'prototype/1.6.1.0/prototype.js' ],
 //  'dojo-1.4.1':         [ 'dojo.query(s)',                   CDN + 'dojo/1.4.1/dojo/dojo.xd.js' ],
 //  'mootools-1.2.4':     [ '$$(s)',                           CDN + 'mootools/1.2.4/mootools.js' ],
@@ -29,8 +29,6 @@ engines = {
 //  'yui-3.0':            [ 'Y.Selector.query(s)',             'lib/yui3.js' ],
 //  'sizzle-1.0':         [ 'Sizzle(s)',                       'lib/sizzle.js' ],
 //  'yass-0.3.9':         [ '_(s)',                            'lib/yass.0.3.9.js' ],
-
-  'querySelectorAll':   [ 'document.querySelectorAll(s)',    '' ]
 };
 
 (function(global, engines) {
