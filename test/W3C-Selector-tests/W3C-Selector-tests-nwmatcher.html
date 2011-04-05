@@ -222,6 +222,9 @@
     .foo..quux { background: red; color: yellow; }
     .bar. { background: red; color: yellow; }
   </style>
+  <script>
+    document.querySelector = document.querySelectorAll = null;
+  </script>
   <script type="text/javascript" src="../../src/nwmatcher.js"></script>
   <script>
 	window.onload = function(){
@@ -611,8 +614,8 @@
 			t( "ID selector with existing ID descendant", "#firstp #simon1", ["simon1"] );
 			t( "ID selector with non-existant descendant", "#firstp #foobar", [] );
 
-			t( "ID selector using UTF8", "#台北Táiběi", ["台北Táiběi"] );
-			t( "Multiple ID selectors using UTF8", "#台北Táiběi, #台北", ["台北Táiběi","台北"] );
+			t( "ID selector using UTF8", "#台北Táiběi", ["台北Táiběi"] );
+			t( "Multiple ID selectors using UTF8", "#台北Táiběi, #台北", ["台北Táiběi","台北"] );
 			t( "Descendant ID selector using UTF8", "div #台北", ["台北"] );
 			t( "Child ID selector using UTF8", "form > #台北", ["台北"] );
 	
@@ -639,12 +642,12 @@
 			t( "Class Selector w/ Element", "a.blog", ["mark","simon"] );
 			t( "Parent Class Selector", "p .blog", ["mark","simon"] );
 	
-			t( "Class selector using UTF8", ".台北Táiběi", ["utf8class1"] );
+			t( "Class selector using UTF8", ".台北Táiběi", ["utf8class1"] );
 			t( "Class selector using UTF8", ".台北", ["utf8class1","utf8class2"] );
-			t( "Class selector using UTF8", ".台北Táiběi.台北", ["utf8class1"] );
-			t( "Class selector using UTF8", ".台北Táiběi, .台北", ["utf8class1","utf8class2"] );
-			t( "Descendant class selector using UTF8", "div .台北Táiběi", ["utf8class1"] );
-			t( "Child class selector using UTF8", "form > .台北Táiběi", ["utf8class1"] );
+			t( "Class selector using UTF8", ".台北Táiběi.台北", ["utf8class1"] );
+			t( "Class selector using UTF8", ".台北Táiběi, .台北", ["utf8class1","utf8class2"] );
+			t( "Descendant class selector using UTF8", "div .台北Táiběi", ["utf8class1"] );
+			t( "Child class selector using UTF8", "form > .台北Táiběi", ["utf8class1"] );
 	
 			t( "Escaped Class", ".foo\\:bar", ["foo:bar"] );
 			t( "Escaped Class", ".test\\.foo\\[5\\]bar", ["test.foo[5]bar"] );
@@ -1269,9 +1272,9 @@
 
 			</object>
 			
-			<span id="台北Táiběi"></span>
+			<span id="台北Táiběi"></span>
 			<span id="台北" lang="中文"></span>
-			<span id="utf8class1" class="台北Táiběi 台北"></span>
+			<span id="utf8class1" class="台北Táiběi 台北"></span>
 			<span id="utf8class2" class="台北"></span>
 			<span id="foo:bar" class="foo:bar"></span>
 			<span id="test.foo[5]bar" class="test.foo[5]bar"></span>
