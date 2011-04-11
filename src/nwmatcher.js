@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2010 Diego Perini
+ * Copyright (C) 2007-2011 Diego Perini
  * All rights reserved.
  *
  * nwmatcher.js - A fast CSS selector engine and matcher
@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.4beta
  * Created: 20070722
- * Release: 20110116
+ * Release: 20110410
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
