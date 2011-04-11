@@ -165,9 +165,7 @@
     '\\[' + attributes + '\\]|' +
     '[^\x20>+~]|\\\\.)+', 'g'),
 
-  // for pseudos, ids and in excess whitespace removal
-  reClassValue = new RegExp('(' + identifier + ')'),
-  reIdSelector = new RegExp('#(' + identifier + ')'),
+  // for in excess whitespace removal
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
   // match missing R/L context
@@ -542,9 +540,9 @@
   // precompiled Regular Expressions
   Patterns = {
     // structural pseudo-classes and child selectors
-    spseudos: /^\:(root|empty|nth)?-?(first|last|only)?-?(child)?-?(of-type)?(?:\(([^\x29]*)\))?(.*)/,
+    spseudos: /^\:((root|empty|nth-)?(?:(first|last|only)-)?(child)?-?(of-type)?)(?:\(([^\x29]*)\))?(.*)/,
     // uistates + dynamic + negation pseudo-classes
-    dpseudos: /^\:([\w]+|[^\x00-\xa0]+)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
+    dpseudos: /^\:(link|visited|target|lang|not|active|focus|hover|checked|disabled|enabled|selected)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
     // element attribute matcher
     attribute: new RegExp('^\\[' + attributes + '\\](.*)'),
     // E > F
@@ -563,27 +561,6 @@
     tagName: new RegExp('^(' + encoding + '+)(.*)'),
     // class
     className: new RegExp('^\\.(' + encoding + '+)(.*)')
-  },
-
-  // current CSS3 grouping of Pseudo-Classes
-  // they allow implementing extensions
-  // and improve error notifications;
-  // the assigned value represent current spec status:
-  // 3 = CSS3, 2 = CSS2, '?' = maybe implemented
-  CSS3PseudoClasses = {
-    Structural: {
-      'root': 3, 'empty': 3,
-      'nth-child': 3, 'nth-last-child': 3,
-      'nth-of-type': 3, 'nth-last-of-type': 3,
-      'first-child': 3, 'last-child': 3, 'only-child': 3,
-      'first-of-type': 3, 'last-of-type': 3, 'only-of-type': 3
-    },
-    Others: {
-      'link': 3, 'visited': 3,
-      'target': 3, 'lang': 3, 'not': 3,
-      'active': 3, 'focus': 3, 'hover': 3,
-      'checked': 3, 'disabled': 3, 'enabled': 3, 'selected': 2
-    }
   },
 
   /*------------------------------ DOM METHODS -------------------------------*/
@@ -1068,13 +1045,12 @@
         // :first-child, :last-child, :only-child,
         // :first-of-type, :last-of-type, :only-of-type,
         // :nth-child(), :nth-last-child(), :nth-of-type(), :nth-last-of-type()
-        else if ((match = selector.match(Patterns.spseudos)) &&
-          CSS3PseudoClasses.Structural[selector.match(reClassValue)[0]]) {
+        else if ((match = selector.match(Patterns.spseudos)) && match[1]) {
 
-          switch (match[1]) {
+          switch (match[2]) {
             case 'root':
               // element root of the document
-              if (match[6]) {
+              if (match[7]) {
                 source = 'if(e===h||s.contains(h,e)){' + source + '}';
               } else {
                 source = 'if(e===h){' + source + '}';
@@ -1087,50 +1063,50 @@
               break;
 
             default:
-              if (match[1] && match[5]) {
-                if (match[5] == 'n') {
+              if (match[2] && match[6]) {
+                if (match[6] == 'n') {
                   source = 'if(e!==h){' + source + '}';
                   break;
-                } else if (match[5] == 'even') {
+                } else if (match[6] == 'even') {
                   a = 2;
                   b = 0;
-                } else if (match[5] == 'odd') {
+                } else if (match[6] == 'odd') {
                   a = 2;
                   b = 1;
                 } else {
                   // assumes correct "an+b" format, "b" before "a" to keep "n" values
-                  b = ((n = match[5].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
-                  a = ((n = match[5].match(/(-?\d*)n/)) ? parseInt(n[1], 10) : 0);
+                  b = ((n = match[6].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
+                  a = ((n = match[6].match(/(-?\d*)n/)) ? parseInt(n[1], 10) : 0);
                   if (n && n[1] == '-') a = -1;
                 }
 
                 // build test expression out of structural pseudo (an+b) parameters
                 // see here: http://www.w3.org/TR/css3-selectors/#nth-child-pseudo
                 test =  b < 1 && a > 1 ? '(n-(' + b + '))%' + a + '==0' : a > +1 ?
-                  (match[2] == 'last') ? '(n-(' + b + '))%' + a + '==0' :
+                  (match[3] == 'last') ? '(n-(' + b + '))%' + a + '==0' :
                   'n>=' + b + '&&(n-(' + b + '))%' + a + '==0' : a < -1 ?
-                  (match[2] == 'last') ? '(n-(' + b + '))%' + a + '==0' :
+                  (match[3] == 'last') ? '(n-(' + b + '))%' + a + '==0' :
                   'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a=== 0 ?
                   'n==' + b :
-                  (match[2] == 'last') ?
+                  (match[3] == 'last') ?
                     a == -1 ? 'n>=' + b : 'n<=' + b :
                     a == -1 ? 'n<=' + b : 'n>=' + b;
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
                 source =
                   'if(e!==h){' +
-                    'n=s[' + (match[4] ? '"nthOfType"' : '"nthElement"') + ']' +
-                      '(e,' + (match[2] == 'last' ? 'true' : 'false') + ');' +
+                    'n=s[' + (match[5] ? '"nthOfType"' : '"nthElement"') + ']' +
+                      '(e,' + (match[3] == 'last' ? 'true' : 'false') + ');' +
                     'if(' + test + '){' + source + '}' +
                   '}';
 
               } else {
                 // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
-                a = match[2] == 'first' ? 'previous' : 'next';
-                n = match[2] == 'only' ? 'previous' : 'next';
-                b = match[2] == 'first' || match[2] == 'last';
+                a = match[3] == 'first' ? 'previous' : 'next';
+                n = match[3] == 'only' ? 'previous' : 'next';
+                b = match[3] == 'first' || match[3] == 'last';
 
-                type = match[4] ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
+                type = match[5] ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
 
                 source = 'if(e!==h){' +
                   ( 'n=e;while((n=n.' + a + 'Sibling)' + type + ');if(!n){' + (b ? source :
@@ -1145,8 +1121,7 @@
         // CSS3 :not, :checked, :enabled, :disabled, :target
         // CSS3 :active, :hover, :focus
         // CSS3 :link, :visited
-        else if ((match = selector.match(Patterns.dpseudos)) &&
-          CSS3PseudoClasses.Others[selector.match(reClassValue)[0]]) {
+        else if ((match = selector.match(Patterns.dpseudos)) && match[1]) {
 
           switch (match[1]) {
             // CSS3 negation pseudo-class
