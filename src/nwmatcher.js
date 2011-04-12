@@ -821,6 +821,8 @@
           reValidator = new RegExp(extendedValidator, 'g');
         } else if (i == 'SHORTCUTS') {
           SHORTCUTS = !!options[i];
+        } else if (i == 'USE_HTML5') {
+          USE_HTML5 = !!options[i];
         } else if (i == 'USE_QSAPI') {
           USE_QSAPI = !!options[i] && NATIVE_QSAPI;
           reValidator = new RegExp(standardValidator, 'g');
@@ -866,6 +868,9 @@
 
   // controls the engine error/warning notifications
   VERBOSITY = true,
+
+  // HTML5 handling for the ":checked" pseudo-class
+  USE_HTML5 = false,
 
   // controls enabling the Query Selector API branch
   USE_QSAPI = NATIVE_QSAPI,
@@ -1146,8 +1151,14 @@
 
             // CSS3 UI element states
             case 'checked':
-              // only available for radio buttons and checkboxes
-              source = 'if(typeof e.form!=="undefined"&&(/radio|checkbox/i).test(e.type)&&e.checked){' + source + '}';
+              test = 'typeof e.form!=="undefined"&&(/radio|checkbox/i).test(e.type)';
+              if (USE_HTML5) {
+                // for radio buttons, checkboxes and options
+                source = 'if(((' + test + ')||/option/i.test(e.nodeName))&&(e.checked||e.selected)){' + source + '}';
+              } else {
+                // for radio buttons and checkboxes
+                source = 'if(' + test + '&&e.checked){' + source + '}';
+              }
               break;
             case 'disabled':
               // does not consider hidden input fields
