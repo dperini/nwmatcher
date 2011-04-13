@@ -1302,6 +1302,19 @@
       // ensure context is set
       from || (from = element.ownerDocument);
 
+      if (SHORTCUTS) {
+        // add left context if missing
+        if (reLeftContext.test(selector)) {
+          selector = from.id ?
+            '#' + from.id + ' ' + selector :
+            '* ' + selector; 
+        }
+        // add right context if missing
+        if (reRightContext.test(selector)) {
+          selector = selector + ' *';
+        }
+      }
+
       // extract context if changed
       if (lastMatchContext != from) {
         // save passed context
@@ -1430,9 +1443,9 @@
       if (SHORTCUTS) {
         // add left context if missing
         if (reLeftContext.test(selector)) {
-          selector = from.nodeType == 9 ? '* ' + selector :
-            from.id ? '#' + from.id + ' ' + selector :
-              selector;
+          selector = from.nodeType == 1 && from.id ?
+            '#' + from.id + ' ' + selector :
+            '* ' + selector;
         }
         // add right context if missing
         if (reRightContext.test(selector)) {
