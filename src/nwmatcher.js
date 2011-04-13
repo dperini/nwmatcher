@@ -254,6 +254,7 @@
   // select Matches Selector API to use if available
   NATIVE_MATCHES_SELECTOR =
     isNative(root, 'matchesSelector') ? 'matchesSelector' :
+    isNative(root, 'oMatchesSelector') ? 'oMatchesSelector' :
     isNative(root, 'msMatchesSelector') ? 'msMatchesSelector' :
     isNative(root, 'mozMatchesSelector') ? 'mozMatchesSelector' :
     isNative(root, 'webkitMatchesSelector') ? 'webkitMatchesSelector' : null,
