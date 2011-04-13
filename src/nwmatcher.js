@@ -1308,7 +1308,7 @@
         if (reLeftContext.test(selector)) {
           selector = from.id ?
             '#' + from.id + ' ' + selector :
-            '* ' + selector; 
+            '* ' + selector;
         }
         // add right context if missing
         if (reRightContext.test(selector)) {
@@ -1362,7 +1362,7 @@
                 compileSelector(selector, 'f&&f(k);return true;') + 'return false;') :
               compileGroup(parts || selector, '', false);
 
-      return resolver(element, snap, [ ], doc, root, from || doc, callback);
+      return resolver(element, Snapshot, [ ], doc, root, from || doc, callback);
     },
 
   // select elements matching selector
@@ -1567,7 +1567,7 @@
                 compileSelector(selector, ACCEPT_NODE) + '}return r;') :
               compileGroup(parts || selector, '', true);
 
-      return resolver(elements, snap, [ ], doc, root, from, callback);
+      return resolver(elements, Snapshot, [ ], doc, root, from, callback);
     },
 
   /*-------------------------------- STORAGE ---------------------------------*/
@@ -1581,7 +1581,7 @@
   XMLMatchers = { },
 
   // used to pass methods to compiled functions
-  snap = {
+  Snapshot = {
 
     // element indexing methods
     nthElement: nthElement,
@@ -1647,6 +1647,17 @@
 
     // handle selector engine configuration settings
     configure: configure,
+
+    // pass methods references to compiled resolvers
+    Snapshot: Snapshot,
+
+    // operators descriptor
+    // for attribute operators extensions
+    Operators: Operators,
+
+    // selectors descriptor
+    // for pseudo-class selectors extensions
+    Selectors: Selectors,
 
     // add or overwrite user defined operators
     registerOperator:
