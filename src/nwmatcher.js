@@ -1218,7 +1218,7 @@
             case 'selected':
               // fix Safari selectedIndex property bug
               expr = BUGGY_SELECTED ? '||(n=e.parentNode)&&n.options[n.selectedIndex]===e' : '';
-              source = 'if(e.nodeName=="OPTION"&&(e.selected' + expr + ')){' + source + '}';
+              source = 'if(e.nodeName.toLowerCase()=="option"&&(e.selected' + expr + ')){' + source + '}';
               break;
 
             default:
