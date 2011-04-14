@@ -1233,7 +1233,7 @@
           status = true;
 
           for (expr in Selectors) {
-            if ((match = selector.match(Selectors[expr].Expression))) {
+            if ((match = selector.match(Selectors[expr].Expression)) && match[1]) {
               result = Selectors[expr].Callback(match, source);
               source = result.source;
               status = result.status;
