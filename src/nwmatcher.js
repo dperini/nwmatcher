@@ -1001,7 +1001,7 @@
           } else {
             test = false;
             // handle empty values
-            type = match[2] == '=' ? 'n==""' : 'false';
+            type = "!=".indexOf(match[2]) > -1 ? 'n' + match[2] + '"' + match[3] + '"' : 'false';
           }
 
           // build expression for has/getAttribute
