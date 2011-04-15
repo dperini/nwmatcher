@@ -447,6 +447,9 @@
       '^(?:\\*|[.#]?-?[_a-zA-Z]{1}' + encoding + '*)$' :
       '^#?-?[_a-zA-Z]{1}' + encoding + '*$'),
 
+  // Opera Selectors API are the fastest, no need for optimizations
+  OPERA_QSAPI = /opera/i.test(toString.call(global.opera)) && NATIVE_QSAPI, 
+
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
   LINK_NODES = { 'a': 1, 'A': 1, 'area': 1, 'AREA': 1, 'link': 1, 'LINK': 1 },
@@ -1388,7 +1391,7 @@
       // ensure context is set
       from || (from = doc);
 
-      if (RE_SIMPLE_SELECTOR.test(selector)) {
+      if (!OPERA_QSAPI && RE_SIMPLE_SELECTOR.test(selector)) {
         switch (selector.charAt(0)) {
           case '#':
             if ((element = byId(selector.slice(1), from))) {
