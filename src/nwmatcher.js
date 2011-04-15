@@ -606,16 +606,12 @@
   // @return element reference or null
   byId = !BUGGY_GEBID ?
     function(id, from) {
-      from || (from = doc);
       id = id.replace(/\\/g, '');
-      if (isXMLDocument || from.nodeType != 9) {
-        return byIdRaw(id, from.getElementsByTagName('*'));
-      }
-      return from.getElementById(id);
+      return from.getElementById && from.getElementById(id) ||
+        byIdRaw(id, from.getElementsByTagName('*'));
     } :
     function(id, from) {
       var element = null;
-      from || (from = doc);
       id = id.replace(/\\/g, '');
       if (isXMLDocument || from.nodeType != 9) {
         return byIdRaw(id, from.getElementsByTagName('*'));
@@ -625,6 +621,15 @@
         return byIdRaw(id, from.getElementsByName(id));
       }
       return element;
+    },
+
+  // publicly exposed byId
+  // @return element reference or null
+  _byId =
+    function(id, from) {
+      from || (from = doc);
+      isXMLDocument = isXML(from.ownerDocument || from);
+      return byId(id, from);
     },
 
   // elements by tag (raw)
@@ -648,14 +653,13 @@
   // @return array
   byTag = !BUGGY_GEBTN && NATIVE_SLICE_PROTO ?
     function(tag, from) {
-      from || (from = doc);
       return slice.call(from.getElementsByTagName ?
         from.getElementsByTagName(tag) :
         byTagRaw(tag, from), 0);
     } :
     function(tag, from) {
       var i = -1, data = [ ],
-        element, elements = (from || doc).getElementsByTagName(tag);
+        element, elements = from.getElementsByTagName(tag);
       if (tag == '*') {
         var j = -1;
         while ((element = elements[++i])) {
@@ -670,37 +674,57 @@
       return data;
     },
 
+  // publicly exposed byTag
+  // @return array
+  _byTag =
+    function(tag, from) {
+      from || (from = doc);
+      isXMLDocument = isXML(from.ownerDocument || from);
+      return byTag(tag, from);
+    },
+
+  // publicly exposed byName
   // elements by name
   // @return array
   byName =
+  _byName =
     function(name, from) {
-      return select('[name="' + name.replace(/\\/g, '') + '"]', from || doc);
+      return select('[name="' + name.replace(/\\/g, '') + '"]', from);
     },
 
-  // elements by class
+  // elements by class (raw)
   // @return array
-  byClass = !BUGGY_GEBCN && NATIVE_SLICE_PROTO ?
-    function(className, from) {
-      return slice.call((from || doc).
-        getElementsByClassName(className.replace(/\\/g, '')), 0);
-    } :
-    function(className, from) {
-      from || (from = doc);
-      var i = -1, j = i,
-        data = [ ], element,
-        elements = byTag('*', from),
-        host = from.ownerDocument || from,
-        quirks = isQuirks(host), xml = isXML(host),
-        n = quirks ? className.toLowerCase() : className;
-      className = ' ' + n.replace(/\\/g, '') + ' ';
+  byClassRaw =
+    function(name, from) {
+      var i = -1, j = i, data = [ ], element, elements = byTag('*', from), n;
+      name = ' ' + (isQuirksMode ? name.toLowerCase() : name).replace(/\\/g, '') + ' ';
       while ((element = elements[++i])) {
-        n = xml ? element.getAttribute('class') : element.className;
-        if (n && n.length && (' ' + (quirks ? n.toLowerCase() : n).
-          replace(reWhiteSpace, ' ') + ' ').indexOf(className) > -1) {
+        n = isXMLDocument ? element.getAttribute('class') : element.className;
+        if (n && n.length && (' ' + (isQuirksMode ? n.toLowerCase() : n).
+          replace(reWhiteSpace, ' ') + ' ').indexOf(name) > -1) {
           data[++j] = element;
         }
       }
       return data;
+    },
+
+  // elements by class
+  // @return array
+  byClass =
+    function(name, from) {
+      return (BUGGY_GEBCN || isXMLDocument || !from.getElementsByClassName) ?
+        byClassRaw(name, from) : slice.call(from.getElementsByClassName(name.replace(/\\/g, '')), 0);
+    },
+
+  // publicly exposed byClass
+  // @return array
+  _byClass =
+    function(name, from) {
+      from || (from = doc);
+      var host = from.ownerDocument || from;
+      isQuirksMode = isQuirks(host);
+      isXMLDocument = isXML(host);
+      return byClass(name, from);
     },
 
   // check if an element is a descendant of container
@@ -1597,7 +1621,7 @@
 
     // element selection methods
     byClass: byClass,
-    byName: byName,
+    byTag: byName,
     byTag: byTag,
     byId: byId,
 
@@ -1618,16 +1642,16 @@
   NW.Dom = {
 
     // retrieve element by id attr
-    byId: byId,
+    byId: _byId,
 
     // retrieve elements by tag name
-    byTag: byTag,
+    byTag: _byTag,
 
     // retrieve elements by name attr
-    byName: byName,
+    byName: _byName,
 
     // retrieve elements by class name
-    byClass: byClass,
+    byClass: _byClass,
 
     // read the value of the attribute
     // as was in the original HTML code
