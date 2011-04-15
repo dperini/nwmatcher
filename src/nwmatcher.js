@@ -27,6 +27,7 @@
 
   // save method reference
   slice = Array.prototype.slice,
+  string = Object.prototype.toString,
 
   // persist last selector/matcher parsing data
   lastError = '',
@@ -448,7 +449,7 @@
       '^#?-?[_a-zA-Z]{1}' + encoding + '*$'),
 
   // Opera Selectors API are the fastest, no need for optimizations
-  OPERA_QSAPI = /opera/i.test(toString.call(global.opera)) && NATIVE_QSAPI, 
+  OPERA_QSAPI = /opera/i.test(string.call(global.opera)) && NATIVE_QSAPI, 
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
