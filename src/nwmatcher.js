@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.4beta
  * Created: 20070722
- * Release: 20110410
+ * Release: 20110414
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -1018,6 +1018,9 @@
             return '';
           }
 
+          test = false;
+          type = 'false';
+
           // replace Operators parameter if needed
           if (match[2] && match[3] && (type = Operators[match[2]])) {
             // case treatment depends on document
@@ -1026,10 +1029,8 @@
             match[3] = match[3].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
             test = (isXMLDocument ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
             type = type.replace(/\%m/g, test ? match[3].toLowerCase() : match[3]);
-          } else {
-            test = false;
-            // handle empty values
-            type = "!=".indexOf(match[2]) > -1 ? 'n' + match[2] + '"' + match[3] + '"' : 'false';
+          } else if (match[2] == '!=' || match[2] == '=') {
+            type = 'n' + match[2] + '="' + match[3] + '"';
           }
 
           // build expression for has/getAttribute
