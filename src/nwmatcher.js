@@ -179,9 +179,9 @@
 
   // detect native methods
   isNative = (function() {
-    var s = (doc.open + '').replace(/open/g, '');
+    var s = (doc.childNodes.item + '').replace(/item/g, '');
     return function(object, method) {
-      var m = object && object[method], r = new RegExp(method, 'g');
+      var m = object && object[method] || false, r = new RegExp(method, 'g');
       return m && typeof m != 'string' && s == (m + '').replace(r, '');
     };
   })(),
@@ -1339,7 +1339,7 @@
       if (SHORTCUTS) {
         // add left context if missing
         if (reLeftContext.test(selector)) {
-          selector = from.id ?
+          selector = from.nodeType == 1 && from.id ?
             '#' + from.id + ' ' + selector :
             '* ' + selector;
         }
