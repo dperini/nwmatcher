@@ -179,7 +179,7 @@
 
   // detect native methods
   isNative = (function() {
-    var s = (global.toString + '').replace(/toString/g, '');
+    var s = (doc.open + '').replace(/open/g, '');
     return function(object, method) {
       var m = object && object[method], r = new RegExp(method, 'g');
       return m && typeof m != 'string' && s == (m + '').replace(r, '');
@@ -354,6 +354,12 @@
       return isBuggy;
     })(),
 
+  // detect Opera browser
+  OPERA = /opera/i.test(string.call(global.opera)),
+
+  // skip simpe selector optimizations for Opera >= 11
+  OPERA_QSAPI = OPERA && parseFloat(opera.version()) >= 11,
+
   // check Seletor API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
@@ -444,12 +450,10 @@
 
   // matches simple id, tag & class selectors
   RE_SIMPLE_SELECTOR = new RegExp(
-    !(BUGGY_GEBTN && BUGGY_GEBCN) ?
+    !(BUGGY_GEBTN && BUGGY_GEBCN) ? !OPERA ?
       '^(?:\\*|[.#]?-?[_a-zA-Z]{1}' + encoding + '*)$' :
+      '^(?:\\*|#-?[_a-zA-Z]{1}' + encoding + '*)$' :
       '^#?-?[_a-zA-Z]{1}' + encoding + '*$'),
-
-  // Opera Selectors API are the fastest, no need for optimizations
-  OPERA_QSAPI = /opera/i.test(string.call(global.opera)) && NATIVE_QSAPI, 
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
