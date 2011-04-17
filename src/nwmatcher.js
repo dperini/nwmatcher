@@ -595,6 +595,7 @@
     },
 
   // element by id (raw)
+  // @return reference or null
   byIdRaw =
     function(id, elements) {
       var i = -1, element = null;
@@ -607,8 +608,8 @@
     },
 
   // element by id
-  // @return element reference or null
-  byId = !BUGGY_GEBID ?
+  // @return reference or null
+  _byId = !BUGGY_GEBID ?
     function(id, from) {
       id = id.replace(/\\/g, '');
       return from.getElementById && from.getElementById(id) ||
@@ -628,12 +629,12 @@
     },
 
   // publicly exposed byId
-  // @return element reference or null
-  _byId =
+  // @return reference or null
+  byId =
     function(id, from) {
       from || (from = doc);
       isXMLDocument = isXML(from.ownerDocument || from);
-      return byId(id, from);
+      return _byId(id, from);
     },
 
   // elements by tag (raw)
@@ -655,7 +656,7 @@
 
   // elements by tag
   // @return array
-  byTag = !BUGGY_GEBTN && NATIVE_SLICE_PROTO ?
+  _byTag = !BUGGY_GEBTN && NATIVE_SLICE_PROTO ?
     function(tag, from) {
       return slice.call(from.getElementsByTagName ?
         from.getElementsByTagName(tag) :
@@ -680,18 +681,16 @@
 
   // publicly exposed byTag
   // @return array
-  _byTag =
+  byTag =
     function(tag, from) {
       from || (from = doc);
       isXMLDocument = isXML(from.ownerDocument || from);
-      return byTag(tag, from);
+      return _byTag(tag, from);
     },
 
   // publicly exposed byName
-  // elements by name
   // @return array
   byName =
-  _byName =
     function(name, from) {
       return select('[name="' + name.replace(/\\/g, '') + '"]', from);
     },
@@ -700,7 +699,7 @@
   // @return array
   byClassRaw =
     function(name, from) {
-      var i = -1, j = i, data = [ ], element, elements = byTag('*', from), n;
+      var i = -1, j = i, data = [ ], element, elements = _byTag('*', from), n;
       name = ' ' + (isQuirksMode ? name.toLowerCase() : name).replace(/\\/g, '') + ' ';
       while ((element = elements[++i])) {
         n = isXMLDocument ? element.getAttribute('class') : element.className;
@@ -714,7 +713,7 @@
 
   // elements by class
   // @return array
-  byClass =
+  _byClass =
     function(name, from) {
       return (BUGGY_GEBCN || isXMLDocument || !from.getElementsByClassName) ?
         byClassRaw(name, from) : slice.call(from.getElementsByClassName(name.replace(/\\/g, '')), 0);
@@ -722,16 +721,17 @@
 
   // publicly exposed byClass
   // @return array
-  _byClass =
+  byClass =
     function(name, from) {
       from || (from = doc);
       var host = from.ownerDocument || from;
       isQuirksMode = isQuirks(host);
       isXMLDocument = isXML(host);
-      return byClass(name, from);
+      return _byClass(name, from);
     },
 
-  // check if an element is a descendant of container
+  // check element is descendant of container
+  // @return boolean
   contains = 'compareDocumentPosition' in root ?
     function(container, element) {
       return (container.compareDocumentPosition(element) & 16) == 16;
@@ -1424,16 +1424,16 @@
       if (!OPERA_QSAPI && RE_SIMPLE_SELECTOR.test(selector)) {
         switch (selector.charAt(0)) {
           case '#':
-            if ((element = byId(selector.slice(1), from))) {
+            if ((element = _byId(selector.slice(1), from))) {
               callback && callback(element);
               return [ element ];
             }
             return [ ];
           case '.':
-            elements = byClass(selector.slice(1), from);
+            elements = _byClass(selector.slice(1), from);
             break;
           default:
-            elements = byTag(selector, from);
+            elements = _byTag(selector, from);
             break;
         }
         return callback ?
@@ -1526,7 +1526,7 @@
 
         // ID optimization RTL, to reduce number of elements to visit
         if ((parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
-          if ((element = byId(token, from))) {
+          if ((element = _byId(token, from))) {
             if (match(element, selector)) {
               callback && callback(element);
               return [ element ];
@@ -1537,7 +1537,7 @@
 
         // ID optimization LTR, to reduce selection context searches
         else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
-          if ((element = byId(token, doc))) {
+          if ((element = _byId(token, doc))) {
             if ('#' + token == selector) {
               callback && callback(element);
               return [ element ];
@@ -1553,12 +1553,12 @@
         }
 
         if (!NATIVE_GEBCN && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
-          if ((elements = byTag(token, from)).length === 0) { return [ ]; }
+          if ((elements = _byTag(token, from)).length === 0) { return [ ]; }
           selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace(token, '*');
         }
 
         else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-          if ((elements = byClass(token, from)).length === 0) { return [ ]; }
+          if ((elements = _byClass(token, from)).length === 0) { return [ ]; }
           if (reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1))) {
             selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '');
           } else {
@@ -1567,7 +1567,7 @@
         }
 
         else if ((parts = selector.match(Optimize.CLASS)) && (token = parts[1])) {
-          if ((elements = byClass(token, from)).length === 0) { return [ ]; }
+          if ((elements = _byClass(token, from)).length === 0) { return [ ]; }
           for (var z = 0, els = [ ]; elements.length > z; ++z) {
             els = concatList(els, elements[z].getElementsByTagName('*'));
           }
@@ -1580,14 +1580,14 @@
         }
 
         else if (NATIVE_GEBCN && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
-          if ((elements = byTag(token, from)).length === 0) { return [ ]; }
+          if ((elements = _byTag(token, from)).length === 0) { return [ ]; }
           selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace(token, '*');
         }
 
       }
 
       if (!elements) {
-        elements = byTag('*', from);
+        elements = _byTag('*', from);
       }
       // end of prefiltering pass
 
@@ -1625,10 +1625,10 @@
     hasAttribute: hasAttribute,
 
     // element selection methods
-    byClass: byClass,
-    byTag: byName,
-    byTag: byTag,
-    byId: byId,
+    byClass: _byClass,
+    byName: byName,
+    byTag: _byTag,
+    byId: _byId,
 
     // helper/check methods
     contains: contains,
@@ -1647,16 +1647,16 @@
   NW.Dom = {
 
     // retrieve element by id attr
-    byId: _byId,
+    byId: byId,
 
     // retrieve elements by tag name
-    byTag: _byTag,
+    byTag: byTag,
 
     // retrieve elements by name attr
-    byName: _byName,
+    byName: byName,
 
     // retrieve elements by class name
-    byClass: _byClass,
+    byClass: byClass,
 
     // read the value of the attribute
     // as was in the original HTML code
