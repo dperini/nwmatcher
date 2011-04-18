@@ -1642,73 +1642,69 @@
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
-  global.NW || (global.NW = { });
+  // Export the public API for web browsers and CommonJS implementations.
+  var Dom = typeof exports == 'object' && exports || (global.NW || (global.NW = {})) && (global.NW.Dom = {});
 
-  NW.Dom = {
+  // retrieve element by id attr
+  Dom.byId = byId;
 
-    // retrieve element by id attr
-    byId: byId,
+  // retrieve elements by tag name
+  Dom.byTag = byTag;
 
-    // retrieve elements by tag name
-    byTag: byTag,
+  // retrieve elements by name attr
+  Dom.byName = byName;
 
-    // retrieve elements by name attr
-    byName: byName,
+  // retrieve elements by class name
+  Dom.byClass = byClass;
 
-    // retrieve elements by class name
-    byClass: byClass,
+  // read the value of the attribute
+  // as was in the original HTML code
+  Dom.getAttribute = getAttribute;
 
-    // read the value of the attribute
-    // as was in the original HTML code
-    getAttribute: getAttribute,
+  // check for the attribute presence
+  // as was in the original HTML code
+  Dom.hasAttribute = hasAttribute;
 
-    // check for the attribute presence
-    // as was in the original HTML code
-    hasAttribute: hasAttribute,
+  // element match selector, return boolean true/false
+  Dom.match = match;
 
-    // element match selector, return boolean true/false
-    match: match,
+  // elements matching selector, starting from element
+  Dom.select = select;
 
-    // elements matching selector, starting from element
-    select: select,
+  // compile selector into ad-hoc javascript resolver
+  Dom.compile = compile;
 
-    // compile selector into ad-hoc javascript resolver
-    compile: compile,
+  // check that two elements are ancestor/descendant
+  Dom.contains = contains;
 
-    // check that two elements are ancestor/descendant
-    contains: contains,
+  // handle selector engine configuration settings
+  Dom.configure = configure;
 
-    // handle selector engine configuration settings
-    configure: configure,
+  // pass methods references to compiled resolvers
+  Dom.Snapshot = Snapshot;
 
-    // pass methods references to compiled resolvers
-    Snapshot: Snapshot,
+  // operators descriptor
+  // for attribute operators extensions
+  Dom.Operators = Operators;
 
-    // operators descriptor
-    // for attribute operators extensions
-    Operators: Operators,
+  // selectors descriptor
+  // for pseudo-class selectors extensions
+  Dom.Selectors = Selectors;
 
-    // selectors descriptor
-    // for pseudo-class selectors extensions
-    Selectors: Selectors,
+  // add or overwrite user defined operators
+  Dom.registerOperator = function(symbol, resolver) {
+    if (!Operators[symbol]) {
+      Operators[symbol] = resolver;
+    }
+  };
 
-    // add or overwrite user defined operators
-    registerOperator:
-      function(symbol, resolver) {
-        if (!Operators[symbol]) {
-          Operators[symbol] = resolver;
-        }
-      },
-
-    // add selector patterns for user defined callbacks
-    registerSelector:
-      function(name, rexp, func) {
-        if (!Selectors[name]) {
-          Selectors[name] = { };
-          Selectors[name].Expression = rexp;
-          Selectors[name].Callback = func;
-        }
-      }
+  // add selector patterns for user defined callbacks
+  Dom.registerSelector = function(name, rexp, func) {
+    if (!Selectors[name]) {
+      Selectors[name] = { };
+      Selectors[name].Expression = rexp;
+      Selectors[name].Callback = func;
+    }
   };
 
 })(this);
