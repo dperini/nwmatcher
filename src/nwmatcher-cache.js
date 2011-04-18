@@ -1,6 +1,7 @@
-NW.Dom.Cache = (function(global) {
+(function(global) {
 
-  var now, lastCalled,
+  // Export the public API for web browsers and CommonJS implementations.
+  var Cache = typeof exports == 'object' && exports || (global.NW.Dom.Cache = {}), now, lastCalled,
 
   Storages = { },
   Contexts = { },
@@ -191,31 +192,27 @@ NW.Dom.Cache = (function(global) {
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
-  return {
+  // save results into cache
+  Cache.saveResults = saveResults;
 
-    // save results into cache
-    saveResults: saveResults,
+  // load results from cache
+  Cache.loadResults = loadResults;
 
-    // load results from cache
-    loadResults: loadResults,
+  // expire DOM tree cache
+  Cache.expireCache = expireCache;
 
-    // expire DOM tree cache
-    expireCache: expireCache,
+  // enable/disable cache
+  Cache.setCache = setCache;
 
-    // enable/disable cache
-    setCache: setCache,
+  // context roots reference
+  Cache.getContexts = function() { return Contexts; };
 
-    // context roots reference
-    getContexts: function() { return Contexts; },
+  // result sets references
+  Cache.getResults = function() { return Results; };
 
-    // result sets references
-    getResults: function() { return Results; },
-
-    // public while debugging
-    isEnabled: function() { return isEnabled; },
-    isExpired: function() { return isExpired; },
-    isPaused: function() { return isPaused; }
-
-  };
+  // public while debugging
+  Cache.isEnabled = function() { return isEnabled; };
+  Cache.isExpired = function() { return isExpired; };
+  Cache.isPaused = function() { return isPaused; };
 
 })(this);
