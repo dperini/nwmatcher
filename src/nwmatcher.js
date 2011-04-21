@@ -186,6 +186,25 @@
     };
   })(),
 
+  isQuirksBuggy =
+    function(document) {
+      // In quirks mode css class names are case insensitive.
+      // In standards mode they are case sensitive. See docs:
+      // https://developer.mozilla.org/en/Mozilla_Quirks_Mode_Behavior
+      // http://www.whatwg.org/specs/web-apps/current-work/#selectors
+
+      // Safari 3.2 QSA doesn't work with mixedcase in quirksmode
+      // https://bugs.webkit.org/show_bug.cgi?id=19047
+      // must test the attribute selector '[class~=xxx]'
+      // before '.xXx' or the bug may not present itself
+      var div = document.createElement('div');
+      div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
+      div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
+      return (NATIVE_QSAPI && isQuirks(document) &&
+        (div.querySelectorAll('[class~=xxx]').length != 2 ||
+        div.querySelectorAll('.xXx').length != 2));
+    },
+
   // Safari 2 missing document.compatMode property
   // makes harder to detect Quirks vs. Strict mode
   isQuirks =
@@ -219,6 +238,7 @@
   // and reset for each selection query
   isQuirksMode = isQuirks(doc),
   isXMLDocument = isXML(doc),
+  BUGGY_QSAPI_QUIRKS = isQuirksBuggy(doc),
 
   // NATIVE_XXXXX true if method exist and is callable
   // detect if DOM methods are native in browsers
@@ -365,25 +385,6 @@
     (function() {
       var pattern = [ ], div = doc.createElement('div'), element;
 
-      // In quirks mode css class names are case insensitive.
-      // In standards mode they are case sensitive. See docs:
-      // https://developer.mozilla.org/en/Mozilla_Quirks_Mode_Behavior
-      // http://www.whatwg.org/specs/web-apps/current-work/#selectors
-
-      // Safari 3.2 QSA doesn't work with mixedcase in quirksmode
-      // https://bugs.webkit.org/show_bug.cgi?id=19047
-      // must test the attribute selector '[class~=xxx]'
-      // before '.xXx' or the bug may not present itself
-      div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
-      div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
-      if (isQuirks(doc) &&
-        (div.querySelectorAll('[class~=xxx]').length != 2 ||
-        div.querySelectorAll('.xXx').length != 2)) {
-        pattern.push('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + identifier + ')');
-      }
-      div.removeChild(div.firstChild);
-      div.removeChild(div.firstChild);
-
       // ^= $= *= operators bugs whith empty values (Opera 10 / IE8)
       div.appendChild(doc.createElement('p')).setAttribute('class', '');
       try {
@@ -438,12 +439,14 @@
         pattern.push('\\[\\s*(?:checked|disabled|ismap|multiple|readonly|selected|value)');
       }
 
-      div = null;
       return pattern.length ?
         new RegExp(pattern.join('|')) :
         { 'test': function() { return false; } };
     })() :
     true,
+
+  // matches class selectors
+  RE_CLASS = new RegExp('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + identifier + ')'),
 
   // matches pseudo-classes
   RE_PSEUDOS = new RegExp(':[-\\w]+'),
@@ -727,6 +730,7 @@
       var host = from.ownerDocument || from;
       isQuirksMode = isQuirks(host);
       isXMLDocument = isXML(host);
+      BUGGY_QSAPI_QUIRKS = isQuirksBuggy(host);
       return _byClass(name, from);
     },
 
@@ -1357,6 +1361,7 @@
         root = (doc = element.ownerDocument || element).documentElement;
         isQuirksMode = isQuirks(doc);
         isXMLDocument = isXML(doc);
+        BUGGY_QSAPI_QUIRKS = isQuirksBuggy(doc);
       }
 
       if ((changed = lastMatcher != selector)) {
@@ -1373,6 +1378,7 @@
 
       // use matchesSelector API if available
       if (USE_QSAPI && element[NATIVE_MATCHES_SELECTOR] &&
+        !(BUGGY_QSAPI_QUIRKS && RE_CLASS.test(selector)) &&
         !(BUGGY_PSEUDOS && RE_PSEUDOS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector)) {
         try {
@@ -1421,6 +1427,17 @@
       // ensure context is set
       from || (from = doc);
 
+      // extract context if changed
+      if (lastSelectContext != from) {
+        // save passed context
+        lastSelectContext = from;
+        // reference context ownerDocument and document root (HTML)
+        root = (doc = from.ownerDocument || from).documentElement;
+        isQuirksMode = isQuirks(doc);
+        isXMLDocument = isXML(doc);
+        BUGGY_QSAPI_QUIRKS = isQuirksBuggy(doc);
+      }
+
       if (!OPERA_QSAPI && RE_SIMPLE_SELECTOR.test(selector)) {
         switch (selector.charAt(0)) {
           case '#':
@@ -1440,7 +1457,9 @@
           concatCall([ ], elements, callback) : elements;
       }
 
-      if (USE_QSAPI && !RE_BUGGY_QSAPI.test(selector) &&
+      if (USE_QSAPI &&
+        !(BUGGY_QSAPI_QUIRKS && RE_CLASS.test(selector)) &&
+        !RE_BUGGY_QSAPI.test(selector) &&
         QSA_NODE_TYPES[from.nodeType]) {
 
         // clear error state
@@ -1485,16 +1504,6 @@
         if (reRightContext.test(selector)) {
           selector = selector + ' *';
         }
-      }
-
-      // extract context if changed
-      if (lastSelectContext != from) {
-        // save passed context
-        lastSelectContext = from;
-        // reference context ownerDocument and document root (HTML)
-        root = (doc = from.ownerDocument || from).documentElement;
-        isQuirksMode = isQuirks(doc);
-        isXMLDocument = isXML(doc);
       }
 
       if ((changed = lastSelector != selector)) {
@@ -1643,7 +1652,7 @@
   /*------------------------------- PUBLIC API -------------------------------*/
 
   // Export the public API for web browsers and CommonJS implementations.
-  var Dom = typeof exports == 'object' && exports || (global.NW || (global.NW = {})) && (global.NW.Dom = {});
+  var Dom = typeof exports == 'object' && exports || (global.NW = { Dom: { } }, global.NW.Dom);
 
   // retrieve element by id attr
   Dom.byId = byId;
@@ -1693,18 +1702,15 @@
 
   // add or overwrite user defined operators
   Dom.registerOperator = function(symbol, resolver) {
-    if (!Operators[symbol]) {
-      Operators[symbol] = resolver;
-    }
+    Operators[symbol] || (Operators[symbol] = resolver);
   };
 
   // add selector patterns for user defined callbacks
   Dom.registerSelector = function(name, rexp, func) {
-    if (!Selectors[name]) {
-      Selectors[name] = { };
-      Selectors[name].Expression = rexp;
-      Selectors[name].Callback = func;
-    }
+    Selectors[name] || (Selectors[name] = {
+      Expression: rexp,
+      Callback: func
+    });
   };
 
 })(this);
