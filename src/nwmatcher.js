@@ -38,9 +38,15 @@
   isSingleMatch = false,
   isSingleSelect = false,
 
-  // initialize selector/matcher loading context
-  lastMatchContext = doc,
-  lastSelectContext = doc,
+  // selector/matcher context
+  lastContext,
+
+  // initialized with the loading context
+  // and reset for each selection query
+  BUGGY_QSAPI_QUIRKS,
+  QUIRKS_MODE,
+  TO_UPPER_CASE,
+  XML_DOCUMENT,
 
   // prefixes identifying id, class & pseudo-class
   prefixes = '[.:#]?',
@@ -222,23 +228,9 @@
     },
 
   // XML is functional in W3C browsers
-  isXML = 'xmlVersion' in doc ?
-    function(document) {
-      return !!document.xmlVersion ||
-        (/xml$/).test(document.contentType) ||
-        !(/html/i).test(document.documentElement.nodeName);
-    } :
-    function(document) {
-      return document.firstChild.nodeType == 7 &&
-        (/xml/i).test(document.firstChild.nodeName) ||
-        !(/html/i).test(document.documentElement.nodeName);
+  isXML = function(document) {
+      return document.createElement('DiV').nodeName == 'DiV';
     },
-
-  // initialized with the loading context
-  // and reset for each selection query
-  QUIRKS_MODE = isQuirks(doc),
-  XML_DOCUMENT = isXML(doc),
-  BUGGY_QSAPI_QUIRKS = isQuirksBuggy(doc),
 
   // NATIVE_XXXXX true if method exist and is callable
   // detect if DOM methods are native in browsers
@@ -575,7 +567,7 @@
     className: new RegExp('^\\.(' + encoding + '+)(.*)')
   },
 
-  /*------------------------------ DOM METHODS -------------------------------*/
+  /*------------------------------ UTIL METHODS -------------------------------*/
 
   // concat elements to data
   concatList =
@@ -596,6 +588,26 @@
         callback(data[data.length] = element);
       return data;
     },
+
+  // change context specific variables
+  switchContext =
+    function(from, force) {
+      var oldDoc = doc;
+      // save passed context
+      lastContext = from;
+      // reference context ownerDocument and document root (HTML)
+      root = (doc = from.ownerDocument || from).documentElement;
+      if (force || oldDoc != doc) {
+        // set flags
+        BUGGY_QSAPI_QUIRKS = isQuirksBuggy(doc);
+        QUIRKS_MODE = isQuirks(doc);
+        XML_DOCUMENT = isXML(doc);
+        // code chunk used when nodeName comparisons need to be uppercased
+        TO_UPPER_CASE = XML_DOCUMENT ? '.toUpperCase()' : '';
+      }
+    },
+
+  /*------------------------------ DOM METHODS -------------------------------*/
 
   // element by id (raw)
   // @return reference or null
@@ -635,8 +647,7 @@
   // @return reference or null
   byId =
     function(id, from) {
-      from || (from = doc);
-      XML_DOCUMENT = isXML(from.ownerDocument || from);
+      switchContext(from || (from = doc));
       return _byId(id, from);
     },
 
@@ -686,8 +697,7 @@
   // @return array
   byTag =
     function(tag, from) {
-      from || (from = doc);
-      XML_DOCUMENT = isXML(from.ownerDocument || from);
+      switchContext(from || (from = doc));
       return _byTag(tag, from);
     },
 
@@ -726,11 +736,7 @@
   // @return array
   byClass =
     function(name, from) {
-      from || (from = doc);
-      var host = from.ownerDocument || from;
-      QUIRKS_MODE = isQuirks(host);
-      XML_DOCUMENT = isXML(host);
-      BUGGY_QSAPI_QUIRKS = isQuirksBuggy(host);
+      switchContext(from || (from = doc));
       return _byClass(name, from);
     },
 
@@ -917,10 +923,6 @@
   // do not change this, it is searched & replaced
   // in multiple places to build compiled functions
   ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
-
-  // checks if nodeName comparisons need to be uppercased
-  TO_UPPER_CASE = doc.createElement('nAv').nodeName == 'nAv' ?
-    '.toUpperCase()' : '',
 
   // compile a comma separated group of selector
   // @mode boolean true for select, false for match
@@ -1354,14 +1356,8 @@
       }
 
       // extract context if changed
-      if (lastMatchContext != from) {
-        // save passed context
-        lastMatchContext = from;
-        // reference element ownerDocument and document root (HTML)
-        root = (doc = element.ownerDocument || element).documentElement;
-        QUIRKS_MODE = isQuirks(doc);
-        XML_DOCUMENT = isXML(doc);
-        BUGGY_QSAPI_QUIRKS = isQuirksBuggy(doc);
+      if (lastContext != from) {
+        switchContext(from);
       }
 
       if ((changed = lastMatcher != selector)) {
@@ -1428,14 +1424,8 @@
       from || (from = doc);
 
       // extract context if changed
-      if (lastSelectContext != from) {
-        // save passed context
-        lastSelectContext = from;
-        // reference context ownerDocument and document root (HTML)
-        root = (doc = from.ownerDocument || from).documentElement;
-        QUIRKS_MODE = isQuirks(doc);
-        XML_DOCUMENT = isXML(doc);
-        BUGGY_QSAPI_QUIRKS = isQuirksBuggy(doc);
+      if (lastContext != from) {
+        switchContext(from);
       }
 
       if (!OPERA_QSAPI && RE_SIMPLE_SELECTOR.test(selector)) {
@@ -1714,5 +1704,10 @@
       Callback: func
     });
   };
+
+  /*---------------------------------- INIT ----------------------------------*/
+
+  // init context specific variables
+  switchContext(doc, true);
 
 })(this);
