@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.4beta
  * Created: 20070722
- * Release: 20110414
+ * Release: 20110426
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -236,8 +236,8 @@
 
   // initialized with the loading context
   // and reset for each selection query
-  isQuirksMode = isQuirks(doc),
-  isXMLDocument = isXML(doc),
+  QUIRKS_MODE = isQuirks(doc),
+  XML_DOCUMENT = isXML(doc),
   BUGGY_QSAPI_QUIRKS = isQuirksBuggy(doc),
 
   // NATIVE_XXXXX true if method exist and is callable
@@ -621,7 +621,7 @@
     function(id, from) {
       var element = null;
       id = id.replace(/\\/g, '');
-      if (isXMLDocument || from.nodeType != 9) {
+      if (XML_DOCUMENT || from.nodeType != 9) {
         return byIdRaw(id, from.getElementsByTagName('*'));
       }
       if ((element = from.getElementById(id)) &&
@@ -636,7 +636,7 @@
   byId =
     function(id, from) {
       from || (from = doc);
-      isXMLDocument = isXML(from.ownerDocument || from);
+      XML_DOCUMENT = isXML(from.ownerDocument || from);
       return _byId(id, from);
     },
 
@@ -687,7 +687,7 @@
   byTag =
     function(tag, from) {
       from || (from = doc);
-      isXMLDocument = isXML(from.ownerDocument || from);
+      XML_DOCUMENT = isXML(from.ownerDocument || from);
       return _byTag(tag, from);
     },
 
@@ -703,10 +703,10 @@
   byClassRaw =
     function(name, from) {
       var i = -1, j = i, data = [ ], element, elements = _byTag('*', from), n;
-      name = ' ' + (isQuirksMode ? name.toLowerCase() : name).replace(/\\/g, '') + ' ';
+      name = ' ' + (QUIRKS_MODE ? name.toLowerCase() : name).replace(/\\/g, '') + ' ';
       while ((element = elements[++i])) {
-        n = isXMLDocument ? element.getAttribute('class') : element.className;
-        if (n && n.length && (' ' + (isQuirksMode ? n.toLowerCase() : n).
+        n = XML_DOCUMENT ? element.getAttribute('class') : element.className;
+        if (n && n.length && (' ' + (QUIRKS_MODE ? n.toLowerCase() : n).
           replace(reWhiteSpace, ' ') + ' ').indexOf(name) > -1) {
           data[++j] = element;
         }
@@ -718,7 +718,7 @@
   // @return array
   _byClass =
     function(name, from) {
-      return (BUGGY_GEBCN || isXMLDocument || !from.getElementsByClassName) ?
+      return (BUGGY_GEBCN || XML_DOCUMENT || !from.getElementsByClassName) ?
         byClassRaw(name, from) : slice.call(from.getElementsByClassName(name.replace(/\\/g, '')), 0);
     },
 
@@ -728,8 +728,8 @@
     function(name, from) {
       from || (from = doc);
       var host = from.ownerDocument || from;
-      isQuirksMode = isQuirks(host);
-      isXMLDocument = isXML(host);
+      QUIRKS_MODE = isQuirks(host);
+      XML_DOCUMENT = isXML(host);
       BUGGY_QSAPI_QUIRKS = isQuirksBuggy(host);
       return _byClass(name, from);
     },
@@ -979,7 +979,7 @@
         else if ((match = selector.match(Patterns.id))) {
           // document can contain conflicting elements (id/name)
           // prototype selector unit need this method to recover bad HTML forms
-          source = 'if(' + (isXMLDocument ?
+          source = 'if(' + (XML_DOCUMENT ?
             's.getAttribute(e,"id")' :
             '(e.submit?s.getAttribute(e,"id"):e.id)') +
             '=="' + match[1] + '"' +
@@ -991,7 +991,7 @@
         else if ((match = selector.match(Patterns.tagName))) {
           // both tagName and nodeName properties may be upper/lower case
           // depending on their creation NAMESPACE in createElementNS()
-          source = 'if(e.nodeName' + (isXMLDocument ?
+          source = 'if(e.nodeName' + (XML_DOCUMENT ?
             '=="' + match[1] + '"' : TO_UPPER_CASE +
             '=="' + match[1].toUpperCase() + '"') +
             '){' + source + '}';
@@ -1003,11 +1003,11 @@
           // W3C CSS3 specs: element whose "class" attribute has been assigned a
           // list of whitespace-separated values, see section 6.4 Class selectors
           // and notes at the bottom; explicitly non-normative in this specification.
-          source = 'if((n=' + (isXMLDocument ?
+          source = 'if((n=' + (XML_DOCUMENT ?
             's.getAttribute(e,"class")' : 'e.className') +
-            ')&&n.length&&(" "+' + (isQuirksMode ? 'n.toLowerCase()' : 'n') +
+            ')&&n.length&&(" "+' + (QUIRKS_MODE ? 'n.toLowerCase()' : 'n') +
             '.replace(' + reWhiteSpace + '," ")+" ").indexOf(" ' +
-            (isQuirksMode ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
+            (QUIRKS_MODE ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
             '){' + source + '}';
         }
 
@@ -1032,10 +1032,10 @@
           // replace Operators parameter if needed
           if (match[2] && match[3] && (type = Operators[match[2]])) {
             // case treatment depends on document
-            HTML_TABLE['class'] = isQuirksMode ? 1 : 0;
+            HTML_TABLE['class'] = QUIRKS_MODE ? 1 : 0;
             // replace escaped values and HTML entities
             match[3] = match[3].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
-            test = (isXMLDocument ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
+            test = (XML_DOCUMENT ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
             type = type.replace(/\%m/g, test ? match[3].toLowerCase() : match[3]);
           } else if (match[2] == '!=' || match[2] == '=') {
             type = 'n' + match[2] + '="' + match[3] + '"';
@@ -1237,15 +1237,15 @@
             // CSS3 user action pseudo-classes IE & FF3 have native support
             // these capabilities may be emulated by some event managers
             case 'active':
-              if (isXMLDocument) break;
+              if (XML_DOCUMENT) break;
               source = 'if(e===d.activeElement){' + source + '}';
               break;
             case 'hover':
-              if (isXMLDocument) break;
+              if (XML_DOCUMENT) break;
               source = 'if(e===d.hoverElement){' + source + '}';
               break;
             case 'focus':
-              if (isXMLDocument) break;
+              if (XML_DOCUMENT) break;
               source = NATIVE_FOCUS ?
                 'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href)){' + source + '}' :
                 'if(e===d.activeElement&&(e.type||e.href)){' + source + '}';
@@ -1359,8 +1359,8 @@
         lastMatchContext = from;
         // reference element ownerDocument and document root (HTML)
         root = (doc = element.ownerDocument || element).documentElement;
-        isQuirksMode = isQuirks(doc);
-        isXMLDocument = isXML(doc);
+        QUIRKS_MODE = isQuirks(doc);
+        XML_DOCUMENT = isXML(doc);
         BUGGY_QSAPI_QUIRKS = isQuirksBuggy(doc);
       }
 
@@ -1393,9 +1393,9 @@
       }
 
       // compile matcher resolver if necessary
-      resolver = (isXMLDocument && XMLMatchers[selector]) ?
+      resolver = (XML_DOCUMENT && XMLMatchers[selector]) ?
         XMLMatchers[selector] : HTMLMatchers[selector] ?
-          HTMLMatchers[selector] : (isXMLDocument ?
+          HTMLMatchers[selector] : (XML_DOCUMENT ?
             XMLMatchers : HTMLMatchers)[selector] = isSingleMatch ?
               new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
                 compileSelector(selector, 'f&&f(k);return true;') + 'return false;') :
@@ -1433,8 +1433,8 @@
         lastSelectContext = from;
         // reference context ownerDocument and document root (HTML)
         root = (doc = from.ownerDocument || from).documentElement;
-        isQuirksMode = isQuirks(doc);
-        isXMLDocument = isXML(doc);
+        QUIRKS_MODE = isQuirks(doc);
+        XML_DOCUMENT = isXML(doc);
         BUGGY_QSAPI_QUIRKS = isQuirksBuggy(doc);
       }
 
@@ -1601,9 +1601,9 @@
       // end of prefiltering pass
 
       // compile selector resolver if necessary
-      resolver = (isXMLDocument && XMLResolvers[selector]) ?
+      resolver = (XML_DOCUMENT && XMLResolvers[selector]) ?
         XMLResolvers[selector] : HTMLResolvers[selector] ?
-          HTMLResolvers[selector] : (isXMLDocument ?
+          HTMLResolvers[selector] : (XML_DOCUMENT ?
             XMLResolvers : HTMLResolvers)[selector] = isSingleSelect ?
               new Function('c,s,r,d,h,g,f', 'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' +
                 compileSelector(selector, ACCEPT_NODE) + '}return r;') :
@@ -1651,8 +1651,10 @@
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
-  // Export the public API for web browsers and CommonJS implementations.
-  var Dom = typeof exports == 'object' && exports || (global.NW = { Dom: { } }, global.NW.Dom);
+  // export the public API for CommonJS implementations,
+  // for headless JS engines or for standard web browsers
+  var Dom = typeof exports == 'object' && exports ||
+    (global.NW = { Dom: { } }, global.NW.Dom);
 
   // retrieve element by id attr
   Dom.byId = byId;
