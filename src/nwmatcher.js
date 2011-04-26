@@ -1641,10 +1641,13 @@
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
+  // create/extend NW namespace
+  global.NW || (global.NW = { });
+  global.NW.Dom || (global.NW.Dom = { });
+
   // export the public API for CommonJS implementations,
   // for headless JS engines or for standard web browsers
-  var Dom = typeof exports == 'object' && exports ||
-    (global.NW = { Dom: { } }, global.NW.Dom);
+  var Dom = typeof exports == 'object' && exports || global.NW.Dom;
 
   // retrieve element by id attr
   Dom.byId = byId;
