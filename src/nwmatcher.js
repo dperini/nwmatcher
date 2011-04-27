@@ -15,19 +15,31 @@
  *  http://javascript.nwbox.com/NWMatcher/nwmatcher.js
  */
 
-(function(global) {
+(function(window) {
 
   var version = 'nwmatcher-1.2.4beta',
 
+  // backup existing NW object
+  oldNW = window.NW,
+
+  // determine if exports object exists
+  hasExports = !!(typeof global == 'object' && global &&
+    typeof exports == 'object' && exports),
+
+  // destination namespace
+  Dom = hasExports ?
+    (window = global, exports) :
+    (window.NW = { Dom: { } }, window.NW.Dom),
+
   // processing context
-  doc = global.document,
+  doc = window.document,
 
   // context root element
   root = doc.documentElement,
 
   // save method reference
-  slice = Array.prototype.slice,
-  string = Object.prototype.toString,
+  slice = [].slice,
+  string = {}.toString,
 
   // persist last selector/matcher parsing data
   lastError = '',
@@ -367,7 +379,7 @@
     })(),
 
   // detect Opera browser
-  OPERA = /opera/i.test(string.call(global.opera)),
+  OPERA = /opera/i.test(string.call(window.opera)),
 
   // skip simpe selector optimizations for Opera >= 11
   OPERA_QSAPI = OPERA && parseFloat(opera.version()) >= 11,
@@ -570,6 +582,7 @@
   /*------------------------------ UTIL METHODS -------------------------------*/
 
   // concat elements to data
+  // @return array
   concatList =
     function(data, elements) {
       var i = -1, element;
@@ -581,6 +594,7 @@
     },
 
   // concat elements to data and callback
+  // @return array
   concatCall =
     function(data, elements, callback) {
       var i = -1, element;
@@ -878,7 +892,7 @@
     function(message) {
       if (VERBOSITY) {
         // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
-        if (typeof global.DOMException !== 'undefined') {
+        if (typeof window.DOMException != 'undefined') {
           var err = new Error();
           err.message = 'SYNTAX_ERR: (Selectors) ' + message;
           err.code = 12;
@@ -887,15 +901,19 @@
           throw new Error(12, 'SYNTAX_ERR: (Selectors) ' + message);
         }
       } else {
-        var console = global.console;
+        var console = window.console;
         if (console && console.log) {
           console.log(message);
-        } else {
+        }
+        else if (typeof print == 'function' && print.length == 1) {
+          print(message);
+        }
+        else {
           if (/exception/i.test(message)) {
-            global.status = message;
-            global.defaultStatus = message;
+            window.status = message;
+            window.defaultStatus = message;
           } else {
-            global.status += message;
+            window.status = (window.status || '') + message;
           }
         }
       }
@@ -1641,14 +1659,6 @@
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
-  // create/extend NW namespace
-  global.NW || (global.NW = { });
-  global.NW.Dom || (global.NW.Dom = { });
-
-  // export the public API for CommonJS implementations,
-  // for headless JS engines or for standard web browsers
-  var Dom = typeof exports == 'object' && exports || global.NW.Dom;
-
   // retrieve element by id attr
   Dom.byId = byId;
 
@@ -1707,6 +1717,14 @@
       Callback: func
     });
   };
+
+  // add no-conflict method when exports object isn't available
+  if (!hasExports) {
+    window.NW.noConflict = function () {
+      window.NW = oldNW;
+      return this;
+    };
+  }
 
   /*---------------------------------- INIT ----------------------------------*/
 
