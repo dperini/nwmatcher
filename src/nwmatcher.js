@@ -22,14 +22,14 @@
   // backup existing NW object
   oldNW = window.NW,
 
-  // determine if exports object exists
-  hasExports = !!(typeof global == 'object' && global &&
-    typeof exports == 'object' && exports),
-
   // destination namespace
-  Dom = hasExports ?
-    (window = global, exports) :
-    (window.NW = { Dom: { } }, window.NW.Dom),
+  Dom = typeof exports == 'object' && exports || (window.NW = {
+    noConflict: function() {
+      window.NW = oldNW;
+      return this;
+    },
+    Dom: { }
+  }, window.NW.Dom),
 
   // processing context
   doc = window.document,
@@ -901,8 +901,7 @@
           throw new Error(12, 'SYNTAX_ERR: (Selectors) ' + message);
         }
       } else {
-        var console = window.console;
-        if (console && console.log) {
+        if (typeof console == 'object' && console && console.log) {
           console.log(message);
         }
         else if (typeof print == 'function' && print.length == 1) {
@@ -1717,14 +1716,6 @@
       Callback: func
     });
   };
-
-  // add no-conflict method when exports object isn't available
-  if (!hasExports) {
-    window.NW.noConflict = function () {
-      window.NW = oldNW;
-      return this;
-    };
-  }
 
   /*---------------------------------- INIT ----------------------------------*/
 
