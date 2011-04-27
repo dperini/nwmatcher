@@ -181,6 +181,12 @@
 
   reOptimizeSelector = new RegExp(identifier + '|^$'),
 
+  // simulates a negative RegExp#test
+  testFalse = { 'test': function() { return false; } },
+
+  // simulates a positive RegExp#test
+  testTrue = { 'test': function() { return true; } },
+
   /*----------------------------- FEATURE TESTING ----------------------------*/
 
   // detect native methods
@@ -375,53 +381,37 @@
   // check Seletor API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
-      var pattern = [ ], div = doc.createElement('div'), element;
+      var pattern = [ ], div = doc.createElement('div'),
+        element = doc.createElement('input');
 
-      // ^= $= *= operators bugs whith empty values (Opera 10 / IE8)
-      div.appendChild(doc.createElement('p')).setAttribute('class', '');
+      // ^= $= *= operators bugs with empty values (IE8 / Opera 10 / Safari 3)
+      element.setAttribute('type', 'checkbox');
+      element.setAttribute('checked', 'checked');
+      div.appendChild(element).setAttribute('class', '');
       try {
         div.querySelectorAll('[class^=""]').length == 1 &&
           pattern.push('[*^$]=\\s*(?:""|' + "'')");
       } catch(e) { }
-      div.removeChild(div.firstChild);
 
-      // :checked bugs whith checkbox elements (Opera 10 to 10.53)
-      element = doc.createElement('input');
-      element.setAttribute('type', 'checkbox');
-      element.setAttribute('checked', 'checked');
-      div.appendChild(element);
+      // :checked bugs whith checkbox elements (Opera 10+)
       try {
         div.querySelectorAll(':checked').length == 1 ||
           pattern.push(':checked');
       } catch(e) { }
-      div.removeChild(div.firstChild);
 
-      // :checked bug with option elements (Firefox 3.6.x)
-      // it wrongly includes 'selected' options elements
-      element = doc.createElement('option');
-      element.setAttribute('selected', 'selected');
-      div.appendChild(element);
-      try {
-        div.querySelectorAll(':checked').length == 1 &&
-          pattern.push(':checked');
-      } catch(e) { }
-      div.removeChild(div.firstChild);
-
-      // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
+      // :enabled :disabled bugs with hidden fields (Firefox 3.5, Opera 10+)
       // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
       // IE8 QSA has problems too and throws error with these dynamic pseudos
       (element = doc.createElement('input')).setAttribute('type', 'hidden');
-      div.appendChild(element);
+      div.replaceChild(element, div.firstChild);
       try {
-        div.querySelectorAll(':enabled').length === 1 &&
+        div.querySelectorAll(':enabled').length == 1 &&
           pattern.push(':enabled', ':disabled');
       } catch(e) { }
-      div.removeChild(div.firstChild);
 
-      // :link bugs with hyperlinks matching (Firefox/Safari)
+      // :link bugs with hyperlinks matching (Firefox/Safari)?
       div.appendChild(doc.createElement('a')).setAttribute('href', 'x');
-      div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
-      div.removeChild(div.firstChild);
+      div.querySelectorAll(':link').length != 1 && pattern.push(':link');
 
       // avoid attribute selectors for IE QSA
       if (BUGGY_HAS_ATTRIBUTE) {
@@ -433,9 +423,29 @@
 
       return pattern.length ?
         new RegExp(pattern.join('|')) :
-        { 'test': function() { return false; } };
+        testFalse;
     })() :
-    true,
+    testTrue,
+
+  // check for HTML5 Selector API bugs
+  RE_BUGGY_QSAPI_HTML5 = NATIVE_QSAPI ?
+    (function() {
+      var div = doc.createElement('div'),
+        element = doc.createElement('option'),
+        pattern = testFalse;
+
+      // :checked bug with option elements (at least Chrome 4+)
+      // wrongly excludes 'selected' option elements
+      element.setAttribute('selected', 'selected');
+      div.appendChild(element);
+      try {
+        div.querySelectorAll(':checked').length == 0 &&
+          (pattern = /:checked/);
+      } catch(e) { }
+
+      return pattern;
+    })() :
+    testTrue,
 
   // matches class selectors
   RE_CLASS = new RegExp('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + identifier + ')'),
@@ -1374,6 +1384,7 @@
 
       // use matchesSelector API if available
       if (USE_QSAPI && element[NATIVE_MATCHES_SELECTOR] &&
+        !(USE_HTML5 == RE_BUGGY_QSAPI_HTML5.test(selector)) &&
         !(BUGGY_QSAPI_QUIRKS && RE_CLASS.test(selector)) &&
         !(BUGGY_PSEUDOS && RE_PSEUDOS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector)) {
@@ -1448,6 +1459,7 @@
       }
 
       if (USE_QSAPI &&
+        !(USE_HTML5 == RE_BUGGY_QSAPI_HTML5.test(selector)) &&
         !(BUGGY_QSAPI_QUIRKS && RE_CLASS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector) &&
         QSA_NODE_TYPES[from.nodeType]) {
