@@ -43,7 +43,7 @@
 
   // initialized with the loading context
   // and reset for each selection query
-  BUGGY_QSAPI_QUIRKS,
+  BUGGY_QUIRKS,
   QUIRKS_MODE,
   TO_UPPER_CASE,
   XML_DOCUMENT,
@@ -194,21 +194,36 @@
 
   isQuirksBuggy =
     function(document) {
+      var div = document.createElement('div'),
+        quirks = isQuirks(document);
+
       // In quirks mode css class names are case insensitive.
       // In standards mode they are case sensitive. See docs:
       // https://developer.mozilla.org/en/Mozilla_Quirks_Mode_Behavior
       // http://www.whatwg.org/specs/web-apps/current-work/#selectors
-
-      // Safari 3.2 QSA doesn't work with mixedcase in quirksmode
+      //
+      // GEBCN
+      // Firefox 3.0+ match count is [xxx = 1, xXx = 1]
+      // Opera 10.63+ [xxx = 0, xXx = 2]
+      //
+      // QSAPI
+      // At least Chrome 4+, Firefox 3.5+, Opera 10.00+, Safari 4+ match count is [xxx = 1, xXx = 2]
+      // Safari 3.2 QSA doesn't work with mixedcase in quirksmode [xxx = 1, xXx = 0]
       // https://bugs.webkit.org/show_bug.cgi?id=19047
       // must test the attribute selector '[class~=xxx]'
       // before '.xXx' or the bug may not present itself
-      var div = document.createElement('div');
       div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
       div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
-      return (NATIVE_QSAPI && isQuirks(document) &&
-        (div.querySelectorAll('[class~=xxx]').length != 2 ||
-        div.querySelectorAll('.xXx').length != 2));
+      return {
+        GEBCN:
+          (quirks && NATIVE_GEBCN &&
+          (div.getElementsByClassName('xxx').length != 2 ||
+          div.getElementsByClassName('xXx').length != 2)),
+        QSAPI:
+          (quirks && NATIVE_QSAPI &&
+          (div.querySelectorAll('[class~=xxx]').length != 2 ||
+          div.querySelectorAll('.xXx').length != 2))
+      };
     },
 
   // Safari 2 missing document.compatMode property
@@ -599,7 +614,7 @@
       root = (doc = from.ownerDocument || from).documentElement;
       if (force || oldDoc != doc) {
         // set flags
-        BUGGY_QSAPI_QUIRKS = isQuirksBuggy(doc);
+        BUGGY_QUIRKS = isQuirksBuggy(doc);
         QUIRKS_MODE = isQuirks(doc);
         XML_DOCUMENT = isXML(doc);
         // code chunk used when nodeName comparisons need to be uppercased
@@ -728,7 +743,7 @@
   // @return array
   _byClass =
     function(name, from) {
-      return (BUGGY_GEBCN || XML_DOCUMENT || !from.getElementsByClassName) ?
+      return (BUGGY_GEBCN || BUGGY_QUIRKS.GEBCN || XML_DOCUMENT || !from.getElementsByClassName) ?
         byClassRaw(name, from) : slice.call(from.getElementsByClassName(name.replace(/\\/g, '')), 0);
     },
 
@@ -1374,7 +1389,7 @@
 
       // use matchesSelector API if available
       if (USE_QSAPI && element[NATIVE_MATCHES_SELECTOR] &&
-        !(BUGGY_QSAPI_QUIRKS && RE_CLASS.test(selector)) &&
+        !(BUGGY_QUIRKS.QSAPI && RE_CLASS.test(selector)) &&
         !(BUGGY_PSEUDOS && RE_PSEUDOS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector)) {
         try {
@@ -1448,7 +1463,7 @@
       }
 
       if (USE_QSAPI &&
-        !(BUGGY_QSAPI_QUIRKS && RE_CLASS.test(selector)) &&
+        !(BUGGY_QUIRKS.QSAPI && RE_CLASS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector) &&
         QSA_NODE_TYPES[from.nodeType]) {
 
