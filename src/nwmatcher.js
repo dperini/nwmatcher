@@ -185,7 +185,7 @@
 
   // detect native methods
   isNative = (function() {
-    var s = (doc.childNodes.item + '').replace(/item/g, '');
+    var s = (doc.appendChild + '').replace(/appendChild/g, '');
     return function(object, method) {
       var m = object && object[method] || false, r = new RegExp(method, 'g');
       return m && typeof m != 'string' && s == (m + '').replace(r, '');
