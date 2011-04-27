@@ -1373,7 +1373,7 @@
       }
 
       // use matchesSelector API if available
-      if (USE_QSAPI && element[NATIVE_MATCHES_SELECTOR] &&
+      if (USE_QSAPI && !XML_DOCUMENT && element[NATIVE_MATCHES_SELECTOR] &&
         !(BUGGY_QSAPI_QUIRKS && RE_CLASS.test(selector)) &&
         !(BUGGY_PSEUDOS && RE_PSEUDOS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector)) {
@@ -1447,7 +1447,7 @@
           concatCall([ ], elements, callback) : elements;
       }
 
-      if (USE_QSAPI &&
+      if (USE_QSAPI && !XML_DOCUMENT &&
         !(BUGGY_QSAPI_QUIRKS && RE_CLASS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector) &&
         QSA_NODE_TYPES[from.nodeType]) {
