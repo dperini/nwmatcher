@@ -1170,10 +1170,10 @@
 
             // CSS3 UI element states
             case 'checked':
-              test = 'typeof e.form!=="undefined"&&(/radio|checkbox/i).test(e.type)';
+              test = 'typeof e.form!=="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)';
               if (USE_HTML5) {
                 // for radio buttons, checkboxes and options
-                source = 'if(((' + test + ')||/option/i.test(e.nodeName))&&(e.checked||e.selected)){' + source + '}';
+                source = 'if(((' + test + ')||/^option$/i.test(e.nodeName))&&(e.checked||e.selected)){' + source + '}';
               } else {
                 // for radio buttons and checkboxes
                 source = 'if(' + test + '&&e.checked){' + source + '}';
@@ -1181,11 +1181,11 @@
               break;
             case 'disabled':
               // does not consider hidden input fields
-              source = 'if(((typeof e.form!=="undefined"&&!(/hidden/i).test(e.type))||s.isLink(e))&&e.disabled){' + source + '}';
+              source = 'if(((typeof e.form!=="undefined"&&!(/^hidden$/i).test(e.type))||s.isLink(e))&&e.disabled){' + source + '}';
               break;
             case 'enabled':
               // does not consider hidden input fields
-              source = 'if(((typeof e.form!=="undefined"&&!(/hidden/i).test(e.type))||s.isLink(e))&&!e.disabled){' + source + '}';
+              source = 'if(((typeof e.form!=="undefined"&&!(/^hidden$/i).test(e.type))||s.isLink(e))&&!e.disabled){' + source + '}';
               break;
 
             // CSS3 lang pseudo-class
@@ -1237,7 +1237,7 @@
             case 'selected':
               // fix Safari selectedIndex property bug
               expr = BUGGY_SELECTED ? '||(n=e.parentNode)&&n.options[n.selectedIndex]===e' : '';
-              source = 'if(e.nodeName.toLowerCase()=="option"&&(e.selected' + expr + ')){' + source + '}';
+              source = 'if(/^option$/i.test(e.nodeName)&&(e.selected' + expr + ')){' + source + '}';
               break;
 
             default:
@@ -1545,7 +1545,7 @@
       }
 
       if (!elements) {
-        elements = /applet|object/i.test(from.nodeName) ? from.childNodes : _byTag('*', from);
+        elements = /^(?:applet|object)$/i.test(from.nodeName) ? from.childNodes : _byTag('*', from);
       }
       // end of prefiltering pass
 
