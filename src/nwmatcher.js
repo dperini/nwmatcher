@@ -187,8 +187,9 @@
   isNative = (function() {
     var s = (doc.childNodes.item + '').replace(/item/g, '');
     return function(object, method) {
-      var m = object && object[method] || false, r = new RegExp(method, 'g');
-      return m && typeof m != 'string' && s == (m + '').replace(r, '');
+      var m = object && object[method] || false;
+      return m && typeof m != 'string' &&
+        s == (m + '').replace(new RegExp(method, 'g'), '');
     };
   })(),
 
@@ -218,17 +219,14 @@
       return typeof document.compatMode == 'string' ?
         document.compatMode.indexOf('CSS') < 0 :
         (function() {
-          var div = document.createElement('div'),
-            isStrict = div.style &&
-              (div.style.width = 1) &&
-              div.style.width != '1px';
-          div = null;
-          return !isStrict;
+          var div = document.createElement('div'), style = div.style;
+          return !(style && (style.width = 1) && style.width != '1px');
         })();
     },
 
   // XML is functional in W3C browsers
-  isXML = function(document) {
+  isXML =
+    function(document) {
       return document.createElement('DiV').nodeName == 'DiV';
     },
 
@@ -276,26 +274,20 @@
   // detect buggy gEBID
   BUGGY_GEBID = NATIVE_GEBID ?
     (function() {
-      var isBuggy = true, x = 'x' + String(+new Date),
+      var x = 'x' + String(+new Date),
         a = doc.createElementNS ? 'a' : '<a name="' + x + '">';
       (a = doc.createElement(a)).name = x;
       root.insertBefore(a, root.firstChild);
-      isBuggy = !!doc.getElementById(x);
-      root.removeChild(a);
-      a = null;
-      return isBuggy;
+      return !!doc.getElementById(x);
     })() :
     true,
 
   // detect IE gEBTN comment nodes bug
   BUGGY_GEBTN = NATIVE_GEBTN ?
     (function() {
-      var isBuggy, div = doc.createElement('div');
+      var div = doc.createElement('div');
       div.appendChild(doc.createComment(''));
-      isBuggy = div.getElementsByTagName('*')[0];
-      div.removeChild(div.firstChild);
-      div = null;
-      return !!isBuggy;
+      return !!div.getElementsByTagName('*')[0];
     })() :
     true,
 
@@ -316,32 +308,25 @@
 
       // Safari test
       div.lastChild.className = test;
-      if (!isBuggy)
-        isBuggy = div.getElementsByClassName(test).length !== 2;
-
-      div.removeChild(div.firstChild);
-      div.removeChild(div.firstChild);
-      div = null;
-      return isBuggy;
+      return isBuggy || div.getElementsByClassName(test).length != 2;
     })() :
     true,
 
   // detect IE bug with dynamic attributes
   BUGGY_GET_ATTRIBUTE = NATIVE_GET_ATTRIBUTE ?
     (function() {
-      var isBuggy, input;
-      (input = doc.createElement('input')).setAttribute('value', '5');
-      return isBuggy = input.defaultValue != 5;
+      var input = doc.createElement('input');
+      input.setAttribute('value', 5);
+      return input.defaultValue != 5;
     })() :
     true,
 
   // detect IE bug with non-standard boolean attributes
   BUGGY_HAS_ATTRIBUTE = NATIVE_HAS_ATTRIBUTE ?
     (function() {
-      var isBuggy, option = doc.createElement('option');
+      var option = doc.createElement('option');
       option.setAttribute('selected', 'selected');
-      isBuggy = !option.hasAttribute('selected');
-      return isBuggy;
+      return !option.hasAttribute('selected');
     })() :
     true,
 
@@ -360,10 +345,9 @@
   // detect Safari bug with selected option elements
   BUGGY_SELECTED =
     (function() {
-      var isBuggy, select = doc.createElement('select');
+      var select = doc.createElement('select');
       select.appendChild(doc.createElement('option'));
-      isBuggy = !select.firstChild.selected;
-      return isBuggy;
+      return !select.firstChild.selected;
     })(),
 
   // detect Opera browser
@@ -573,7 +557,7 @@
   concatList =
     function(data, elements) {
       var i = -1, element;
-      if (data.length === 0 && Array.slice)
+      if (!data.length && Array.slice)
         return Array.slice(elements);
       while ((element = elements[++i]))
         data[data.length] = element;
@@ -634,11 +618,11 @@
       var element = null;
       id = id.replace(/\\/g, '');
       if (XML_DOCUMENT || from.nodeType != 9) {
-        return byIdRaw(id, from.getElementsByTagName('*'));
+        element = byIdRaw(id, from.getElementsByTagName('*'));
       }
-      if ((element = from.getElementById(id)) &&
-        element.name == id && from.getElementsByName) {
-        return byIdRaw(id, from.getElementsByName(id));
+      else if ((element = from.getElementById(id)) &&
+          element.name == id && from.getElementsByName) {
+        element = byIdRaw(id, from.getElementsByName(id));
       }
       return element;
     },
@@ -677,10 +661,9 @@
         byTagRaw(tag, from), 0);
     } :
     function(tag, from) {
-      var i = -1, data = [ ],
+      var i = -1, j = i, data = [ ],
         element, elements = from.getElementsByTagName(tag);
       if (tag == '*') {
-        var j = -1;
         while ((element = elements[++i])) {
           if (element.nodeName > '@')
             data[++j] = element;
