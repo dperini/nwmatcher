@@ -1366,7 +1366,7 @@
                 compileSelector(selector, 'f&&f(k);return true;') + 'return false;') :
               compileGroup(parts || selector, '', false);
 
-      return resolver(element, Snapshot, [ ], doc, root, from || doc, callback);
+      return resolver(element, Snapshot, [ ], doc, root, from, callback);
     },
 
   // select elements matching selector
@@ -1545,7 +1545,7 @@
       }
 
       if (!elements) {
-        elements = _byTag('*', from);
+        elements = /applet|object/i.test(from.nodeName) ? from.childNodes : _byTag('*', from);
       }
       // end of prefiltering pass
 
