@@ -26,8 +26,8 @@
   root = doc.documentElement,
 
   // save method reference
-  slice = Array.prototype.slice,
-  string = Object.prototype.toString,
+  slice = [ ].slice,
+  string = { }.toString,
 
   // persist last selector/matcher parsing data
   lastError = '',
@@ -187,8 +187,9 @@
   isNative = (function() {
     var s = (doc.appendChild + '').replace(/appendChild/g, '');
     return function(object, method) {
-      var m = object && object[method] || false, r = new RegExp(method, 'g');
-      return m && typeof m != 'string' && s == (m + '').replace(r, '');
+      var m = object && object[method] || false;
+      return m && typeof m != 'string' &&
+        s == (m + '').replace(new RegExp(method, 'g'), '');
     };
   })(),
 
@@ -218,17 +219,14 @@
       return typeof document.compatMode == 'string' ?
         document.compatMode.indexOf('CSS') < 0 :
         (function() {
-          var div = document.createElement('div'),
-            isStrict = div.style &&
-              (div.style.width = 1) &&
-              div.style.width != '1px';
-          div = null;
-          return !isStrict;
+          var div = document.createElement('div'), style = div.style;
+          return !(style && (style.width = 1) && style.width != '1px');
         })();
     },
 
   // XML is functional in W3C browsers
-  isXML = function(document) {
+  isXML =
+    function(document) {
       return document.createElement('DiV').nodeName == 'DiV';
     },
 
@@ -282,7 +280,6 @@
       root.insertBefore(a, root.firstChild);
       isBuggy = !!doc.getElementById(x);
       root.removeChild(a);
-      a = null;
       return isBuggy;
     })() :
     true,
@@ -290,12 +287,9 @@
   // detect IE gEBTN comment nodes bug
   BUGGY_GEBTN = NATIVE_GEBTN ?
     (function() {
-      var isBuggy, div = doc.createElement('div');
+      var div = doc.createElement('div');
       div.appendChild(doc.createComment(''));
-      isBuggy = div.getElementsByTagName('*')[0];
-      div.removeChild(div.firstChild);
-      div = null;
-      return !!isBuggy;
+      return !!div.getElementsByTagName('*')[0];
     })() :
     true,
 
@@ -316,54 +310,45 @@
 
       // Safari test
       div.lastChild.className = test;
-      if (!isBuggy)
-        isBuggy = div.getElementsByClassName(test).length !== 2;
-
-      div.removeChild(div.firstChild);
-      div.removeChild(div.firstChild);
-      div = null;
-      return isBuggy;
+      return isBuggy || div.getElementsByClassName(test).length != 2;
     })() :
     true,
 
   // detect IE bug with dynamic attributes
   BUGGY_GET_ATTRIBUTE = NATIVE_GET_ATTRIBUTE ?
     (function() {
-      var isBuggy, input;
-      (input = doc.createElement('input')).setAttribute('value', '5');
-      return isBuggy = input.defaultValue != 5;
+      var input = doc.createElement('input');
+      input.setAttribute('value', 5);
+      return input.defaultValue != 5;
     })() :
     true,
 
   // detect IE bug with non-standard boolean attributes
   BUGGY_HAS_ATTRIBUTE = NATIVE_HAS_ATTRIBUTE ?
     (function() {
-      var isBuggy, option = doc.createElement('option');
+      var option = doc.createElement('option');
       option.setAttribute('selected', 'selected');
-      isBuggy = !option.hasAttribute('selected');
-      return isBuggy;
+      return !option.hasAttribute('selected');
     })() :
     true,
 
   // detect matchesSelector correctly throw errors
   BUGGY_PSEUDOS = NATIVE_MATCHES_SELECTOR ?
     (function() {
-      var isBuggy = false;
       try {
         root[NATIVE_MATCHES_SELECTOR](':buggy');
-        isBuggy = true;
+        return true;
       } catch(e) { }
-      return isBuggy;
+      return false;
     })() :
     true,
 
   // detect Safari bug with selected option elements
   BUGGY_SELECTED =
     (function() {
-      var isBuggy, select = doc.createElement('select');
+      var select = doc.createElement('select');
       select.appendChild(doc.createElement('option'));
-      isBuggy = !select.firstChild.selected;
-      return isBuggy;
+      return !select.firstChild.selected;
     })(),
 
   // detect Opera browser
@@ -375,53 +360,51 @@
   // check Seletor API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
-      var pattern = [ ], div = doc.createElement('div'), element;
+      var pattern = [ ], div = doc.createElement('div'), element,
+
+      expect = function(selector, context, element, n) {
+        var result = false;
+        context.appendChild(element);
+        try {
+          result = context.querySelectorAll(selector).length == n;
+          context.removeChid(context.firstChild);
+        } catch(_e) { }
+        return result;
+      };
 
       // ^= $= *= operators bugs whith empty values (Opera 10 / IE8)
-      div.appendChild(doc.createElement('p')).setAttribute('class', '');
-      try {
-        div.querySelectorAll('[class^=""]').length == 1 &&
-          pattern.push('[*^$]=\\s*(?:""|' + "'')");
-      } catch(e) { }
-      div.removeChild(div.firstChild);
+      element = doc.createElement('p');
+      element.setAttribute('class', '');
+      expect('[class^=""]', div, element, 1) &&
+        pattern.push('[*^$]=\\s*(?:""|' + "'')");
 
       // :checked bugs whith checkbox elements (Opera 10 to 10.53)
       element = doc.createElement('input');
       element.setAttribute('type', 'checkbox');
       element.setAttribute('checked', 'checked');
-      div.appendChild(element);
-      try {
-        div.querySelectorAll(':checked').length == 1 ||
-          pattern.push(':checked');
-      } catch(e) { }
-      div.removeChild(div.firstChild);
+      expect(':checked', div, element, 1) &&
+        pattern.push(':checked');
 
       // :checked bug with option elements (Firefox 3.6.x)
       // it wrongly includes 'selected' options elements
       element = doc.createElement('option');
       element.setAttribute('selected', 'selected');
-      div.appendChild(element);
-      try {
-        div.querySelectorAll(':checked').length == 1 &&
-          pattern.push(':checked');
-      } catch(e) { }
-      div.removeChild(div.firstChild);
+      expect(':checked', div, element, 1) &&
+        pattern.push(':checked');
 
       // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
       // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
       // IE8 QSA has problems too and throws error with these dynamic pseudos
-      (element = doc.createElement('input')).setAttribute('type', 'hidden');
-      div.appendChild(element);
-      try {
-        div.querySelectorAll(':enabled').length === 1 &&
-          pattern.push(':enabled', ':disabled');
-      } catch(e) { }
-      div.removeChild(div.firstChild);
+      element = doc.createElement('input');
+      element.setAttribute('type', 'hidden');
+      expect(':enabled', div, element, 1) &&
+        pattern.push(':enabled', ':disabled');
 
       // :link bugs with hyperlinks matching (Firefox/Safari)
-      div.appendChild(doc.createElement('a')).setAttribute('href', 'x');
-      div.querySelectorAll(':link').length !== 1 && pattern.push(':link');
-      div.removeChild(div.firstChild);
+      element = doc.createElement('link');
+      element.setAttribute('href', 'x');
+      expect(':link', div, element, 1) ||
+        pattern.push(':link');
 
       // avoid attribute selectors for IE QSA
       if (BUGGY_HAS_ATTRIBUTE) {
@@ -567,13 +550,13 @@
     className: new RegExp('^\\.(' + encoding + '+)(.*)')
   },
 
-  /*------------------------------ UTIL METHODS -------------------------------*/
+  /*------------------------------ UTIL METHODS ------------------------------*/
 
   // concat elements to data
   concatList =
     function(data, elements) {
       var i = -1, element;
-      if (data.length === 0 && Array.slice)
+      if (!data.length && Array.slice)
         return Array.slice(elements);
       while ((element = elements[++i]))
         data[data.length] = element;
@@ -677,10 +660,9 @@
         byTagRaw(tag, from), 0);
     } :
     function(tag, from) {
-      var i = -1, data = [ ],
+      var i = -1, j = i, data = [ ],
         element, elements = from.getElementsByTagName(tag);
       if (tag == '*') {
-        var j = -1;
         while ((element = elements[++i])) {
           if (element.nodeName > '@')
             data[++j] = element;
