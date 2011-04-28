@@ -154,6 +154,9 @@
   // skip [ ], ( ), { } groups in token tails
   skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
 
+  // quick check for sibling selectors
+  reSibling = /[+~](?:[^=]|$)/,
+
   // split comma groups, exclude commas from
   // quotes '' "" and from brackets () [] {}
   reSplitGroup = new RegExp('(' +
@@ -170,14 +173,14 @@
   reSplitToken = new RegExp('(' +
     '\\(' + pseudoclass + '\\)|' +
     '\\[' + attributes + '\\]|' +
-    '[^\x20>+~]|\\\\.)+', 'g'),
+    '[^\x20\t\n\r\f>+~]|\\\\.)+', 'g'),
 
   // for in excess whitespace removal
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
   // match missing R/L context
-  reLeftContext = /^\s*[>+~]{1}/,
-  reRightContext = /[>+~]{1}\s*$/,
+  reLeftContext = /^[\x20\t\n\r\f]*[>+~]/,
+  reRightContext = /[>+~][\x20\t\n\r\f]*$/,
 
   reOptimizeSelector = new RegExp(identifier + '|^$'),
 
@@ -218,17 +221,16 @@
       return typeof document.compatMode == 'string' ?
         document.compatMode.indexOf('CSS') < 0 :
         (function() {
-          var div = document.createElement('div'),
-            isStrict = div.style &&
-              (div.style.width = 1) &&
-              div.style.width != '1px';
-          div = null;
-          return !isStrict;
+          var div = document.createElement('div');
+          return div.style &&
+            (div.style.width = 1) &&
+            div.style.width != '1px';
         })();
     },
 
   // XML is functional in W3C browsers
-  isXML = function(document) {
+  isXML =
+    function(document) {
       return document.createElement('DiV').nodeName == 'DiV';
     },
 
@@ -413,7 +415,7 @@
       (element = doc.createElement('input')).setAttribute('type', 'hidden');
       div.appendChild(element);
       try {
-        div.querySelectorAll(':enabled').length === 1 &&
+        div.querySelectorAll(':enabled').length == 1 &&
           pattern.push(':enabled', ':disabled');
       } catch(e) { }
       div.removeChild(div.firstChild);
@@ -568,6 +570,28 @@
   },
 
   /*------------------------------ UTIL METHODS -------------------------------*/
+
+  // use to fill in the blanks of SHORTCUT selectors
+  completeSelector =
+    function(selector, from, alt) {
+      // add left context if missing
+      if (reLeftContext.test(selector)) {
+        if (from.nodeType == 1 && from.id) {
+          selector = '#' + from.id + ' ' + selector;
+        } else if (from == root || from == doc.body) {
+          selector = from.nodeName + ' ' + selector;
+        } else if (alt) {
+          selector = completeSelector(selector, alt);
+        } else {
+          emit('Unable to resolve a context for the shortcut selector "' + selector + '"');
+        }
+      }
+      // add right context if missing
+      if (reRightContext.test(selector)) {
+        selector += ' *';
+      }
+      return selector;
+    },
 
   // concat elements to data
   concatList =
@@ -1332,27 +1356,19 @@
         return false;
       }
 
-      // if passed, check context contains element
-      if (from && from.nodeType == 1 && !contains(from, element)) {
-        return false;
-      }
-
-      selector = selector.replace(reTrimSpaces, '');
-
       // ensure context is set
       from || (from = element.ownerDocument);
 
+      selector = selector.replace(reTrimSpaces, '');
+
       if (SHORTCUTS) {
-        // add left context if missing
-        if (reLeftContext.test(selector)) {
-          selector = from.nodeType == 1 && from.id ?
-            '#' + from.id + ' ' + selector :
-            '* ' + selector;
-        }
-        // add right context if missing
-        if (reRightContext.test(selector)) {
-          selector = selector + ' *';
-        }
+        selector = completeSelector(selector, element, from);
+      }
+
+      // if passed, check context contains element
+      if (from.nodeType == 1 && !reSibling.test(selector) &&
+          !contains(from, element)) {
+        return false;
       }
 
       // extract context if changed
@@ -1484,16 +1500,7 @@
       selector = selector.replace(reTrimSpaces, '');
 
       if (SHORTCUTS) {
-        // add left context if missing
-        if (reLeftContext.test(selector)) {
-          selector = from.nodeType == 1 && from.id ?
-            '#' + from.id + ' ' + selector :
-            '* ' + selector;
-        }
-        // add right context if missing
-        if (reRightContext.test(selector)) {
-          selector = selector + ' *';
-        }
+        selector = completeSelector(selector, from);
       }
 
       if ((changed = lastSelector != selector)) {
