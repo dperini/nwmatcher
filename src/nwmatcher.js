@@ -104,7 +104,7 @@
   // using regular expression
   standardValidator =
     // discard start
-    '(?=\s*[^>+~(){}<>])' +
+    '(?=\\s*[^>+~(){}<>])' +
     // open match group
     '(' +
     //universal selector
@@ -174,10 +174,6 @@
 
   // for in excess whitespace removal
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
-
-  // match missing R/L context
-  reLeftContext = /^\s*[>+~]{1}/,
-  reRightContext = /[>+~]{1}\s*$/,
 
   reOptimizeSelector = new RegExp(identifier + '|^$'),
 
@@ -520,8 +516,7 @@
   Optimize = {
     ID: new RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
     TAG: new RegExp('^(' + encoding + '+)|' + skipgroup),
-    CLASS: new RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup),
-    NAME: /\[\s*name\s*=\s*((["']*)([^'"()]*?)\2)?\s*\]/
+    CLASS: new RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
   },
 
   // precompiled Regular Expressions
@@ -636,20 +631,21 @@
 
   // elements by tag (raw)
   // @return array
-  byTagRaw = function(tag, from) {
-    var any = tag == '*', element = from, elements = [ ], next = element.firstChild;
-    any || (tag = tag.toUpperCase());
-    while ((element = next)) {
-      if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
-        elements[elements.length] = element;
+  byTagRaw =
+    function(tag, from) {
+      var any = tag == '*', element = from, elements = [ ], next = element.firstChild;
+      any || (tag = tag.toUpperCase());
+      while ((element = next)) {
+        if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
+          elements[elements.length] = element;
+        }
+        if ((next = element.firstChild || element.nextSibling)) continue;
+        while (!next && (element = element.parentNode) && element != from) {
+          next = element.nextSibling;
+        }
       }
-      if ((next = element.firstChild || element.nextSibling)) continue;
-      while (!next && (element = element.parentNode) && element != from) {
-        next = element.nextSibling;
-      }
-    }
-    return elements;
-  },
+      return elements;
+    },
 
   // elements by tag
   // @return array
@@ -889,6 +885,7 @@
 
   // by default do not add missing left/right context
   // to selector string shortcuts like "+div" or "ul>"
+  // callable Dom.shortcuts method has to be available
   SHORTCUTS = false,
 
   // controls the engine error/warning notifications
@@ -1324,18 +1321,8 @@
       // ensure context is set
       from || (from = element.ownerDocument);
 
-      if (SHORTCUTS) {
-        // add left context if missing
-        if (reLeftContext.test(selector)) {
-          selector = from.nodeType == 1 && from.id ?
-            '#' + from.id + ' ' + selector :
-            '* ' + selector;
-        }
-        // add right context if missing
-        if (reRightContext.test(selector)) {
-          selector = selector + ' *';
-        }
-      }
+      SHORTCUTS && NW.Dom.shortcuts &&
+        (selector = NW.Dom.shortcuts(selector, element, from));
 
       // extract context if changed
       if (lastContext != from) {
@@ -1465,18 +1452,8 @@
 
       selector = selector.replace(reTrimSpaces, '');
 
-      if (SHORTCUTS) {
-        // add left context if missing
-        if (reLeftContext.test(selector)) {
-          selector = from.nodeType == 1 && from.id ?
-            '#' + from.id + ' ' + selector :
-            '* ' + selector;
-        }
-        // add right context if missing
-        if (reRightContext.test(selector)) {
-          selector = selector + ' *';
-        }
-      }
+      SHORTCUTS && NW.Dom.shortcuts &&
+        (selector = NW.Dom.shortcuts(selector, from));
 
       if ((changed = lastSelector != selector)) {
         // process valid selector strings
@@ -1666,6 +1643,9 @@
   // handle selector engine configuration settings
   Dom.configure = configure;
 
+  // utility to log resolvers errors or warnings
+  Dom.emit = emit;
+
   // pass methods references to compiled resolvers
   Dom.Snapshot = Snapshot;
 
@@ -1678,17 +1658,19 @@
   Dom.Selectors = Selectors;
 
   // add or overwrite user defined operators
-  Dom.registerOperator = function(symbol, resolver) {
-    Operators[symbol] || (Operators[symbol] = resolver);
-  };
+  Dom.registerOperator =
+    function(symbol, resolver) {
+      Operators[symbol] || (Operators[symbol] = resolver);
+    };
 
   // add selector patterns for user defined callbacks
-  Dom.registerSelector = function(name, rexp, func) {
-    Selectors[name] || (Selectors[name] = {
-      Expression: rexp,
-      Callback: func
-    });
-  };
+  Dom.registerSelector =
+    function(name, rexp, func) {
+      Selectors[name] || (Selectors[name] = {
+        Expression: rexp,
+        Callback: func
+      });
+    };
 
   /*---------------------------------- INIT ----------------------------------*/
 
