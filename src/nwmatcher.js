@@ -104,7 +104,7 @@
   // using regular expression
   standardValidator =
     // discard start
-    '(?=\\s*[^>+~(){}<>])' +
+    '(?=[\\x20\\t\\n\\r\\f]*[^>+~(){}<>])' +
     // open match group
     '(' +
     //universal selector
@@ -372,7 +372,7 @@
       element = doc.createElement('p');
       element.setAttribute('class', '');
       expect('[class^=""]', div, element, 1) &&
-        pattern.push('[*^$]=\\s*(?:""|' + "'')");
+        pattern.push('[*^$]=[\\x20\\t\\n\\r\\f]*(?:""|' + "'')");
 
       // :checked bugs whith checkbox elements (Opera 10 to 10.53)
       element = doc.createElement('input');
@@ -407,7 +407,7 @@
         // IE fails in reading:
         // - original values for input/textarea
         // - original boolean values for controls
-        pattern.push('\\[\\s*(?:checked|disabled|ismap|multiple|readonly|selected|value)');
+        pattern.push('\\[[\\x20\\t\\n\\r\\f]*(?:checked|disabled|ismap|multiple|readonly|selected|value)');
       }
 
       return pattern.length ?
