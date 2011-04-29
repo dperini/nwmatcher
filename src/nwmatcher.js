@@ -1243,7 +1243,10 @@
             default:
               break;
           }
-        } else {
+
+        }
+
+        else {
 
           // this is where external extensions are
           // invoked if expressions match selectors
@@ -1301,13 +1304,13 @@
 
       // ensures a valid element node was passed
       if (!(element && element.nodeName > '@')) {
-        emit("Invalid element argument");
+        emit('Invalid element argument');
         return false;
       }
 
       // ensures a valid selector string was passed
       if (!selector || typeof selector != 'string') {
-        emit("Invalid selector argument");
+        emit('Invalid selector argument');
         return false;
       }
 
@@ -1598,6 +1601,19 @@
     match: match
   };
 
+  Tokens = {
+    prefixes: prefixes,
+    encoding: encoding,
+    operators: operators,
+    whitespace: whitespace,
+    identifier: identifier,
+    attributes: attributes,
+    combinators: combinators,
+    pseudoclass: pseudoclass,
+    pseudoparms: pseudoparms,
+    quotedvalue: quotedvalue
+  };
+
   /*------------------------------- PUBLIC API -------------------------------*/
 
   // create/extend NW namespace
@@ -1656,6 +1672,8 @@
   // selectors descriptor
   // for pseudo-class selectors extensions
   Dom.Selectors = Selectors;
+
+  Dom.Tokens = Tokens;
 
   // add or overwrite user defined operators
   Dom.registerOperator =
