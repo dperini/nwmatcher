@@ -19,6 +19,9 @@
 
   var version = 'nwmatcher-1.2.4beta',
 
+  // API methods base container
+  Dom,
+
   // processing context
   doc = global.document,
 
@@ -1614,13 +1617,15 @@
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
-  // create/extend NW namespace
-  global.NW || (global.NW = { });
-  global.NW.Dom || (global.NW.Dom = { });
-
   // export the public API for CommonJS implementations,
   // for headless JS engines or for standard web browsers
-  var Dom = typeof exports == 'object' && exports || global.NW.Dom;
+  Dom =
+    // CommonJS/NodeJS module
+    typeof exports == 'object' ? exports :
+    // create or extend NW namespace
+    (global.NW || (global.NW = { })) &&
+    (global.NW.Dom || (global.NW.Dom = { }));
+
 
   // retrieve element by id attr
   Dom.byId = byId;
