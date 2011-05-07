@@ -1319,13 +1319,12 @@
         return false;
       }
 
-      selector = selector.replace(reTrimSpaces, '');
-
       // ensure context is set
       from || (from = element.ownerDocument);
 
-      SHORTCUTS && NW.Dom.shortcuts &&
-        (selector = NW.Dom.shortcuts(selector, element, from));
+      selector = selector.replace(reTrimSpaces, '');
+
+      SHORTCUTS && (selector = NW.Dom.shortcuts(selector, element, from));
 
       // extract context if changed
       if (lastContext != from) {
@@ -1455,8 +1454,7 @@
 
       selector = selector.replace(reTrimSpaces, '');
 
-      SHORTCUTS && NW.Dom.shortcuts &&
-        (selector = NW.Dom.shortcuts(selector, from));
+      SHORTCUTS && (selector = NW.Dom.shortcuts(selector, from));
 
       if ((changed = lastSelector != selector)) {
         // process valid selector strings
@@ -1661,6 +1659,9 @@
 
   // utility to log resolvers errors or warnings
   Dom.emit = emit;
+
+  // handle missing context in selector strings
+  Dom.shortcuts = function(x) { return x; };
 
   // pass methods references to compiled resolvers
   Dom.Snapshot = Snapshot;
