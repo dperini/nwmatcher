@@ -120,7 +120,7 @@
     // dom properties selector (extension)
     '|\\{' + extensions + '\\}' +
     // selector group separator (comma)
-    '|,' +
+    '|,.' +
     // close match group
     ')+',
 
@@ -364,7 +364,7 @@
         try {
           result = context.querySelectorAll(selector).length == n;
           context.removeChid(context.firstChild);
-        } catch(_e) { }
+        } catch(e) { }
         return result;
       };
 
