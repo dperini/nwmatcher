@@ -45,13 +45,6 @@
   lastPartsMatch,
   lastPartsSelect,
 
-  // initialized with the loading context
-  // and reset for each selection query
-  BUGGY_QSAPI_QUIRKS,
-  QUIRKS_MODE,
-  TO_UPPER_CASE,
-  XML_DOCUMENT,
-
   // prefix identifier (id, class & pseudo-class)
   prefixes = '[#.:]?',
 
@@ -314,6 +307,15 @@
       return !select.firstChild.selected;
     })(),
 
+  // initialized with the loading context
+  // and reset for each different context
+  BUGGY_QUIRKS_GEBCN,
+  BUGGY_QUIRKS_QSAPI,
+
+  QUIRKS_MODE,
+  TO_UPPER_CASE,
+  XML_DOCUMENT,
+
   // detect Opera browser
   OPERA = /opera/i.test(string.call(global.opera)),
 
@@ -556,7 +558,11 @@
         div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
         div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
 
-        BUGGY_QSAPI_QUIRKS = NATIVE_QSAPI && QUIRKS_MODE &&
+        BUGGY_QUIRKS_GEBCN = NATIVE_GEBCN && QUIRKS_MODE &&
+          (div.getElementsByClassName('xxx').length != 2 ||
+          div.getElementsByClassName('xXx').length != 2);
+
+        BUGGY_QUIRKS_QSAPI = NATIVE_QSAPI && QUIRKS_MODE &&
           (div.querySelectorAll('[class~=xxx]').length != 2 ||
           div.querySelectorAll('.xXx').length != 2);
       }
@@ -683,7 +689,7 @@
   // @return array
   _byClass =
     function(name, from) {
-      return (BUGGY_GEBCN || XML_DOCUMENT || !from.getElementsByClassName) ?
+      return (BUGGY_GEBCN || BUGGY_QUIRKS_GEBCN || XML_DOCUMENT || !from.getElementsByClassName) ?
         byClassRaw(name, from) : slice.call(from.getElementsByClassName(name.replace(/\\/g, '')), 0);
     },
 
@@ -1312,7 +1318,7 @@
 
       // use matchesSelector API if available
       if (USE_QSAPI && element[NATIVE_MATCHES_SELECTOR] &&
-        !(BUGGY_QSAPI_QUIRKS && RE_CLASS.test(selector)) &&
+        !(BUGGY_QUIRKS_QSAPI && RE_CLASS.test(selector)) &&
         !(BUGGY_PSEUDOS && RE_PSEUDOS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector)) {
         try {
@@ -1384,7 +1390,7 @@
       }
 
       if (USE_QSAPI &&
-        !(BUGGY_QSAPI_QUIRKS && RE_CLASS.test(selector)) &&
+        !(BUGGY_QUIRKS_QSAPI && RE_CLASS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector) &&
         QSA_NODE_TYPES[from.nodeType]) {
 
