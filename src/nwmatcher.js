@@ -22,27 +22,28 @@
   // API methods base container
   Dom,
 
-  // processing context
+  // processing context & root element
   doc = global.document,
-
-  // context root element
   root = doc.documentElement,
 
-  // save method reference
+  // save utility methods references
   slice = [ ].slice,
   string = { }.toString,
 
-  // persist last selector/matcher parsing data
-  lastError = '',
-  lastSlice = '',
-  lastPosition = 0,
-  lastMatcher = '',
-  lastSelector = '',
-  isSingleMatch = false,
-  isSingleSelect = false,
+  // persist previous parsed data
+  isSingleMatch,
+  isSingleSelect,
 
-  // selector/matcher context
+  lastError,
+  lastSlice,
   lastContext,
+  lastPosition,
+
+  lastMatcher,
+  lastSelector,
+
+  lastPartsMatch,
+  lastPartsSelect,
 
   // initialized with the loading context
   // and reset for each selection query
@@ -819,16 +820,6 @@
 
   /*------------------------------- DEBUGGING --------------------------------*/
 
-  // compile selectors to ad-hoc functions resolvers
-  // @selector string
-  // @mode boolean
-  // false = select resolvers
-  // true = match resolvers
-  compile =
-    function(selector, mode) {
-      return compileGroup(selector, '', mode || false);
-    },
-
   // set working mode
   configure =
     function(options) {
@@ -909,22 +900,25 @@
   // compile a comma separated group of selector
   // @mode boolean true for select, false for match
   // return a compiled function
-  compileGroup =
+  compile =
     function(selector, source, mode) {
 
-      var i = -1, seen = { }, token,
-        parts = typeof selector == 'string' ?
-          selector.match(reSplitGroup) : selector;
+      var parts = typeof selector == 'string' ? selector.match(reSplitGroup) : selector;
 
-      // for each selector in the group
-      while ((token = parts[++i])) {
-        token = token.replace(reTrimSpaces, '');
-        // avoid repeating the same token
-        // in comma separated group (p, p)
-        if (!seen[token]) {
-          seen[token] = true;
-          source += (i > 0 ? (mode ? 'e=c[k];': 'e=k;') : '') +
-            compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+      if (parts.length == 1) {
+        source += (mode ? 'e=c[k];' : 'e=k;') +
+          compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+      } else {
+        // for each selector in the group
+        var i = -1, seen = { }, token;
+        while ((token = parts[++i])) {
+          token = token.replace(reTrimSpaces, '');
+          // avoid repeating the same token
+          // in comma separated group (p, p)
+          if (!seen[token] && (seen[token] = true)) {
+            source += (i > 0 ? (mode ? 'e=c[k];' : 'e=k;') : '') +
+              compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+          }
         }
       }
 
@@ -1164,7 +1158,7 @@
                 return '';
               } else {
                 if ('compatMode' in doc) {
-                  source = 'if(!' + compileGroup(expr, '', false) + '(e,s,r,d,h,g)){' + source + '}';
+                  source = 'if(!' + compile([expr], '', false) + '(e,s,r,d,h,g)){' + source + '}';
                 } else {
                   source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",r)){' + source +'}';
                 }
@@ -1303,7 +1297,7 @@
   match =
     function(element, selector, from, callback) {
 
-      var changed, parts, resolver;
+      var parts, resolver;
 
       // ensures a valid element node was passed
       if (!(element && element.nodeName > '@')) {
@@ -1334,17 +1328,18 @@
         switchContext(from);
       }
 
-      if ((changed = lastMatcher != selector)) {
+      if (lastMatcher != selector) {
         // process valid selector strings
         if ((parts = selector.match(reValidator)) && parts[0] == selector) {
+          isSingleMatch = (parts = selector.match(reSplitGroup)).length < 2;
           // save passed selector
           lastMatcher = selector;
-          isSingleMatch = (parts = selector.match(reSplitGroup)).length < 2;
+          lastPartsMatch = parts;
         } else {
           emit('The string "' + selector + '", is not a valid CSS selector');
           return false;
         }
-      }
+      } else parts = lastPartsMatch;
 
       // use matchesSelector API if available
       if (USE_QSAPI && element[NATIVE_MATCHES_SELECTOR] &&
@@ -1366,10 +1361,8 @@
       resolver = (XML_DOCUMENT && XMLMatchers[selector]) ?
         XMLMatchers[selector] : HTMLMatchers[selector] ?
           HTMLMatchers[selector] : (XML_DOCUMENT ?
-            XMLMatchers : HTMLMatchers)[selector] = isSingleMatch ?
-              new Function('e,s,r,d,h,g,f', 'var N,n,x=0,k=e;' +
-                compileSelector(selector, 'f&&f(k);return true;') + 'return false;') :
-              compileGroup(parts || selector, '', false);
+            XMLMatchers : HTMLMatchers)[selector] =
+              compile(isSingleMatch ? [selector] : parts, '', false);
 
       return resolver(element, Snapshot, [ ], doc, root, from, callback);
     },
@@ -1462,14 +1455,15 @@
       if ((changed = lastSelector != selector)) {
         // process valid selector strings
         if ((parts = selector.match(reValidator)) && parts[0] == selector) {
+          isSingleSelect = (parts = selector.match(reSplitGroup)).length < 2;
           // save passed selector
           lastSelector = selector;
-          isSingleSelect = (parts = selector.match(reSplitGroup)).length < 2;
+          lastPartsSelect = parts;
         } else {
           emit('The string "' + selector + '", is not a valid CSS selector');
           return [ ];
         }
-      }
+      } else parts = lastPartsSelect;
 
       // commas separators are treated sequentially to maintain order
       if (isSingleSelect && from.nodeType != 11) {
@@ -1479,11 +1473,11 @@
           parts = selector.match(reSplitToken);
           token = parts[parts.length - 1];
 
-          // position where token was found
-          lastPosition = selector.length - token.length;
-
           // only last slice before :not rules
           lastSlice = token.split(':not')[0];
+
+          // position where token was found
+          lastPosition = selector.length - token.length;
         }
 
         // ID optimization RTL, to reduce number of elements to visit
@@ -1557,10 +1551,8 @@
       resolver = (XML_DOCUMENT && XMLResolvers[selector]) ?
         XMLResolvers[selector] : HTMLResolvers[selector] ?
           HTMLResolvers[selector] : (XML_DOCUMENT ?
-            XMLResolvers : HTMLResolvers)[selector] = isSingleSelect ?
-              new Function('c,s,r,d,h,g,f', 'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' +
-                compileSelector(selector, ACCEPT_NODE) + '}return r;') :
-              compileGroup(parts || selector, '', true);
+            XMLResolvers : HTMLResolvers)[selector] =
+              compile(isSingleSelect ? [selector] : parts, '', true);
 
       return resolver(elements, Snapshot, [ ], doc, root, from, callback);
     },
