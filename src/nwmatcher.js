@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.4beta
  * Created: 20070722
- * Release: 20110426
+ * Release: 20110509
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -19,8 +19,14 @@
 
   var version = 'nwmatcher-1.2.4beta',
 
-  // API methods base container
-  Dom,
+  // export the public API for CommonJS implementations,
+  // for headless JS engines or for standard web browsers
+  Dom =
+    // as CommonJS/NodeJS module
+    typeof exports == 'object' ? exports :
+    // create or extend NW namespace
+    (global.NW || (global.NW = { })) &&
+    (global.NW.Dom || (global.NW.Dom = { })),
 
   // processing context & root element
   doc = global.document,
@@ -1575,16 +1581,6 @@
   };
 
   /*------------------------------- PUBLIC API -------------------------------*/
-
-  // export the public API for CommonJS implementations,
-  // for headless JS engines or for standard web browsers
-  Dom =
-    // CommonJS/NodeJS module
-    typeof exports == 'object' ? exports :
-    // create or extend NW namespace
-    (global.NW || (global.NW = { })) &&
-    (global.NW.Dom || (global.NW.Dom = { }));
-
 
   // retrieve element by id attr
   Dom.byId = byId;
