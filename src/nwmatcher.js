@@ -52,8 +52,8 @@
   TO_UPPER_CASE,
   XML_DOCUMENT,
 
-  // prefixes identifying id, class & pseudo-class
-  prefixes = '[.:#]?',
+  // prefix identifier (id, class & pseudo-class)
+  prefixes = '[#.:]?',
 
   // attributes operators
   // ! invalid but compat !
@@ -193,43 +193,6 @@
     };
   })(),
 
-  isQuirksBuggy =
-    function(document) {
-      // In quirks mode css class names are case insensitive.
-      // In standards mode they are case sensitive. See docs:
-      // https://developer.mozilla.org/en/Mozilla_Quirks_Mode_Behavior
-      // http://www.whatwg.org/specs/web-apps/current-work/#selectors
-
-      // Safari 3.2 QSA doesn't work with mixedcase in quirksmode
-      // https://bugs.webkit.org/show_bug.cgi?id=19047
-      // must test the attribute selector '[class~=xxx]'
-      // before '.xXx' or the bug may not present itself
-      var div = document.createElement('div');
-      div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
-      div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
-      return (NATIVE_QSAPI && isQuirks(document) &&
-        (div.querySelectorAll('[class~=xxx]').length != 2 ||
-        div.querySelectorAll('.xXx').length != 2));
-    },
-
-  // Safari 2 missing document.compatMode property
-  // makes harder to detect Quirks vs. Strict mode
-  isQuirks =
-    function(document) {
-      return typeof document.compatMode == 'string' ?
-        document.compatMode.indexOf('CSS') < 0 :
-        (function() {
-          var div = document.createElement('div'), style = div.style;
-          return !(style && (style.width = 1) && style.width != '1px');
-        })();
-    },
-
-  // XML is functional in W3C browsers
-  isXML =
-    function(document) {
-      return document.createElement('DiV').nodeName == 'DiV';
-    },
-
   // NATIVE_XXXXX true if method exist and is callable
   // detect if DOM methods are native in browsers
   NATIVE_FOCUS = isNative(doc, 'hasFocus'),
@@ -365,10 +328,8 @@
       expect = function(selector, context, element, n) {
         var result = false;
         context.appendChild(element);
-        try {
-          result = context.querySelectorAll(selector).length == n;
-          context.removeChid(context.firstChild);
-        } catch(e) { }
+        try { result = context.querySelectorAll(selector).length == n; } catch(e) { }
+        while (context.firstChild) { context.removeChild(context.firstChild); }
         return result;
       };
 
@@ -377,13 +338,6 @@
       element.setAttribute('class', '');
       expect('[class^=""]', div, element, 1) &&
         pattern.push('[*^$]=[\\x20\\t\\n\\r\\f]*(?:""|' + "'')");
-
-      // :checked bugs whith checkbox elements (Opera 10 to 10.53)
-      element = doc.createElement('input');
-      element.setAttribute('type', 'checkbox');
-      element.setAttribute('checked', 'checked');
-      expect(':checked', div, element, 1) &&
-        pattern.push(':checked');
 
       // :checked bug with option elements (Firefox 3.6.x)
       // it wrongly includes 'selected' options elements
@@ -578,14 +532,33 @@
       // save passed context
       lastContext = from;
       // reference context ownerDocument and document root (HTML)
-      root = (doc = from.ownerDocument || from).documentElement;
+      doc = from.ownerDocument || from;
       if (force || oldDoc != doc) {
-        // set flags
-        BUGGY_QSAPI_QUIRKS = isQuirksBuggy(doc);
-        QUIRKS_MODE = isQuirks(doc);
-        XML_DOCUMENT = isXML(doc);
-        // code chunk used when nodeName comparisons need to be uppercased
+        // set document root
+        root = doc.documentElement;
+        // set host environment flags
+        XML_DOCUMENT = doc.createElement('DiV').nodeName == 'DiV';
+        // used when nodeName comparisons need to be uppercased
         TO_UPPER_CASE = XML_DOCUMENT ? '.toUpperCase()' : '';
+
+        // In quirks mode css class names are case insensitive.
+        // In standards mode they are case sensitive. See docs:
+        // https://developer.mozilla.org/en/Mozilla_Quirks_Mode_Behavior
+        // http://www.whatwg.org/specs/web-apps/current-work/#selectors
+        QUIRKS_MODE = XML_DOCUMENT ||
+          'compatMode' in doc && doc.compatMode.indexOf('CSS') < 0;
+
+        // Safari 3.2 QSA doesn't work with mixedcase in quirksmode
+        // https://bugs.webkit.org/show_bug.cgi?id=19047
+        // must test the attribute selector '[class~=xxx]'
+        // before '.xXx' or the bug may not present itself
+        var div = doc.createElement('div');
+        div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
+        div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
+
+        BUGGY_QSAPI_QUIRKS = NATIVE_QSAPI && QUIRKS_MODE &&
+          (div.querySelectorAll('[class~=xxx]').length != 2 ||
+          div.querySelectorAll('.xXx').length != 2);
       }
     },
 
