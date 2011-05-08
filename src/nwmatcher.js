@@ -1357,14 +1357,9 @@
       } else if (typeof selector != 'string') {
         // QSA capable browsers do not throw
         return [ ];
-      }
-
-      // ensure context is set
-      from || (from = doc);
-
-      // extract context if changed
-      if (lastContext != from) {
-        switchContext(from);
+      } else if (lastContext != from) {
+        // reset context data when it changes
+        switchContext(from || (from = doc));
       }
 
       if (!OPERA_QSAPI && RE_SIMPLE_SELECTOR.test(selector)) {
