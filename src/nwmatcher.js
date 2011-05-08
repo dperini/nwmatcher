@@ -64,6 +64,16 @@
   // CSS quoted string values
   quotedvalue = '"[^"]*"' + "|'[^']*'",
 
+  // skip group of round brackets
+  skipround = '\\([^()]+\\)|\\(.*\\)',
+  // skip group of curly brackets
+  skipcurly = '\\{[^{}]+\\}|\\{.*\\}',
+  // skip group of square brackets
+  skipsquare = '\\[[^[\\]]*\\]|\\[.*\\]',
+
+  // skip [ ], ( ), { } groups in token tails
+  skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
+
   // http://www.w3.org/TR/css3-syntax/#characters
   // unicode/ISO 10646 characters 161 and higher
   // NOTE: Safari 2.0.x crashes with escaped (\\)
@@ -75,10 +85,10 @@
   identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)+',
 
   // build attribute string
-  attributes =
-    whitespace + '(' + encoding + '+:?' + encoding + '+)' +
-    whitespace + '(?:' + operators + whitespace + '(' +
-    quotedvalue + '|' + identifier + '))?' + whitespace,
+  attrcheck = '(' + quotedvalue + '|' + identifier + ')',
+  attributes = whitespace + '(' + encoding + '+:?' + encoding + '+)' +
+    whitespace + '(?:' + operators + whitespace + attrcheck + ')?' + whitespace,
+  attrmatcher = attributes.replace(attrcheck, '([\\x22\\x27]*)((?:\\\\?.)*?)\\3'),
 
   // build pseudoclass string
   pseudoclass = '((?:' +
@@ -121,11 +131,11 @@
     // close match group
     ')+',
 
-  // validator for standard selectors as default
-  reValidator = new RegExp(standardValidator, 'g'),
-
   // validator for complex selectors in ':not()' pseudo-classes
   extendedValidator = standardValidator.replace(pseudoclass, '.*'),
+
+  // validator for standard selectors as default
+  reValidator = new RegExp(standardValidator, 'g'),
 
   // whitespace is any combination of these 5 character [\x20\t\n\r\f]
   // http://www.w3.org/TR/css3-selectors/#selector-syntax
@@ -141,23 +151,11 @@
     '|\\[' + attributes + '\\]' +
     ')$'),
 
-  // skip group of round brackets
-  skipround = '\\([^()]+\\)|\\(.*\\)',
-  // skip group of curly brackets
-  skipcurly = '\\{[^{}]+\\}|\\{.*\\}',
-  // skip group of square brackets
-  skipsquare = '\\[[^[\\]]*\\]|\\[.*\\]',
-
-  // skip [ ], ( ), { } groups in token tails
-  skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
-
   // split comma groups, exclude commas from
   // quotes '' "" and from brackets () [] {}
   reSplitGroup = new RegExp('(' +
-    '[^(,)\\\\\\[\\]]+' +
-    '|\\[(?:' + skipsquare +
-    '|' + quotedvalue +
-    '|[^\\[\\]]+)+\\]' +
+    '[^,\\\\\\[\\]]+' +
+    '|' + skipsquare +
     '|' + skipround +
     '|' + skipcurly +
     '|\\\\.' +
@@ -486,7 +484,7 @@
     // uistates + dynamic + negation pseudo-classes
     dpseudos: /^\:(link|visited|target|lang|not|active|focus|hover|checked|disabled|enabled|selected)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
     // element attribute matcher
-    attribute: new RegExp('^\\[' + attributes + '\\](.*)'),
+    attribute: new RegExp('^\\[' + attrmatcher + '\\](.*)'),
     // E > F
     children: /^[\x20\t\n\r\f]*\>[\x20\t\n\r\f]*(.*)/,
     // E + F
@@ -972,7 +970,6 @@
         // [attr] [attr=value] [attr="value"] [attr='value'] and !=, *=, ~=, |=, ^=, $=
         // case sensitivity is treated differently depending on the document type (see map)
         else if ((match = selector.match(Patterns.attribute))) {
-          if (match[3]) match[3] = match[3].replace(/^\x22|\x22$/g, '').replace(/^\x27|\x27$/g, '');
 
           // xml namespaced attribute ?
           expr = match[1].split(':');
@@ -987,15 +984,15 @@
           type = 'false';
 
           // replace Operators parameter if needed
-          if (match[2] && match[3] && (type = Operators[match[2]])) {
+          if (match[2] && match[4] && (type = Operators[match[2]])) {
             // case treatment depends on document
             HTML_TABLE['class'] = QUIRKS_MODE ? 1 : 0;
             // replace escaped values and HTML entities
-            match[3] = match[3].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
+            match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
             test = (XML_DOCUMENT ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
-            type = type.replace(/\%m/g, test ? match[3].toLowerCase() : match[3]);
+            type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
           } else if (match[2] == '!=' || match[2] == '=') {
-            type = 'n' + match[2] + '="' + match[3] + '"';
+            type = 'n' + match[2] + '="' + match[4] + '"';
           }
 
           // build expression for has/getAttribute
