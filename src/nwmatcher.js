@@ -25,8 +25,8 @@
     // as CommonJS/NodeJS module
     typeof exports == 'object' ? exports :
     // create or extend NW namespace
-    (global.NW || (global.NW = { })) &&
-    (global.NW.Dom || (global.NW.Dom = { })),
+    (global.NW || (global.NW = { }) &&
+    global.NW.Dom || (global.NW.Dom = { })),
 
   // processing context & root element
   doc = global.document,
@@ -554,18 +554,23 @@
         QUIRKS_MODE = XML_DOCUMENT ||
           'compatMode' in doc && doc.compatMode.indexOf('CSS') < 0;
 
-        // Safari 3.2 QSA doesn't work with mixedcase in quirksmode
-        // https://bugs.webkit.org/show_bug.cgi?id=19047
-        // must test the attribute selector '[class~=xxx]'
-        // before '.xXx' or the bug may not present itself
         var div = doc.createElement('div');
         div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
         div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
 
+        // GEBCN buggy in quirks mode, match count is:
+        // Firefox 3.0+ [xxx = 1, xXx = 1]
+        // Opera 10.63+ [xxx = 0, xXx = 2]
         BUGGY_QUIRKS_GEBCN = NATIVE_GEBCN && QUIRKS_MODE &&
           (div.getElementsByClassName('xxx').length != 2 ||
           div.getElementsByClassName('xXx').length != 2);
 
+        // QSAPI buggy in quirks mode, match count is:
+        // At least Chrome 4+, Firefox 3.5+, Opera 10.x+, Safari 4+ [xxx = 1, xXx = 2]
+        // Safari 3.2 QSA doesn't work with mixedcase in quirksmode [xxx = 1, xXx = 0]
+        // https://bugs.webkit.org/show_bug.cgi?id=19047
+        // must test the attribute selector '[class~=xxx]'
+        // before '.xXx' or the bug may not present itself
         BUGGY_QUIRKS_QSAPI = NATIVE_QSAPI && QUIRKS_MODE &&
           (div.querySelectorAll('[class~=xxx]').length != 2 ||
           div.querySelectorAll('.xXx').length != 2);
