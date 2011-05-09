@@ -249,12 +249,13 @@
     function refuteEquivalent(expected, actual, message){
       return equivalent(expected, actual) ? this.addFailure("`refuteEquivalent`: Expected: %o, Actual: %o, Message: %s.", expected, actual, message ? sprintf(message, toArray.call(arguments, 3)) : "The two objects are equivalent") : this.addAssertion();
     }
-    function assertThrowsException(exceptionName, method, message){
-      try{
-        method.call(global);
+    function assertThrowsException(expected, callback, message) {
+      var isRegExp = expected && getClass.call(expected) == '[object RegExp]', isFunction = !isRegExp && typeof expected == 'function';
+      try {
+        callback();
         return this.addFailure("`assertThrowsException`: Function: %o, Message: %s.", method, message ? sprintf(message, toArray.call(arguments, 3)) : "The function did not throw any exceptions");
-      }catch(exception){
-        return (exceptionName === exception.name ? this.addAssertion() : this.addError(exception));
+      } catch (exception) {
+        return ((isRegExp && expected.test(exception)) || (isFunction && expected.call(this, exception, this))) ? this.addAssertion() : this.addError(exception);
       }
     }
     function assertThrowsNothing(method, message){
