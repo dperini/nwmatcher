@@ -17,7 +17,7 @@
 
 (function(global) {
 
-  var version = 'nwmatcher-1.2.4',
+  var version = 'nwmatcher-1.2.4beta',
 
   Dom = typeof exports == 'object' ? exports :
     (global.NW || (global.NW = { })) &&
@@ -194,12 +194,15 @@
 
   compile =
     function(selector, source, mode) {
-      if (typeof selector == 'string') {
+
+      var parts = typeof selector == 'string' ? selector.match(reSplitGroup) : selector;
+
+      if (parts.length == 1) {
         source += (mode ? 'e=c[k];' : 'e=k;') +
-          compileSelector(selector, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+          compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;');
       } else {
         var i = -1, seen = { }, token;
-        while ((token = selector[++i])) {
+        while ((token = parts[++i])) {
           token = token.replace(reTrimSpaces, '');
           if (!seen[token] && (seen[token] = true)) {
             source += (i > 0 ? (mode ? 'e=c[k];' : 'e=k;') : '') +
@@ -207,6 +210,7 @@
           }
         }
       }
+
       if (mode)
         return Function('c,s,r,d,h,g,f',
           'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
@@ -217,12 +221,16 @@
 
   compileSelector =
     function(selector, source) {
+
       var k = 0, expr, match, result, status, test, type;
+
       while (selector) {
         k++;
+
         if ((match = selector.match(Patterns.universal))) {
           void 0;
         }
+
         else if ((match = selector.match(Patterns.id))) {
           source = 'if(' + (XML_DOCUMENT ?
             'e.getAttribute("id")' :
@@ -230,12 +238,14 @@
             '=="' + match[1] + '"' +
             '){' + source + '}';
         }
+
         else if ((match = selector.match(Patterns.tagName))) {
           source = 'if(e.nodeName' + (XML_DOCUMENT ?
             '=="' + match[1] + '"' : TO_UPPER_CASE +
             '=="' + match[1].toUpperCase() + '"') +
             '){' + source + '}';
         }
+
         else if ((match = selector.match(Patterns.className))) {
           source = 'if((n=' + (XML_DOCUMENT ?
             'e.getAttribute("class")' : 'e.className') +
@@ -244,6 +254,7 @@
             (QUIRKS_MODE ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
             '){' + source + '}';
         }
+
         else if ((match = selector.match(Patterns.attribute))) {
           if (match[2] && !Operators[match[2]]) {
             emit('Unsupported operator in attribute selectors "' + selector + '"');
@@ -273,18 +284,23 @@
           }
           source = expr + 'if(' + type + '){' + source + '}';
         }
+
         else if ((match = selector.match(Patterns.adjacent))) {
           source = 'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}e=N' + k + ';';
         }
+
         else if ((match = selector.match(Patterns.relative))) {
           source = 'var N' + k + '=e;e=e.parentNode.firstChild;while(e&&e!=N' + k + '){if(e.nodeName>"@"){' + source + '}e=e.nextSibling;}e=N' + k + ';';
         }
+
         else if ((match = selector.match(Patterns.children))) {
           source = 'var N' + k + '=e;if(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
         }
+
         else if ((match = selector.match(Patterns.ancestor))) {
           source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
         }
+
         else {
           expr = false;
           status = true;
@@ -305,12 +321,15 @@
             return '';
           }
         }
+
         if (!match) {
           emit('Invalid syntax in selector "' + selector + '"');
           return '';
         }
+
         selector = match && match[match.length - 1];
       }
+
       return source;
     },
 
@@ -361,7 +380,7 @@
       }
 
       return (MatchResolvers[selector] =
-        compile(isSingleMatch ? selector : parts, '', false))(element, Snapshot, [ ], doc, root, from, callback);
+        compile(isSingleMatch ? [ selector ] : parts, '', false))(element, Snapshot, [ ], doc, root, from, callback);
     },
 
   select =
@@ -462,7 +481,7 @@
       }
 
       return (SelectResolvers[selector] =
-        compile(isSingleSelect ? selector : parts, REJECT_NODE, true))(elements, Snapshot, [ ], doc, root, from, callback);
+        compile(isSingleSelect ? [ selector ] : parts, REJECT_NODE, true))(elements, Snapshot, [ ], doc, root, from, callback);
     },
 
   SelectResolvers = { },

@@ -166,26 +166,19 @@ NW.Dom.registerSelector(
   /^\:(link|visited|target|lang|not|active|focus|hover|checked|disabled|enabled|selected)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
   (function() {
 
-    var doc = document, expr, status = true, test, reTrimSpace, reSimpleNot,
+    var doc = document, USE_HTML5 = true, SIMPLENOT = true, T = NW.Dom.Tokens,
 
-    USE_HTML5 = true, SIMPLENOT = true;
+    reTrimSpace = RegExp(
+      '^' + T.whitespace +
+      '|' + T.whitespace + '$', 'g'),
 
-    with (NW.Dom.Tokens) {
-
-      reTrimSpace = new RegExp('^' +
-        whitespace + '|' +
-        whitespace + '$', 'g'),
-
-      reSimpleNot = new RegExp('^((?!:not)(' +
-        prefixes + '|' +
-        identifier + '|\\([^()]*\\))+|\\[' +
-        attributes + '\\])$');
-
-    }
+    reSimpleNot = RegExp('^((?!:not)' +
+      '(' + T.prefixes + '|' + T.identifier +
+      '|\\([^()]*\\))+|\\[' + T.attributes + '\\])$');
 
     return function(match, source) {
 
-      var status = true;
+      var expr, status = true, test;
 
       switch (match[1]) {
 
@@ -195,7 +188,7 @@ NW.Dom.registerSelector(
             NW.Dom.emit('Negation pseudo-class only accepts simple selectors "' + match.join('') + '"');
           } else {
             if ('compatMode' in doc) {
-              source = 'if(!' + NW.Dom.compile(expr, '', false) + '(e,s,r,d,h,g)){' + source + '}';
+              source = 'if(!' + NW.Dom.compile([ expr ], '', false) + '(e,s,r,d,h,g)){' + source + '}';
             } else {
               source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",r)){' + source +'}';
             }
