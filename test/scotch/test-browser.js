@@ -151,7 +151,7 @@ assertionsRunner.addGroup("Functions").addTests(null, {
     function testError(){
       throw new Error();
     }
-    this.assertThrowsException("Error", testError);
+    this.assertThrowsException(/Error/, testError);
   },
   "assertThrowsNothing": function(){
     function testNoError(){
