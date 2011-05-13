@@ -812,22 +812,16 @@
   configure =
     function(options) {
       for (var i in options) {
-        if (i == 'VERBOSITY') {
-          VERBOSITY = !!options[i];
-        } else if (i == 'SIMPLENOT') {
-          SIMPLENOT = !!options[i];
+        Config[i] = !!options[i];
+        if (i == 'SIMPLENOT') {
           HTMLResolvers = { };
           XMLResolvers = { };
           HTMLMatchers = { };
           XMLMatchers = { };
-          USE_QSAPI = false;
+          Config['USE_QSAPI'] = false;
           reValidator = new RegExp(extendedValidator, 'g');
-        } else if (i == 'SHORTCUTS') {
-          SHORTCUTS = !!options[i];
-        } else if (i == 'USE_HTML5') {
-          USE_HTML5 = !!options[i];
         } else if (i == 'USE_QSAPI') {
-          USE_QSAPI = !!options[i] && NATIVE_QSAPI;
+          Config[i] = !!options[i] && NATIVE_QSAPI;
           reValidator = new RegExp(standardValidator, 'g');
         }
       }
@@ -836,7 +830,7 @@
   // control user notifications
   emit =
     function(message) {
-      if (VERBOSITY) {
+      if (Config.VERBOSITY) {
         // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
         if (typeof global.DOMException !== 'undefined') {
           var err = new Error();
@@ -861,23 +855,27 @@
       }
     },
 
-  // by default disable complex selectors nested in
-  // ':not()' pseudo-classes, as for specifications
-  SIMPLENOT = true,
+  Config = {
 
-  // by default do not add missing left/right context
-  // to selector string shortcuts like "+div" or "ul>"
-  // callable Dom.shortcuts method has to be available
-  SHORTCUTS = false,
+    // by default do not add missing left/right context
+    // to selector string shortcuts like "+div" or "ul>"
+    // callable Dom.shortcuts method has to be available
+    SHORTCUTS: false,
 
-  // controls the engine error/warning notifications
-  VERBOSITY = true,
+    // by default disable complex selectors nested in
+    // ':not()' pseudo-classes, as for specifications
+    SIMPLENOT: true,
 
-  // HTML5 handling for the ":checked" pseudo-class
-  USE_HTML5 = false,
+    // HTML5 handling for the ":checked" pseudo-class
+    USE_HTML5: false,
 
-  // controls enabling the Query Selector API branch
-  USE_QSAPI = NATIVE_QSAPI,
+    // controls enabling the Query Selector API branch
+    USE_QSAPI: NATIVE_QSAPI,
+
+    // controls the engine error/warning notifications
+    VERBOSITY: true
+
+  },
 
   /*---------------------------- COMPILER METHODS ----------------------------*/
 
@@ -1133,7 +1131,7 @@
               // in ':not()' pseudo-classes, breaks some test units
               expr = match[3].replace(reTrimSpaces, '');
 
-              if (SIMPLENOT && !reSimpleNot.test(expr)) {
+              if (Config.SIMPLENOT && !reSimpleNot.test(expr)) {
                 // see above, log error but continue execution
                 emit('Negation pseudo-class only accepts simple selectors "' + selector + '"');
                 return '';
@@ -1149,7 +1147,7 @@
             // CSS3 UI element states
             case 'checked':
               test = 'typeof e.form!=="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)';
-              if (USE_HTML5) {
+              if (Config.USE_HTML5) {
                 // for radio buttons, checkboxes and options
                 source = 'if(((' + test + ')||/^option$/i.test(e.nodeName))&&(e.checked||e.selected)){' + source + '}';
               } else {
@@ -1280,34 +1278,23 @@
 
       var parts, resolver;
 
-      // ensures a valid element node was passed
       if (!(element && element.nodeName > '@')) {
         emit('Invalid element argument');
         return false;
-      }
-
-      // ensures a valid selector string was passed
-      if (!selector || typeof selector != 'string') {
+      } else if (!selector || typeof selector != 'string') {
         emit('Invalid selector argument');
         return false;
-      }
-
-      // if passed, check context contains element
-      if (from && from.nodeType == 1 && !contains(from, element)) {
+      } else if (from && from.nodeType == 1 && !contains(from, element)) {
         return false;
+      } else if (lastContext != from) {
+        // reset context data when it changes
+        // and ensure context is set to a default
+        switchContext(from || (from = element.ownerDocument));
       }
-
-      // ensure context is set
-      from || (from = element.ownerDocument);
 
       selector = selector.replace(reTrimSpaces, '');
 
-      SHORTCUTS && (selector = NW.Dom.shortcuts(selector, element, from));
-
-      // extract context if changed
-      if (lastContext != from) {
-        switchContext(from);
-      }
+      Config.SHORTCUTS && (selector = NW.Dom.shortcuts(selector, element, from));
 
       if (lastMatcher != selector) {
         // process valid selector strings
@@ -1323,7 +1310,7 @@
       } else parts = lastPartsMatch;
 
       // use matchesSelector API if available
-      if (USE_QSAPI && element[NATIVE_MATCHES_SELECTOR] &&
+      if (Config.USE_QSAPI && element[NATIVE_MATCHES_SELECTOR] &&
         !(BUGGY_QUIRKS_QSAPI && RE_CLASS.test(selector)) &&
         !(BUGGY_PSEUDOS && RE_PSEUDOS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector)) {
@@ -1368,6 +1355,7 @@
         return [ ];
       } else if (lastContext != from) {
         // reset context data when it changes
+        // and ensure context is set to a default
         switchContext(from || (from = doc));
       }
 
@@ -1390,7 +1378,7 @@
           concatCall([ ], elements, callback) : elements;
       }
 
-      if (USE_QSAPI &&
+      if (Config.USE_QSAPI &&
         !(BUGGY_QUIRKS_QSAPI && RE_CLASS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector) &&
         QSA_NODE_TYPES[from.nodeType]) {
@@ -1426,7 +1414,7 @@
 
       selector = selector.replace(reTrimSpaces, '');
 
-      SHORTCUTS && (selector = NW.Dom.shortcuts(selector, from));
+      Config.SHORTCUTS && (selector = NW.Dom.shortcuts(selector, from));
 
       if ((changed = lastSelector != selector)) {
         // process valid selector strings
@@ -1625,6 +1613,9 @@
 
   // handle missing context in selector strings
   Dom.shortcuts = function(x) { return x; };
+
+  // options enabing specific engine functionality
+  Dom.Config = Config;
 
   // pass methods references to compiled resolvers
   Dom.Snapshot = Snapshot;
