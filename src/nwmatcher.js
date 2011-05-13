@@ -894,8 +894,7 @@
       var parts = typeof selector == 'string' ? selector.match(reSplitGroup) : selector;
 
       if (parts.length == 1) {
-        source += (mode ? 'e=c[k];' : 'e=k;') +
-          compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+        source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;');
       } else {
         // for each selector in the group
         var i = -1, seen = { }, token;
@@ -904,8 +903,7 @@
           // avoid repeating the same token
           // in comma separated group (p, p)
           if (!seen[token] && (seen[token] = true)) {
-            source += (i > 0 ? (mode ? 'e=c[k];' : 'e=k;') : '') +
-              compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+            source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
           }
         }
       }
