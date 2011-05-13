@@ -734,7 +734,7 @@
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
-      if (ATTR_DEFAULT[attribute] in node) {
+      if (ATTR_DEFAULT[attribute]) {
         return node[ATTR_DEFAULT[attribute]] || '';
       }
       return (
@@ -757,7 +757,7 @@
       // see NetFront/Playstation as an example
       attribute = attribute in ATTR_MAPPING ?
         ATTR_MAPPING[attribute] : attribute;
-      if (ATTR_DEFAULT[attribute] in node) {
+      if (ATTR_DEFAULT[attribute]) {
         return !!node[ATTR_DEFAULT[attribute]];
       }
       // need to get at AttributeNode first on IE
