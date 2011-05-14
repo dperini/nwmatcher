@@ -538,7 +538,7 @@
       lastContext = from;
       // reference context ownerDocument and document root (HTML)
       doc = from.ownerDocument || from;
-      if (force || oldDoc != doc) {
+      if (force || oldDoc !== doc) {
         // set document root
         root = doc.documentElement;
         // set host environment flags
@@ -814,10 +814,10 @@
       for (var i in options) {
         Config[i] = !!options[i];
         if (i == 'SIMPLENOT') {
-          HTMLResolvers = { };
-          XMLResolvers = { };
-          HTMLMatchers = { };
-          XMLMatchers = { };
+          matchContexts = { };
+          matchResolvers = { };
+          selectContexts = { };
+          selectResolvers = { };
           Config['USE_QSAPI'] = false;
           reValidator = new RegExp(extendedValidator, 'g');
         } else if (i == 'USE_QSAPI') {
@@ -1326,13 +1326,12 @@
       }
 
       // compile matcher resolver if necessary
-      resolver = (XML_DOCUMENT && XMLMatchers[selector]) ?
-        XMLMatchers[selector] : HTMLMatchers[selector] ?
-          HTMLMatchers[selector] : (XML_DOCUMENT ?
-            XMLMatchers : HTMLMatchers)[selector] =
-              compile(isSingleMatch ? [selector] : parts, '', false);
+      if (!matchResolvers[selector] || matchContexts[selector] !== from) {
+        matchResolvers[selector] = compile(isSingleMatch ? [selector] : parts, '', false);
+        matchContexts[selector] = from;
+      }
 
-      return resolver(element, Snapshot, [ ], doc, root, from, callback);
+      return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback);
     },
 
   // select elements matching selector
@@ -1505,24 +1504,23 @@
       // end of prefiltering pass
 
       // compile selector resolver if necessary
-      resolver = (XML_DOCUMENT && XMLResolvers[selector]) ?
-        XMLResolvers[selector] : HTMLResolvers[selector] ?
-          HTMLResolvers[selector] : (XML_DOCUMENT ?
-            XMLResolvers : HTMLResolvers)[selector] =
-              compile(isSingleSelect ? [selector] : parts, '', true);
+      if (!selectResolvers[selector] || selectContexts[selector] !== from) {
+        selectResolvers[selector] = compile(isSingleSelect ? [selector] : parts, '', true);
+        selectContexts[selector] = from;
+      }
 
-      return resolver(elements, Snapshot, [ ], doc, root, from, callback);
+      return selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback);
     },
 
   /*-------------------------------- STORAGE ---------------------------------*/
 
-  // compiled select functions returning collections
-  HTMLResolvers = { },
-  XMLResolvers = { },
-
   // compiled match functions returning booleans
-  HTMLMatchers = { },
-  XMLMatchers = { },
+  matchContexts = { },
+  matchResolvers = { },
+
+  // compiled select functions returning collections
+  selectContexts = { },
+  selectResolvers = { },
 
   // used to pass methods to compiled functions
   Snapshot = {
