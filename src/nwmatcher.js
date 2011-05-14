@@ -40,7 +40,6 @@
   isSingleMatch,
   isSingleSelect,
 
-  lastError,
   lastSlice,
   lastContext,
   lastPosition,
@@ -551,7 +550,7 @@
         // In standards mode they are case sensitive. See docs:
         // https://developer.mozilla.org/en/Mozilla_Quirks_Mode_Behavior
         // http://www.whatwg.org/specs/web-apps/current-work/#selectors
-        QUIRKS_MODE = XML_DOCUMENT ||
+        QUIRKS_MODE = !XML_DOCUMENT &&
           'compatMode' in doc && doc.compatMode.indexOf('CSS') < 0;
 
         var div = doc.createElement('div');
@@ -561,7 +560,8 @@
         // GEBCN buggy in quirks mode, match count is:
         // Firefox 3.0+ [xxx = 1, xXx = 1]
         // Opera 10.63+ [xxx = 0, xXx = 2]
-        BUGGY_QUIRKS_GEBCN = NATIVE_GEBCN && QUIRKS_MODE &&
+        BUGGY_QUIRKS_GEBCN =
+          !XML_DOCUMENT && NATIVE_GEBCN && QUIRKS_MODE &&
           (div.getElementsByClassName('xxx').length != 2 ||
           div.getElementsByClassName('xXx').length != 2);
 
@@ -571,7 +571,8 @@
         // https://bugs.webkit.org/show_bug.cgi?id=19047
         // must test the attribute selector '[class~=xxx]'
         // before '.xXx' or the bug may not present itself
-        BUGGY_QUIRKS_QSAPI = NATIVE_QSAPI && QUIRKS_MODE &&
+        BUGGY_QUIRKS_QSAPI =
+          !XML_DOCUMENT && NATIVE_QSAPI && QUIRKS_MODE &&
           (div.querySelectorAll('[class~=xxx]').length != 2 ||
           div.querySelectorAll('.xXx').length != 2);
       }
@@ -643,9 +644,8 @@
   // @return array
   _byTag = !BUGGY_GEBTN && NATIVE_SLICE_PROTO ?
     function(tag, from) {
-      return slice.call(from.getElementsByTagName ?
-        from.getElementsByTagName(tag) :
-        byTagRaw(tag, from), 0);
+      return XML_DOCUMENT || from.nodeType == 11 ? byTagRaw(tag, from) :
+        slice.call(from.getElementsByTagName(tag), 0);
     } :
     function(tag, from) {
       var i = -1, j = i, data = [ ],
@@ -1310,7 +1310,7 @@
       } else parts = lastPartsMatch;
 
       // use matchesSelector API if available
-      if (Config.USE_QSAPI && element[NATIVE_MATCHES_SELECTOR] &&
+      if (!XML_DOCUMENT && Config.USE_QSAPI && element[NATIVE_MATCHES_SELECTOR] &&
         !(BUGGY_QUIRKS_QSAPI && RE_CLASS.test(selector)) &&
         !(BUGGY_PSEUDOS && RE_PSEUDOS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector)) {
@@ -1378,21 +1378,14 @@
           concatCall([ ], elements, callback) : elements;
       }
 
-      if (Config.USE_QSAPI &&
+      else if (!XML_DOCUMENT && Config.USE_QSAPI &&
         !(BUGGY_QUIRKS_QSAPI && RE_CLASS.test(selector)) &&
         !RE_BUGGY_QSAPI.test(selector) &&
         QSA_NODE_TYPES[from.nodeType]) {
 
-        // clear error state
-        lastError = null;
-
         try {
           elements = from.querySelectorAll(selector);
-        } catch(e) {
-          // remember last error
-          lastError = e;
-          if (selector === '') throw e;
-        }
+        } catch(e) { }
 
         if (elements) {
           switch (elements.length) {
@@ -1430,7 +1423,7 @@
       } else parts = lastPartsSelect;
 
       // commas separators are treated sequentially to maintain order
-      if (isSingleSelect && from.nodeType != 11) {
+      if (!XML_DOCUMENT && isSingleSelect && from.nodeType != 11) {
 
         if (changed) {
           // get right most selector token
