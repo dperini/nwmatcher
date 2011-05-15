@@ -113,9 +113,11 @@ NW.Dom.registerSelector(
           source = 'if(e!==h){' + source + '}';
           break;
         } else if (match[6] == 'even') {
-          a = 2, b = 0;
+          a = 2;
+          b = 0;
         } else if (match[6] == 'odd') {
-          a = 2, b = 1;
+          a = 2;
+          b = 1;
         } else {
           b = ((n = match[6].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
           a = ((n = match[6].match(/(-?\d*)n/)) ? parseInt(n[1], 10) : 0);
@@ -262,6 +264,6 @@ NW.Dom.registerSelector(
         'source': source,
         'status': status
       };
+
     };
-  })()
-);
+  })());

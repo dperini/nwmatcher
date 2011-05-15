@@ -27,7 +27,8 @@
     while ((element = element[property])) {
       if (element.nodeType != 1) continue;
       if (isIndex) {
-        if (i++ == expr) return element;
+        ++i;
+        if (i == expr) return element;
       } else if (match(element, expr)) {
         return element;
       }
@@ -70,16 +71,16 @@
    */
   function down(element, expr) {
     var isIndex = typeof expr == 'number', descendants, index, descendant;
-    if (expr == null) {
+    if (expr === null) {
       element = element.firstChild;
       while (element && element.nodeType != 1) element = element[nextElement];
       return element;
     }
-    if (!isIndex && match(element, expr) || isIndex && expr == 0) return element;
+    if (!isIndex && match(element, expr) || isIndex && expr === 0) return element;
     descendants = select('*', element);
     if (isIndex) return descendants[expr] || null;
     index = 0;
-    while ((descendant = descendants[index++]) && !match(descendant, expr));
+    while ((descendant = descendants[index]) && !match(descendant, expr)) { ++index; }
     return descendant || null;
   }
   D.up = up;
