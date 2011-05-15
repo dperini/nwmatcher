@@ -142,7 +142,7 @@ NW.Dom.registerSelector(
         a = match[3] == 'first' ? 'previous' : 'next';
         n = match[3] == 'only' ? 'previous' : 'next';
         b = match[3] == 'first' || match[3] == 'last';
-        type = match[5] ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
+        type = match[5] ? '&&n.nodeName!==e.nodeName' : '&&n.nodeName<"@"';
         source = 'if(e!==h){' +
           ( 'n=e;while((n=n.' + a + 'Sibling)' + type + ');if(!n){' + (b ? source :
             'n=e;while((n=n.' + n + 'Sibling)' + type + ');if(!n){' + source + '}') + '}' ) + '}';
@@ -166,15 +166,17 @@ NW.Dom.registerSelector(
   /^\:(link|visited|target|lang|not|active|focus|hover|checked|disabled|enabled|selected)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
   (function() {
 
-    var doc = document, USE_HTML5 = true, SIMPLENOT = true, T = NW.Dom.Tokens,
+    var doc = document,
+    Config = NW.Dom.Config,
+    Tokens = NW.Dom.Tokens,
 
     reTrimSpace = RegExp(
-      '^' + T.whitespace +
-      '|' + T.whitespace + '$', 'g'),
+      '^' + Tokens.whitespace +
+      '|' + Tokens.whitespace + '$', 'g'),
 
     reSimpleNot = RegExp('^((?!:not)' +
-      '(' + T.prefixes + '|' + T.identifier +
-      '|\\([^()]*\\))+|\\[' + T.attributes + '\\])$');
+      '(' + Tokens.prefixes + '|' + Tokens.identifier +
+      '|\\([^()]*\\))+|\\[' + Tokens.attributes + '\\])$');
 
     return function(match, source) {
 
@@ -184,7 +186,7 @@ NW.Dom.registerSelector(
 
         case 'not':
           expr = match[3].replace(reTrimSpace, '');
-          if (SIMPLENOT && !reSimpleNot.test(expr)) {
+          if (Config.SIMPLENOT && !reSimpleNot.test(expr)) {
             NW.Dom.emit('Negation pseudo-class only accepts simple selectors "' + match.join('') + '"');
           } else {
             if ('compatMode' in doc) {
@@ -196,10 +198,8 @@ NW.Dom.registerSelector(
           break;
 
         case 'checked':
-          test = 'typeof e.form!=="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)';
-          source = 'if' + (USE_HTML5 ?
-            '(((' + test + ')||/^option$/i.test(e.nodeName))&&(e.checked||e.selected))' :
-            '(' + test + '&&e.checked)') + '{' + source + '}';
+          test = 'if((typeof e.form!=="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)&&e.checked)';
+          source = (Config.USE_HTML5 ? test + '||(/^option$/i.test(e.nodeName)&&e.selected)' : test) + '){' + source + '}';
           break;
 
         case 'disabled':

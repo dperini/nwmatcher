@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.4beta
  * Created: 20070722
- * Release: 20110509
+ * Release: 20110515
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -20,12 +20,13 @@
   var version = 'nwmatcher-1.2.4beta',
 
   Dom = typeof exports == 'object' ? exports :
-    (global.NW || (global.NW = { })) &&
-    (global.NW.Dom || (global.NW.Dom = { })),
+    ((global.NW || (global.NW = { })) &&
+    (global.NW.Dom || (global.NW.Dom = { }))),
 
-  slice = [ ].slice,
   doc = global.document,
   root = doc.documentElement,
+
+  slice = [ ].slice,
 
   isSingleMatch,
   isSingleSelect,
@@ -40,7 +41,7 @@
   lastPartsMatch,
   lastPartsSelect,
 
-  prefixes = '[.:#]?',
+  prefixes = '[#.:]?',
   operators = '([~*^$|!]?={1})',
   whitespace = '[\\x20\\t\\n\\r\\f]*',
   combinators = '[\\x20]|[>+~][^>+~]',
@@ -65,17 +66,21 @@
 
   extensions = '.+',
 
-  reValidator = RegExp(
+  standardValidator =
     '(?=[\\x20\\t\\n\\r\\f]*[^>+~(){}<>])' +
     '(' +
     '\\*' +
-    '|' + combinators +
     '|(?:' + prefixes + identifier + ')' +
+    '|' + combinators +
     '|\\[' + attributes + '\\]' +
     '|\\(' + pseudoclass + '\\)' +
     '|\\{' + extensions + '\\}' +
     '|,.' +
-    ')+', 'g'),
+    ')+',
+
+  extendedValidator = standardValidator.replace(pseudoclass, '.*'),
+
+  reValidator = RegExp(standardValidator, 'g'),
 
   reTrimSpaces = RegExp('^' +
     whitespace + '|' + whitespace + '$', 'g'),
@@ -91,7 +96,7 @@
   reSplitToken = RegExp('(' +
     '\\[' + attributes + '\\]|' +
     '\\(' + pseudoclass + '\\)|' +
-    '[^\x20>+~]|\\\\.)+', 'g'),
+    '[^\\x20>+~]|\\\\.)+', 'g'),
 
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
@@ -130,8 +135,6 @@
   XML_DOCUMENT,
   TO_UPPER_CASE,
 
-  SHORTCUTS = true,
-
   GEBTN = 'getElementsByTagName' in doc,
   GEBCN = 'getElementsByClassName' in doc,
 
@@ -140,6 +143,50 @@
   IE_LT_9 = typeof doc.addEventListener != 'function',
   ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
   REJECT_NODE = IE_LT_9 ? 'if(e.nodeName<"A")continue;' : '',
+
+  Config = {
+    CACHING: false,
+    SIMPLENOT: true,
+    USE_HTML5: false,
+    USE_QSAPI: false
+  },
+
+  configure =
+    function(options) {
+      for (var i in options) {
+        Config[i] = !!options[i];
+        if (i == 'SIMPLENOT') {
+          matchContexts = { };
+          matchResolvers = { };
+          selectContexts = { };
+          selectResolvers = { };
+          Config['USE_QSAPI'] = false;
+          reValidator = new RegExp(extendedValidator, 'g');
+        } else if (i == 'USE_QSAPI') {
+          reValidator = new RegExp(standardValidator, 'g');
+        }
+      }
+    },
+
+  concatCall =
+    function(data, elements, callback) {
+      var i = -1, element;
+      while ((element = elements[++i]))
+        callback(data[data.length] = element);
+      return data;
+    },
+
+  emit =
+    function(message) {
+      if (typeof global.DOMException !== 'undefined') {
+        var err = Error();
+        err.message = 'SYNTAX_ERR: (Selectors) ' + message;
+        err.code = 12;
+        throw err;
+      } else {
+        throw Error(12, 'SYNTAX_ERR: (Selectors) ' + message);
+      }
+    },
 
   switchContext =
     function(from, force) {
@@ -152,6 +199,8 @@
         TO_UPPER_CASE = XML_DOCUMENT ? '.toUpperCase()' : '';
         QUIRKS_MODE = XML_DOCUMENT ||
           typeof doc.compatMode == 'string' && doc.compatMode.indexOf('CSS') < 0;
+
+        Config.CACHING && Dom.setCache(true, doc);
       }
     },
 
@@ -333,18 +382,6 @@
       return source;
     },
 
-  emit =
-    function(message) {
-      if (typeof global.DOMException !== 'undefined') {
-        var err = Error();
-        err.message = 'SYNTAX_ERR: (Selectors) ' + message;
-        err.code = 12;
-        throw err;
-      } else {
-        throw Error(12, 'SYNTAX_ERR: (Selectors) ' + message);
-      }
-    },
-
   match =
     function(element, selector, from, callback) {
 
@@ -362,7 +399,7 @@
 
       selector = selector.replace(reTrimSpaces, '');
 
-      SHORTCUTS && (selector = NW.Dom.shortcuts(selector, element, from));
+      Config.SHORTCUTS && (selector = NW.Dom.shortcuts(selector, element, from));
 
       if (lastMatcher != selector) {
         if ((parts = selector.match(reValidator)) && parts[0] == selector) {
@@ -375,18 +412,18 @@
         }
       } else parts = lastPartsMatch;
 
-      if (MatchResolvers[selector]) {
-        return MatchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback);
+      if (!matchResolvers[selector] || matchContexts[selector] !== from) {
+        matchResolvers[selector] = compile(isSingleMatch ? [selector] : parts, '', false);
+        matchContexts[selector] = from;
       }
 
-      return (MatchResolvers[selector] =
-        compile(isSingleMatch ? [ selector ] : parts, '', false))(element, Snapshot, [ ], doc, root, from, callback);
+      return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback);
     },
 
   select =
     function(selector, from, callback) {
 
-      var i, changed, element, elements, parts, token;
+      var i, changed, element, elements, parts, token, original = selector;
 
       if (arguments.length === 0) {
         emit('Missing required selector parameters');
@@ -400,9 +437,13 @@
         switchContext(from || (from = doc));
       }
 
+      if (Config.CACHING && (elements = Dom.loadResults(original, from, doc, root))) {
+        return callback ? concatCall([ ], elements, callback) : elements; 
+      }
+
       selector = selector.replace(reTrimSpaces, '');
 
-      SHORTCUTS && (selector = NW.Dom.shortcuts(selector, from));
+      Config.SHORTCUTS && (selector = NW.Dom.shortcuts(selector, from));
 
       if ((changed = lastSelector != selector)) {
         if ((parts = selector.match(reValidator)) && parts[0] == selector) {
@@ -432,17 +473,16 @@
           if ((element = _byId(token, from))) {
             if (match(element, selector)) {
               callback && callback(element);
-              return [ element ];
-            }
+              elements = [ element ];
+            } else elements = [ ];
           }
-          return [ ];
         }
 
         else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
           if ((element = _byId(token, doc))) {
             if ('#' + token == selector) {
               callback && callback(element);
-              return [ element ];
+              elements = [ element ];
             }
             if (/[>+~]/.test(selector)) {
               from = element.parentNode;
@@ -451,7 +491,12 @@
               lastPosition -= token.length + 1;
               from = element;
             }
-          } else return [ ];
+          } else elements = [ ];
+        }
+
+        if (elements) {
+          Config.CACHING && Dom.saveResults(original, from, doc, elements);
+          return elements;
         }
 
         if (!XML_DOCUMENT && GEBTN && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
@@ -464,6 +509,7 @@
             selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token,
               reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1)) ? '' : '*');
         }
+
       }
 
       if (!elements) {
@@ -476,16 +522,23 @@
         }
       }
 
-      if (SelectResolvers[selector]) {
-        return SelectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback);
+      if (!selectResolvers[selector] || selectContexts[selector] !== from) {
+        selectResolvers[selector] = compile(isSingleSelect ? [selector] : parts, '', true);
+        selectContexts[selector] = from;
       }
 
-      return (SelectResolvers[selector] =
-        compile(isSingleSelect ? [ selector ] : parts, REJECT_NODE, true))(elements, Snapshot, [ ], doc, root, from, callback);
+      elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback);
+
+      Config.CACHING && Dom.saveResults(original, from, doc, elements);
+
+      return elements;
     },
 
-  SelectResolvers = { },
-  MatchResolvers = { },
+  matchContexts = { },
+  matchResolvers = { },
+
+  selectContexts = { },
+  selectResolvers = { },
 
   Snapshot = {
     byId: _byId,
@@ -512,13 +565,18 @@
   Dom.match = match;
   Dom.select = select;
   Dom.compile = compile;
+  Dom.configure = configure;
 
-  Dom.Snapshot = Snapshot;
+  Dom.Config = Config;
   Dom.Operators = Operators;
   Dom.Selectors = Selectors;
+  Dom.Snapshot = Snapshot;
   Dom.Tokens = Tokens;
 
-  Dom.caching = function(x) { return x; };
+  Dom.setCache = function() { return; };
+  Dom.loadResults = function() { return; };
+  Dom.saveResults = function() { return; };
+
   Dom.shortcuts = function(x) { return x; };
 
   Dom.registerOperator =
