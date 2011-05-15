@@ -168,8 +168,8 @@
 
   // split last, right most, selector group token
   reSplitToken = new RegExp('(' +
-    '\\(' + pseudoclass + '\\)|' +
     '\\[' + attributes + '\\]|' +
+    '\\(' + pseudoclass + '\\)|' +
     '[^\\x20>+~]|\\\\.)+', 'g'),
 
   // for in excess whitespace removal
@@ -634,7 +634,7 @@
           elements[elements.length] = element;
         }
         if ((next = element.firstChild || element.nextSibling)) continue;
-        while (!next && (element = element.parentNode) && element != from) {
+        while (!next && (element = element.parentNode) && element !== from) {
           next = element.nextSibling;
         }
       }
@@ -835,7 +835,7 @@
     function(message) {
       if (Config.VERBOSITY) {
         // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
-        if (typeof global.DOMException !== 'undefined') {
+        if (typeof global.DOMException != 'undefined') {
           var err = new Error();
           err.message = 'SYNTAX_ERR: (Selectors) ' + message;
           err.code = 12;
@@ -928,7 +928,7 @@
   compileSelector =
     function(selector, source) {
 
-      var i, a, b, n, k = 0, expr, match, result, status, test, type;
+      var a, b, n, k = 0, expr, match, result, status, test, type;
 
       while (selector) {
 
@@ -939,7 +939,7 @@
         if ((match = selector.match(Patterns.universal))) {
           // do nothing, handled in the compiler where
           // BUGGY_GEBTN return comment nodes (ex: IE)
-          i = true;
+          expr = '';
         }
 
         // *** ID selector
@@ -1029,9 +1029,9 @@
         else if ((match = selector.match(Patterns.relative))) {
           source = NATIVE_TRAVERSAL_API ?
             ('var N' + k + '=e;e=e.parentNode.firstElementChild;' +
-            'while(e&&e!=N' + k + '){' + source + 'e=e.nextElementSibling;}e=N' + k + ';') :
+            'while(e&&e!==N' + k + '){' + source + 'e=e.nextElementSibling;}e=N' + k + ';') :
             ('var N' + k + '=e;e=e.parentNode.firstChild;' +
-            'while(e&&e!=N' + k + '){if(e.nodeName>"@"){' + source + '}e=e.nextSibling;}e=N' + k + ';');
+            'while(e&&e!==N' + k + '){if(e.nodeName>"@"){' + source + '}e=e.nextSibling;}e=N' + k + ';');
         }
 
         // *** Child combinator
@@ -1054,6 +1054,7 @@
         else if ((match = selector.match(Patterns.spseudos)) && match[1]) {
 
           switch (match[2]) {
+
             case 'root':
               // element root of the document
               if (match[7]) {
@@ -1120,6 +1121,7 @@
               }
               break;
           }
+
         }
 
         // *** negation, user action and target pseudo-classes
@@ -1153,16 +1155,16 @@
             // CSS3 UI element states
             case 'checked':
               // for radio buttons checkboxes (HTML4) and options (HTML5)
-              test = 'if((typeof e.form!=="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)&&e.checked)';
+              test = 'if((typeof e.form!="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)&&e.checked)';
               source = (Config.USE_HTML5 ? test + '||(/^option$/i.test(e.nodeName)&&e.selected)' : test) + '){' + source + '}';
               break;
             case 'disabled':
               // does not consider hidden input fields
-              source = 'if(((typeof e.form!=="undefined"&&!(/^hidden$/i).test(e.type))||s.isLink(e))&&e.disabled){' + source + '}';
+              source = 'if(((typeof e.form!="undefined"&&!(/^hidden$/i).test(e.type))||s.isLink(e))&&e.disabled){' + source + '}';
               break;
             case 'enabled':
               // does not consider hidden input fields
-              source = 'if(((typeof e.form!=="undefined"&&!(/^hidden$/i).test(e.type))||s.isLink(e))&&!e.disabled){' + source + '}';
+              source = 'if(((typeof e.form!="undefined"&&!(/^hidden$/i).test(e.type))||s.isLink(e))&&!e.disabled){' + source + '}';
               break;
 
             // CSS3 lang pseudo-class
@@ -1287,7 +1289,7 @@
         return false;
       } else if (from && from.nodeType == 1 && !contains(from, element)) {
         return false;
-      } else if (lastContext != from) {
+      } else if (lastContext !== from) {
         // reset context data when it changes
         // and ensure context is set to a default
         switchContext(from || (from = element.ownerDocument));
@@ -1342,7 +1344,7 @@
   select =
     function(selector, from, callback) {
 
-      var i, changed, element, elements, original, parts, token;
+      var i, changed, element, elements, parts, token, original = selector;
 
       if (arguments.length === 0) {
         emit('Missing required selector parameters');
@@ -1353,13 +1355,11 @@
       } else if (typeof selector != 'string') {
         // QSA capable browsers do not throw
         return [ ];
-      } else if (lastContext != from) {
+      } else if (lastContext !== from) {
         // reset context data when it changes
         // and ensure context is set to a default
         switchContext(from || (from = doc));
       }
-
-      original = selector;
 
       if (Config.CACHING && (elements = Dom.loadResults(original, from, doc, root))) {
         return callback ? concatCall([ ], elements, callback) : elements;
@@ -1414,7 +1414,11 @@
       } else parts = lastPartsSelect;
 
       // commas separators are treated sequentially to maintain order
-      if (!XML_DOCUMENT && isSingleSelect && from.nodeType != 11) {
+      if (from.nodeType == 11) {
+
+        elements = from.childNodes;
+
+      } else if (!XML_DOCUMENT && isSingleSelect) {
 
         if (changed) {
           // get right most selector token
@@ -1603,13 +1607,13 @@
   Dom.configure = configure;
 
   // initialize caching for each document
-  Dom.setCache = function(x) { return x; };
+  Dom.setCache = function() { return; };
 
   // load previously collected result set
-  Dom.loadResults = function(x) { return x; };
+  Dom.loadResults = function() { return; };
 
   // save previously collected result set
-  Dom.saveResults = function(x) { return x; };
+  Dom.saveResults = function() { return; };
 
   // handle missing context in selector strings
   Dom.shortcuts = function(x) { return x; };
