@@ -178,7 +178,7 @@
 
   emit =
     function(message) {
-      if (typeof global.DOMException !== 'undefined') {
+      if (typeof global.DOMException != 'undefined') {
         var err = Error();
         err.message = 'SYNTAX_ERR: (Selectors) ' + message;
         err.code = 12;
@@ -193,7 +193,7 @@
       var oldDoc = doc;
       lastContext = from;
       doc = from.ownerDocument || from;
-      if (force || oldDoc != doc) {
+      if (force || oldDoc !== doc) {
         root = doc.documentElement;
         XML_DOCUMENT = doc.createElement('DiV').nodeName == 'DiV';
         TO_UPPER_CASE = XML_DOCUMENT ? '.toUpperCase()' : '';
@@ -274,10 +274,11 @@
       var k = 0, expr, match, result, status, test, type;
 
       while (selector) {
+
         k++;
 
         if ((match = selector.match(Patterns.universal))) {
-          void 0;
+          expr = '';
         }
 
         else if ((match = selector.match(Patterns.id))) {
@@ -393,7 +394,7 @@
       } else if (!selector || typeof selector != 'string') {
         emit('Invalid selector argument');
         return false;
-      } else if (lastContext != from) {
+      } else if (lastContext !== from) {
         switchContext(from || (from = element.ownerDocument));
       }
 
@@ -433,7 +434,7 @@
         return [ ];
       } else if (typeof selector != 'string') {
         return [ ];
-      } else if (lastContext != from) {
+      } else if (lastContext !== from) {
         switchContext(from || (from = doc));
       }
 
