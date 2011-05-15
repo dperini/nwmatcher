@@ -1,13 +1,32 @@
+/*
+ * Copyright (C) 2007-2011 Diego Perini & NWBOX
+ * All rights reserved.
+ *
+ * high speed caching/memoization system module for NWMatcher
+ *
+ * Added capabilities:
+ *
+ * - mutation events are feature tested and used safely
+ * - handle caching different document types HTML/XML/SVG
+ * - store result sets for different selectors / contexts
+ * - simultaneously control mutation on multiple documents
+ *
+ */
+
 (function(global) {
 
-  // Export the public API for web browsers and CommonJS implementations.
-  var Cache = typeof exports == 'object' && exports || (global.NW.Dom.Cache = {}), now, lastCalled,
+  // export the public API for CommonJS implementations,
+  // for headless JS engines or for standard web browsers
+  var Dom =
+    // as CommonJS/NodeJS module
+    typeof exports == 'object' ? exports :
+    // create or extend NW namespace
+    ((global.NW || (global.NW = { })) &&
+    (global.NW.Dom || (global.NW.Dom = { }))),
 
-  Storages = { },
   Contexts = { },
   Results = { },
 
-  isCacheable = false,
   isEnabled = false,
   isExpired = true,
   isPaused = false,
@@ -15,18 +34,21 @@
   context = global.document,
   root = context.documentElement,
 
+  // last time cache initialization was called
+  lastCalled = 0,
+
   // minimum time allowed between calls to the cache initialization
   minCacheRest = 15, //ms
 
   // check for Mutation Events, DOMAttrModified should be
   // enough to ensure DOMNodeInserted/DOMNodeRemoved exist
-  // check for Mutation Events, DOMAttrModified should be
-  // enough to ensure DOMNodeInserted/DOMNodeRemoved exist
   NATIVE_MUTATION_EVENTS = root.addEventListener ?
     (function() {
+
       var isSupported, id = root.id,
-        input = context.createElement('input'),
-        handler = function() { isSupported = true; };
+
+      input = context.createElement('input'),
+      handler = function() { isSupported = true; };
 
       // add a bogus control element
       root.insertBefore(input, root.firstChild);
@@ -49,86 +71,32 @@
     })() :
     false,
 
-  // NOT TESTED YET !
-  getHostIndex =
-    function(host) {
-      // fix for older Safari 2.0.x returning
-      // [object AbstractView] instead of [window]
-      var index = 0, frame, frames;
-      if (window.frames.length === 0 && top.document === host) {
-        return index;
-      } else {
-        frames = top.frames;
-        for (; frame = frames[index]; index++) {
-          if (top.frames[index].document === host) {
-            return index + 1;
-          }
-        }
-      }
-      return 0;
-    },
-
-  // NOT TESTED YET !
-  setStorage =
-    function(host) {
-      if (Storages[host]) {
-        Contexts = Storages[host].Contexts;
-        Results = Storages[host].Results;
-      } else {
-        Contexts = Storages[host].Contexts = { };
-        Results = Storages[host].Results = { };
-      }
-    },
-
   loadResults =
-    function(selector, from, base, root) {
-
-      setStorage(getHostIndex(base));
-
-      isCacheable = isEnabled && !isPaused &&
-        !(from != base && isDisconnected(from, root));
-
-      // avoid caching disconnected nodes
-      if (isCacheable) {
+    function(selector, from, doc, root) {
+      if (isEnabled && !isPaused) {
         if (!isExpired) {
-          if (Results[selector] && Contexts[selector] == from) {
+          if (Results[selector] && Contexts[selector] === from) {
             return Results[selector];
           }
         } else {
-          // temporarily pause caching while we are getting hammered with dom mutations (jdalton)
+          // pause caching while we are getting
+          // hammered by dom mutations (jdalton)
           now = new Date;
           if ((now - lastCalled) < minCacheRest) {
             isPaused = isExpired = true;
             setTimeout(function() { isPaused = false; }, minCacheRest);
-          } else setCache(true, base);
+          } else setCache(true, doc);
           lastCalled = now;
         }
       }
-
-      return Results;
+      return undefined;
     },
 
   saveResults =
-    function(selector, from, data) {
-      if (isCacheable) {
-        Contexts[selector] = from;
-        Results[selector]  = data;
-      }
+    function(selector, from, doc, data) {
+      Contexts[selector] = from;
+      Results[selector]  = data;
       return;
-    },
-
-  isDisconnected = 'compareDocumentPosition' in root ?
-    function(element, container) {
-      return (container.compareDocumentPosition(element) & 1) == 1;
-    } : 'contains' in root ?
-    function(element, container) {
-      return !container.contains(element);
-    } :
-    function(element, container) {
-      while ((element = element.parentNode)) {
-        if (element === container) return false;
-      }
-      return true;
     },
 
   /*-------------------------------- CACHING ---------------------------------*/
@@ -144,11 +112,11 @@
   // append mutation events
   startMutation =
     function(d) {
-      if (!d.isCaching) {
+      if (!d.isCaching && d.addEventListener) {
         // FireFox/Opera/Safari/KHTML have support for Mutation Events
-        d.addEventListener('DOMAttrModified', mutationWrapper, false);
-        d.addEventListener('DOMNodeInserted', mutationWrapper, false);
-        d.addEventListener('DOMNodeRemoved',  mutationWrapper, false);
+        d.addEventListener('DOMAttrModified', mutationWrapper, true);
+        d.addEventListener('DOMNodeInserted', mutationWrapper, true);
+        d.addEventListener('DOMNodeRemoved',  mutationWrapper, true);
         d.isCaching = true;
       }
     },
@@ -156,10 +124,10 @@
   // remove mutation events
   stopMutation =
     function(d) {
-      if (d.isCaching) {
-        d.removeEventListener('DOMAttrModified', mutationWrapper, false);
-        d.removeEventListener('DOMNodeInserted', mutationWrapper, false);
-        d.removeEventListener('DOMNodeRemoved',  mutationWrapper, false);
+      if (d.isCaching && d.removeEventListener) {
+        d.removeEventListener('DOMAttrModified', mutationWrapper, true);
+        d.removeEventListener('DOMNodeInserted', mutationWrapper, true);
+        d.removeEventListener('DOMNodeRemoved',  mutationWrapper, true);
         d.isCaching = false;
       }
     },
@@ -186,6 +154,8 @@
   expireCache =
     function(d) {
       isExpired = true;
+      Contexts = { };
+      Results = { };
     };
 
   isEnabled = NATIVE_MUTATION_EVENTS;
@@ -193,26 +163,15 @@
   /*------------------------------- PUBLIC API -------------------------------*/
 
   // save results into cache
-  Cache.saveResults = saveResults;
+  Dom.saveResults = saveResults;
 
   // load results from cache
-  Cache.loadResults = loadResults;
+  Dom.loadResults = loadResults;
 
   // expire DOM tree cache
-  Cache.expireCache = expireCache;
+  Dom.expireCache = expireCache;
 
   // enable/disable cache
-  Cache.setCache = setCache;
-
-  // context roots reference
-  Cache.getContexts = function() { return Contexts; };
-
-  // result sets references
-  Cache.getResults = function() { return Results; };
-
-  // public while debugging
-  Cache.isEnabled = function() { return isEnabled; };
-  Cache.isExpired = function() { return isExpired; };
-  Cache.isPaused = function() { return isPaused; };
+  Dom.setCache = setCache;
 
 })(this);
