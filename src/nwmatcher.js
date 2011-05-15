@@ -573,6 +573,8 @@
           !XML_DOCUMENT && NATIVE_QSAPI && QUIRKS_MODE &&
           (div.querySelectorAll('[class~=xxx]').length != 2 ||
           div.querySelectorAll('.xXx').length != 2);
+
+        Config.CACHING && Dom.setCache(true, doc);
       }
     },
 
@@ -856,6 +858,9 @@
     },
 
   Config = {
+
+    // used to enable/disable caching of result sets
+    CACHING: false,
 
     // by default do not add missing left/right context
     // to selector string shortcuts like "+div" or "ul>"
@@ -1336,7 +1341,7 @@
   select =
     function(selector, from, callback) {
 
-      var i, changed, element, elements, parts, token;
+      var i, changed, element, elements, original, parts, token;
 
       if (arguments.length === 0) {
         emit('Missing required selector parameters');
@@ -1351,6 +1356,12 @@
         // reset context data when it changes
         // and ensure context is set to a default
         switchContext(from || (from = doc));
+      }
+
+      original = selector;
+
+      if (Config.CACHING && (elements = Dom.loadResults(original, from, doc, root))) {
+        return callback ? concatCall([ ], elements, callback) : elements;
       }
 
       if (!OPERA_QSAPI && RE_SIMPLE_SELECTOR.test(selector)) {
@@ -1380,6 +1391,7 @@
       if (elements) {
         elements = callback ? concatCall([ ], elements, callback) :
           NATIVE_SLICE_PROTO ? slice.call(elements) : concatList([ ], elements);
+        Config.CACHING && Dom.saveResults(original, from, doc, elements);
         return elements;
       }
 
@@ -1443,6 +1455,7 @@
         }
 
         if (elements) {
+          Config.CACHING && Dom.saveResults(original, from, doc, elements);
           return elements;
         }
 
@@ -1492,6 +1505,8 @@
       }
 
       elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback);
+
+      Config.CACHING && Dom.saveResults(original, from, doc, elements);
 
       return elements;
     },
@@ -1585,6 +1600,15 @@
 
   // handle selector engine configuration settings
   Dom.configure = configure;
+
+  // initialize caching for each document
+  Dom.setCache = function(x) { return x; };
+
+  // load previously collected result set
+  Dom.loadResults = function(x) { return x; };
+
+  // save previously collected result set
+  Dom.saveResults = function(x) { return x; };
 
   // handle missing context in selector strings
   Dom.shortcuts = function(x) { return x; };
