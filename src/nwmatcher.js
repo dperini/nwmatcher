@@ -170,7 +170,7 @@
   reSplitToken = new RegExp('(' +
     '\\(' + pseudoclass + '\\)|' +
     '\\[' + attributes + '\\]|' +
-    '[^\x20>+~]|\\\\.)+', 'g'),
+    '[^\\x20>+~]|\\\\.)+', 'g'),
 
   // for in excess whitespace removal
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
@@ -747,7 +747,9 @@
   // @return boolean
   hasAttribute = !BUGGY_HAS_ATTRIBUTE ?
     function(node, attribute) {
-      return node.hasAttribute(attribute);
+      return XML_DOCUMENT ?
+        !!node.getAttribute(attribute) :
+        node.hasAttribute(attribute);
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
@@ -1144,14 +1146,9 @@
 
             // CSS3 UI element states
             case 'checked':
-              test = 'typeof e.form!=="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)';
-              if (Config.USE_HTML5) {
-                // for radio buttons, checkboxes and options
-                source = 'if(((' + test + ')||/^option$/i.test(e.nodeName))&&(e.checked||e.selected)){' + source + '}';
-              } else {
-                // for radio buttons and checkboxes
-                source = 'if(' + test + '&&e.checked){' + source + '}';
-              }
+              // for radio buttons checkboxes (HTML4) and options (HTML5)
+              test = 'if((typeof e.form!=="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)&&e.checked)';
+              source = (Config.USE_HTML5 ? test + '||(/^option$/i.test(e.nodeName)&&e.selected)' : test) + '){' + source + '}';
               break;
             case 'disabled':
               // does not consider hidden input fields
@@ -1274,7 +1271,7 @@
   match =
     function(element, selector, from, callback) {
 
-      var parts, resolver;
+      var parts;
 
       if (!(element && element.nodeName > '@')) {
         emit('Invalid element argument');
@@ -1339,7 +1336,7 @@
   select =
     function(selector, from, callback) {
 
-      var i, changed, element, elements, parts, token; 
+      var i, changed, element, elements, parts, token;
 
       if (arguments.length === 0) {
         emit('Missing required selector parameters');
