@@ -346,9 +346,10 @@
 
       // :checked bug with option elements (Firefox 3.6.x)
       // it wrongly includes 'selected' options elements
+      // HTML5 rules says selected options also match
       element = doc.createElement('option');
       element.setAttribute('selected', 'selected');
-      expect(':checked', div, element, 1) &&
+      expect(':checked', div, element, 0) &&
         pattern.push(':checked');
 
       // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
