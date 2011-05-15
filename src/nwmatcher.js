@@ -396,8 +396,6 @@
 
   LINK_NODES = { 'a': 1, 'A': 1, 'area': 1, 'AREA': 1, 'link': 1, 'LINK': 1 },
 
-  QSA_NODE_TYPES = { '9': 1, '11': 1 },
-
   // boolean attributes should return attribute name instead of true/false
   ATTR_BOOLEAN = {
     checked: 1, disabled: 1, ismap: 1, multiple: 1, readonly: 1, selected: 1
@@ -1341,7 +1339,7 @@
   select =
     function(selector, from, callback) {
 
-      var i, changed, element, elements, parts, resolver, token;
+      var i, changed, element, elements, parts, token; 
 
       if (arguments.length === 0) {
         emit('Missing required selector parameters');
@@ -1362,10 +1360,9 @@
         switch (selector.charAt(0)) {
           case '#':
             if ((element = _byId(selector.slice(1), from))) {
-              callback && callback(element);
-              return [ element ];
-            }
-            return [ ];
+              elements = [ element ];
+            } else elements = [ ];
+            break;
           case '.':
             elements = _byClass(selector.slice(1), from);
             break;
@@ -1373,35 +1370,20 @@
             elements = _byTag(selector, from);
             break;
         }
-        return callback ?
-          concatCall([ ], elements, callback) : elements;
       }
 
       else if (!XML_DOCUMENT && Config.USE_QSAPI &&
         !(BUGGY_QUIRKS_QSAPI && RE_CLASS.test(selector)) &&
-        !RE_BUGGY_QSAPI.test(selector) &&
-        QSA_NODE_TYPES[from.nodeType]) {
-
+        !RE_BUGGY_QSAPI.test(selector)) {
         try {
           elements = from.querySelectorAll(selector);
         } catch(e) { }
+      }
 
-        if (elements) {
-          switch (elements.length) {
-            case 0:
-              return [ ];
-            case 1:
-              element = elements.item(0);
-              callback && callback(element);
-              return [ element ];
-            default:
-              return callback ?
-                concatCall([ ], elements, callback) :
-                NATIVE_SLICE_PROTO ?
-                  slice.call(elements) :
-                  concatList([ ], elements);
-          }
-        }
+      if (elements) {
+        elements = callback ? concatCall([ ], elements, callback) :
+          NATIVE_SLICE_PROTO ? slice.call(elements) : concatList([ ], elements);
+        return elements;
       }
 
       selector = selector.replace(reTrimSpaces, '');
@@ -1441,10 +1423,9 @@
           if ((element = _byId(token, from))) {
             if (match(element, selector)) {
               callback && callback(element);
-              return [ element ];
-            }
+              elements = [ element ];
+            } else elements = [ ];
           }
-          return [ ];
         }
 
         // ID optimization LTR, to reduce selection context searches
@@ -1452,7 +1433,7 @@
           if ((element = _byId(token, doc))) {
             if ('#' + token == selector) {
               callback && callback(element);
-              return [ element ];
+              elements = [ element ];
             }
             if (/[>+~]/.test(selector)) {
               from = element.parentNode;
@@ -1461,7 +1442,11 @@
               lastPosition -= token.length + 1;
               from = element;
             }
-          } else return [ ];
+          } else elements = [ ];
+        }
+
+        if (elements) {
+          return elements;
         }
 
         if (!NATIVE_GEBCN && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
@@ -1509,7 +1494,9 @@
         selectContexts[selector] = from;
       }
 
-      return selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback);
+      elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback);
+
+      return elements;
     },
 
   /*-------------------------------- STORAGE ---------------------------------*/
@@ -1564,6 +1551,9 @@
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
+  // log resolvers errors/warnings
+  Dom.emit = emit;
+
   // retrieve element by id attr
   Dom.byId = byId;
 
@@ -1598,9 +1588,6 @@
 
   // handle selector engine configuration settings
   Dom.configure = configure;
-
-  // utility to log resolvers errors or warnings
-  Dom.emit = emit;
 
   // handle missing context in selector strings
   Dom.shortcuts = function(x) { return x; };
