@@ -194,7 +194,7 @@ NW.Dom.registerSelector(
             if ('compatMode' in doc) {
               source = 'if(!' + NW.Dom.compile([ expr ], '', false) + '(e,s,r,d,h,g)){' + source + '}';
             } else {
-              source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",r)){' + source +'}';
+              source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",g)){' + source +'}';
             }
           }
           break;
