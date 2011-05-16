@@ -132,7 +132,7 @@
     // dom properties selector (extension)
     '|\\{' + extensions + '\\}' +
     // selector group separator (comma)
-    '|,.' +
+    '|,' +
     // close match group
     ')+',
 

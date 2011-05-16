@@ -75,7 +75,7 @@
     '|\\[' + attributes + '\\]' +
     '|\\(' + pseudoclass + '\\)' +
     '|\\{' + extensions + '\\}' +
-    '|,.' +
+    '|,' +
     ')+',
 
   extendedValidator = standardValidator.replace(pseudoclass, '.*'),
