@@ -735,6 +735,8 @@
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
+      attribute = attribute in ATTR_MAPPING ?
+        ATTR_MAPPING[attribute] : attribute;
       if (ATTR_DEFAULT[attribute]) {
         return node[ATTR_DEFAULT[attribute]] || '';
       }
