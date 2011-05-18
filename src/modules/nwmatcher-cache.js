@@ -40,36 +40,25 @@
   // minimum time allowed between calls to the cache initialization
   minCacheRest = 15, //ms
 
+  mutationTest =
+    function(type, callback) {
+      var isSupported = false,
+      root = document.documentElement,
+      div = document.createElement('div'),
+      handler = function() { isSupported = true; };
+      root.insertBefore(div, root.firstChild);
+      div.addEventListener(type, handler, true);
+      if (callback && callback.call) callback(div);
+      div.removeEventListener(type, handler, true);
+      root.removeChild(div);
+      return isSupported;
+    },
+
   // check for Mutation Events, DOMAttrModified should be
   // enough to ensure DOMNodeInserted/DOMNodeRemoved exist
+  HACKED_MUTATION_EVENT = false;
   NATIVE_MUTATION_EVENTS = root.addEventListener ?
-    (function() {
-
-      var isSupported, id = root.id,
-
-      input = context.createElement('input'),
-      handler = function() { isSupported = true; };
-
-      // add a bogus control element
-      root.insertBefore(input, root.firstChild);
-
-      // add listener and modify attribute
-      root.addEventListener('DOMAttrModified', handler, false);
-      root.id = 'nw';
-
-      // now try to modify the bogus element
-      isSupported && !(isSupported = 0) && (input.disabled = 0);
-
-      // remove event listener and tested element
-      root.removeEventListener('DOMAttrModified', handler, false);
-      root.removeChild(input);
-      root.id = id;
-
-      input = null;
-      handler = null;
-      return !!isSupported;
-    })() :
-    false,
+    mutationTest('DOMAttrModified', function(e) { e.setAttribute('id', 'nw'); }) : false,
 
   loadResults =
     function(selector, from, doc, root) {
@@ -158,7 +147,24 @@
       Results = { };
     };
 
-  isEnabled = NATIVE_MUTATION_EVENTS;
+  if (!NATIVE_MUTATION_EVENTS && Element && Element.prototype) {
+    if (mutationTest('DOMNodeInserted', function(e) { e.appendChild(document.createElement('div')); }) &&
+        mutationTest('DOMNodeRemoved', function(e) { e.removeChild(e.appendChild(document.createElement('div'))); })) {
+      HACKED_MUTATION_EVENTS = true;
+      Element.prototype._setAttribute = Element.prototype.setAttribute;
+      Element.prototype.setAttribute =
+        function(name, val) {
+          this._setAttribute(name, val);
+          mutationWrapper({
+            target: this,
+            type: 'DOMAttrModified',
+            attrName: name,
+            attrValue: val });
+        };
+    }
+  }
+
+  isEnabled = NATIVE_MUTATION_EVENTS || HACKED_MUTATION_EVENTS;
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
