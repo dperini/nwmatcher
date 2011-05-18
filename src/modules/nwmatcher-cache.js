@@ -56,7 +56,8 @@
 
   // check for Mutation Events, DOMAttrModified should be
   // enough to ensure DOMNodeInserted/DOMNodeRemoved exist
-  HACKED_MUTATION_EVENT = false,
+  HACKED_MUTATION_EVENTS = false,
+
   NATIVE_MUTATION_EVENTS = root.addEventListener ?
     mutationTest('DOMAttrModified', function(e) { e.setAttribute('id', 'nw'); }) : false,
 
