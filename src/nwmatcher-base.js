@@ -197,8 +197,13 @@
         root = doc.documentElement;
         XML_DOCUMENT = doc.createElement('DiV').nodeName == 'DiV';
         TO_UPPER_CASE = XML_DOCUMENT ? '.toUpperCase()' : '';
-        QUIRKS_MODE = XML_DOCUMENT ||
-          typeof doc.compatMode == 'string' && doc.compatMode.indexOf('CSS') < 0;
+        QUIRKS_MODE = !XML_DOCUMENT &&
+          typeof doc.compatMode == 'string' ?
+          doc.compatMode.indexOf('CSS') < 0 :
+          (function() {
+            var style = document.createElement('div').style;
+            return style && (style.width = 1) && style.width == '1px';
+          })();
 
         Config.CACHING && Dom.setCache(true, doc);
       }

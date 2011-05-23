@@ -532,7 +532,7 @@
   // change context specific variables
   switchContext =
     function(from, force) {
-      var oldDoc = doc;
+      var div, oldDoc = doc;
       // save passed context
       lastContext = from;
       // reference context ownerDocument and document root (HTML)
@@ -550,9 +550,14 @@
         // https://developer.mozilla.org/en/Mozilla_Quirks_Mode_Behavior
         // http://www.whatwg.org/specs/web-apps/current-work/#selectors
         QUIRKS_MODE = !XML_DOCUMENT &&
-          'compatMode' in doc && doc.compatMode.indexOf('CSS') < 0;
+          typeof doc.compatMode == 'string' ?
+          doc.compatMode.indexOf('CSS') < 0 :
+          (function() {
+            var style = doc.createElement('div').style;
+            return style && (style.width = 1) && style.width == '1px';
+          })();
 
-        var div = doc.createElement('div');
+        div = doc.createElement('div');
         div.appendChild(doc.createElement('p')).setAttribute('class', 'xXx');
         div.appendChild(doc.createElement('p')).setAttribute('class', 'xxx');
 
