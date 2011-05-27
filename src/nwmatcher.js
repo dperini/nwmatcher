@@ -740,8 +740,7 @@
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
-      attribute = attribute in ATTR_MAPPING ?
-        ATTR_MAPPING[attribute] : attribute;
+      attribute = ATTR_MAPPING[attribute] || attribute;
       if (ATTR_DEFAULT[attribute]) {
         return node[ATTR_DEFAULT[attribute]] || '';
       }
@@ -765,8 +764,7 @@
       attribute = attribute.toLowerCase();
       // older IE engines requires DOM mapping
       // see NetFront/Playstation as an example
-      attribute = attribute in ATTR_MAPPING ?
-        ATTR_MAPPING[attribute] : attribute;
+      attribute = ATTR_MAPPING[attribute] || attribute;
       if (ATTR_DEFAULT[attribute]) {
         return !!node[ATTR_DEFAULT[attribute]];
       }
