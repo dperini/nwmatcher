@@ -409,11 +409,6 @@
     selected: 'defaultSelected'
   },
 
-  // HTML to DOM namespace mapping for special case attributes (IE engines)
-  ATTR_MAPPING = {
-    'class': 'className', 'for': 'htmlFor'
-  },
-
   // attribute referencing URI data values need special treatment in IE
   ATTR_URIDATA = {
     'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
@@ -740,7 +735,6 @@
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
-      attribute = ATTR_MAPPING[attribute] || attribute;
       if (ATTR_DEFAULT[attribute]) {
         return node[ATTR_DEFAULT[attribute]] || '';
       }
@@ -764,7 +758,6 @@
       attribute = attribute.toLowerCase();
       // older IE engines requires DOM mapping
       // see NetFront/Playstation as an example
-      attribute = ATTR_MAPPING[attribute] || attribute;
       if (ATTR_DEFAULT[attribute]) {
         return !!node[ATTR_DEFAULT[attribute]];
       }
