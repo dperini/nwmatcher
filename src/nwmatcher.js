@@ -221,14 +221,6 @@
   NATIVE_TRAVERSAL_API =
     'nextElementSibling' in root && 'previousElementSibling' in root,
 
-  // select Matches Selector API to use if available
-  NATIVE_MATCHES_SELECTOR =
-    isNative(root, 'matchesSelector') ? 'matchesSelector' :
-    isNative(root, 'oMatchesSelector') ? 'oMatchesSelector' :
-    isNative(root, 'msMatchesSelector') ? 'msMatchesSelector' :
-    isNative(root, 'mozMatchesSelector') ? 'mozMatchesSelector' :
-    isNative(root, 'webkitMatchesSelector') ? 'webkitMatchesSelector' : null,
-
   // BUGGY_XXXXX true if method is feature tested and has known bugs
   // detect buggy gEBID
   BUGGY_GEBID = NATIVE_GEBID ?
@@ -288,17 +280,6 @@
       var option = doc.createElement('option');
       option.setAttribute('selected', 'selected');
       return !option.hasAttribute('selected');
-    })() :
-    true,
-
-  // detect matchesSelector correctly throw errors
-  BUGGY_PSEUDOS = NATIVE_MATCHES_SELECTOR ?
-    (function() {
-      try {
-        root[NATIVE_MATCHES_SELECTOR](':buggy');
-        return true;
-      } catch(e) { }
-      return false;
     })() :
     true,
 
@@ -382,9 +363,6 @@
 
   // matches class selectors
   RE_CLASS = new RegExp('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + identifier + ')'),
-
-  // matches pseudo-classes
-  RE_PSEUDOS = new RegExp(':[-\\w]+'),
 
   // matches simple id, tag & class selectors
   RE_SIMPLE_SELECTOR = new RegExp(
@@ -1309,22 +1287,6 @@
           return false;
         }
       } else parts = lastPartsMatch;
-
-      // use matchesSelector API if available
-      if (!XML_DOCUMENT && Config.USE_QSAPI && element[NATIVE_MATCHES_SELECTOR] &&
-        !(BUGGY_QUIRKS_QSAPI && RE_CLASS.test(selector)) &&
-        !(BUGGY_PSEUDOS && RE_PSEUDOS.test(selector)) &&
-        !RE_BUGGY_QSAPI.test(selector)) {
-        try {
-          if (element[NATIVE_MATCHES_SELECTOR](selector)) {
-            if (typeof callback == 'function') {
-              callback(element);
-            }
-            return true;
-          }
-          return false;
-        } catch(e) { }
-      }
 
       // compile matcher resolver if necessary
       if (!matchResolvers[selector] || matchContexts[selector] !== from) {
