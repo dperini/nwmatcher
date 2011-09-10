@@ -1443,8 +1443,8 @@
 
         else if ((parts = selector.match(Optimize.CLASS)) && (token = parts[1])) {
           if ((elements = _byClass(token, from)).length === 0) { return [ ]; }
-          for (var z = 0, els = [ ]; elements.length > z; ++z) {
-            els = concatList(els, elements[z].getElementsByTagName('*'));
+          for (i = 0, els = [ ]; elements.length > i; ++i) {
+            els = concatList(els, elements[i].getElementsByTagName('*'));
           }
           elements = els;
           if (reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1))) {
