@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>NWMatcher HTML5 elements selection test</title>
+<!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+<script type="text/javascript" src="http://s3.amazonaws.com/nwapi/nwmatcher/nwmatcher.js"></script>
+<style type="text/css">
+abbr { Helvetica, sans-serif; font-weight: bold; }
+mark { background-color: yellow; }
+span { background-color: lime; }
+</style>
+</head>
+
+<body>
+
+<h1>NWMatcher HTML5 elements selection test</h1>
+
+<p>Usual nonsense content...</p>
+
+<p>
+<abbr title="International Barbershop Association">IBA</abbr>
+Located at <mark>116</mark> Messina Avenue, London NW6 4LD
+<abbr title="United Kingdom">UK</abbr>
+</p>
+
+<hr>
+
+<p>Selection test start here...</p>
+
+<script type="text/javascript">
+
+window.onload = function() {
+
+  function log(msg) {
+    document.body.appendChild(document.createElement('p')).innerHTML = msg;
+  }
+
+  log(NW.Dom.select("abbr:first-of-type")[0].innerHTML + ' <span>abbr:first-of-type</span>');
+  log(NW.Dom.select("abbr:last-of-type")[0].innerHTML + ' <span>abbr:last-of-type</span>');
+  log(NW.Dom.select("mark:only-of-type")[0].innerHTML + ' <span>mark:only-of-type</span>');
+
+  log(NW.Dom.select("abbr:nth-of-type(1)")[0].innerHTML + ' <span>abbr:nth-of-type(1)</span>');
+  log(NW.Dom.select("abbr:nth-of-type(2)")[0].innerHTML + ' <span>abbr:nth-of-type(2)</span>');
+
+  log(NW.Dom.select("abbr:nth-last-of-type(1)")[0].innerHTML + ' <span>abbr:nth-last-of-type(1)</span>');
+  log(NW.Dom.select("abbr:nth-last-of-type(2)")[0].innerHTML + ' <span>abbr:nth-last-of-type(2)</span>');
+
+  /*
+
+  log(document.querySelectorAll("abbr:first-of-type")[0].innerHTML + ' <span>abbr:first-of-type</span>');
+  log(document.querySelectorAll("abbr:last-of-type")[0].innerHTML + ' <span>abbr:last-of-type</span>');
+  log(document.querySelectorAll("mark:only-of-type")[0].innerHTML + ' <span>mark:only-of-type</span>');
+
+  log(document.querySelectorAll("abbr:nth-of-type(1)")[0].innerHTML + ' <span>abbr:nth-of-type(1)</span>');
+  log(document.querySelectorAll("abbr:nth-of-type(2)")[0].innerHTML + ' <span>abbr:nth-of-type(2)</span>');
+
+  log(document.querySelectorAll("abbr:nth-last-of-type(1)")[0].innerHTML + ' <span>abbr:nth-last-of-type(1)</span>');
+  log(document.querySelectorAll("abbr:nth-last-of-type(2)")[0].innerHTML + ' <span>abbr:nth-last-of-type(2)</span>');
+
+  */
+
+};
+
+</script>
+
+</body>
+</html>
