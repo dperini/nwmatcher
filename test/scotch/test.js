@@ -218,7 +218,7 @@ function getById(element){
           }, 1000);
         }, 500);
       }
-    },
+    }
 
   });
   
