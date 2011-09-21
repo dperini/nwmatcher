@@ -63,7 +63,7 @@
   // 4 combinators F E, F>E, F+E, F~E
   combinators = '[\\x20]|[>+~][^>+~]',
 
-  // an+b format params for psuedo-classes
+  // an+b format params for pseudo-classes
   pseudoparms = '[-+]?\\d*n?[-+]?\\d*',
 
   // CSS quoted string values
