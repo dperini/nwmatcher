@@ -873,6 +873,9 @@
 
       var parts = typeof selector == 'string' ? selector.match(reSplitGroup) : selector;
 
+      // ensures that source is a string
+      typeof source == 'string' || (source = '');
+
       if (parts.length == 1) {
         source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;');
       } else {
