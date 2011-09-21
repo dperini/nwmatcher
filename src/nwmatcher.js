@@ -297,7 +297,6 @@
   BUGGY_QUIRKS_QSAPI,
 
   QUIRKS_MODE,
-  TO_UPPER_CASE,
   XML_DOCUMENT,
 
   // detect Opera browser
@@ -513,15 +512,13 @@
       var div, oldDoc = doc;
       // save passed context
       lastContext = from;
-      // reference context ownerDocument and document root (HTML)
+      // set new context document
       doc = from.ownerDocument || from;
       if (force || oldDoc !== doc) {
         // set document root
         root = doc.documentElement;
         // set host environment flags
         XML_DOCUMENT = doc.createElement('DiV').nodeName == 'DiV';
-        // used when nodeName comparisons need to be uppercased
-        TO_UPPER_CASE = XML_DOCUMENT ? '.toUpperCase()' : '';
 
         // In quirks mode css class names are case insensitive.
         // In standards mode they are case sensitive. See docs:
@@ -939,7 +936,7 @@
           // both tagName and nodeName properties may be upper/lower case
           // depending on their creation NAMESPACE in createElementNS()
           source = 'if(e.nodeName' + (XML_DOCUMENT ?
-            '=="' + match[1] + '"' : TO_UPPER_CASE +
+            '=="' + match[1] + '"' : '.toUpperCase()' +
             '=="' + match[1].toUpperCase() + '"') +
             '){' + source + '}';
         }
