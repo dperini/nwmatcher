@@ -50,14 +50,14 @@
   lastPartsMatch,
   lastPartsSelect,
 
-  // prefix identifier (id, class & pseudo-class)
+  // accepted prefix identifiers
+  // (id, class & pseudo-class)
   prefixes = '[#.:]?',
 
-  // attributes operators
-  // ! invalid but compat !
+  // accepted attribute operators
   operators = '([~*^$|!]?={1})',
 
-  // whitespace characters
+  // accepted whitespace characters
   whitespace = '[\\x20\\t\\n\\r\\f]*',
 
   // 4 combinators F E, F>E, F+E, F~E
@@ -384,11 +384,6 @@
     value: 'defaultValue',
     checked: 'defaultChecked',
     selected: 'defaultSelected'
-  },
-
-  // HTML to DOM namespace mapping for special case attributes (IE engines)
-  ATTR_MAPPING = {
-    'class': 'className', 'for': 'htmlFor'
   },
 
   // attribute referencing URI data values need special treatment in IE
