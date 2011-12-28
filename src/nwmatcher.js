@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.5beta
  * Created: 20070722
- * Release: 20110730
+ * Release: 20111222
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -496,8 +496,9 @@
   concatCall =
     function(data, elements, callback) {
       var i = -1, element;
-      while ((element = elements[++i]))
-        callback(data[data.length] = element);
+      while ((element = elements[++i])) {
+        if (false === callback(data[data.length] = element)) { break; }
+      }
       return data;
     },
 
