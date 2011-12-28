@@ -4,11 +4,17 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>NWMatcher HTML5 elements selection test</title>
 <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-<script type="text/javascript" src="http://s3.amazonaws.com/nwapi/nwmatcher/nwmatcher.js"></script>
+<script type="text/javascript" src="../../src/nwmatcher.js"></script>
+<!--
+<script type="text/javascript" src="../../src/nwmatcher-base.js"></script>
+<script type="text/javascript" src="../../src/modules/nwmatcher-pseudos.js"></script>
+-->
 <style type="text/css">
 abbr { Helvetica, sans-serif; font-weight: bold; }
 mark { background-color: yellow; }
 span { background-color: lime; }
+.pass { background-color: lime; }
+.fail { background-color: red; }
 </style>
 </head>
 
@@ -19,46 +25,56 @@ span { background-color: lime; }
 <p>Usual nonsense content...</p>
 
 <p>
-<abbr title="International Barbershop Association">IBA</abbr>
-Located at <mark>116</mark> Messina Avenue, London NW6 4LD
-<abbr title="United Kingdom">UK</abbr>
+<abbr id="IBA" title="International Barbershop Association">IBA</abbr>
+Located at <mark id="NUM">116</mark> Messina Avenue, London NW6 4LD
+<abbr id="UK" title="United Kingdom">UK</abbr>
 </p>
 
-<hr>
+<section>
+  <ul>
+	<li id="first">First</li>
+	<li id="second">Second</li>
+	<li id="last">Last</li>
+  </ul>
+</section>
 
-<p>Selection test start here...</p>
+<hr>
 
 <script type="text/javascript">
 
 window.onload = function() {
 
   function log(msg) {
-    document.body.appendChild(document.createElement('p')).innerHTML = msg;
+    document.body.appendChild(document.createElement('div')).innerHTML = msg;
   }
 
-  log(NW.Dom.select("abbr:first-of-type")[0].innerHTML + ' <span>abbr:first-of-type</span>');
-  log(NW.Dom.select("abbr:last-of-type")[0].innerHTML + ' <span>abbr:last-of-type</span>');
-  log(NW.Dom.select("mark:only-of-type")[0].innerHTML + ' <span>mark:only-of-type</span>');
+  var i, temp, test, selectors = {
+    'abbr:first-of-type': 'IBA',
+    'abbr:last-of-type': 'UK',
+    'mark:only-of-type': 'NUM',
+    'abbr:nth-of-type(1)': 'IBA',
+    'abbr:nth-of-type(2)': 'UK',
+    'abbr:nth-last-of-type(1)': 'UK',
+    'abbr:nth-last-of-type(2)': 'IBA',
+    'section li:first-of-type': 'first',
+    'section li:last-of-type': 'last'
+  };
 
-  log(NW.Dom.select("abbr:nth-of-type(1)")[0].innerHTML + ' <span>abbr:nth-of-type(1)</span>');
-  log(NW.Dom.select("abbr:nth-of-type(2)")[0].innerHTML + ' <span>abbr:nth-of-type(2)</span>');
+  log('--- TEST USING NW.Dom.select ---');
 
-  log(NW.Dom.select("abbr:nth-last-of-type(1)")[0].innerHTML + ' <span>abbr:nth-last-of-type(1)</span>');
-  log(NW.Dom.select("abbr:nth-last-of-type(2)")[0].innerHTML + ' <span>abbr:nth-last-of-type(2)</span>');
+  for (i in selectors) {
+    temp = NW.Dom.select(i)[0];
+    test = temp && temp.id == selectors[i];
+    log((test ? temp.innerHTML : 'FAIL') + ' <span class="' + (test ? 'pass' : 'fail') + '">' + i + '</span>');
+  }
 
-  /*
+  log('--- TEST USING document.querySelectorAll ---');
 
-  log(document.querySelectorAll("abbr:first-of-type")[0].innerHTML + ' <span>abbr:first-of-type</span>');
-  log(document.querySelectorAll("abbr:last-of-type")[0].innerHTML + ' <span>abbr:last-of-type</span>');
-  log(document.querySelectorAll("mark:only-of-type")[0].innerHTML + ' <span>mark:only-of-type</span>');
-
-  log(document.querySelectorAll("abbr:nth-of-type(1)")[0].innerHTML + ' <span>abbr:nth-of-type(1)</span>');
-  log(document.querySelectorAll("abbr:nth-of-type(2)")[0].innerHTML + ' <span>abbr:nth-of-type(2)</span>');
-
-  log(document.querySelectorAll("abbr:nth-last-of-type(1)")[0].innerHTML + ' <span>abbr:nth-last-of-type(1)</span>');
-  log(document.querySelectorAll("abbr:nth-last-of-type(2)")[0].innerHTML + ' <span>abbr:nth-last-of-type(2)</span>');
-
-  */
+  for (i in selectors) {
+    temp = document.querySelectorAll(i)[0];
+    test = temp && temp.id == selectors[i];
+    log((test ? temp.innerHTML : 'FAIL') + ' <span class="' + (test ? 'pass' : 'fail') + '">' + i + '</span>');
+  }
 
 };
 
