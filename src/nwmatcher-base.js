@@ -160,7 +160,8 @@
     CACHING: false,
     SIMPLENOT: true,
     USE_HTML5: false,
-    USE_QSAPI: false
+    USE_QSAPI: false,
+    VERBOSITY: true
   },
 
   configure =
@@ -191,13 +192,19 @@
 
   emit =
     function(message) {
-      if (typeof global.DOMException != 'undefined') {
-        var err = Error();
-        err.message = 'SYNTAX_ERR: (Selectors) ' + message;
-        err.code = 12;
-        throw err;
+      message = 'SYNTAX_ERR: ' + message + ' ';
+      if (Config.VERBOSITY) {
+        if (typeof global.DOMException != 'undefined') {
+          throw { code: 12, message: message };
+        } else {
+          throw new Error(12, message);
+        }
       } else {
-        throw Error(12, 'SYNTAX_ERR: (Selectors) ' + message);
+        if (global.console && global.console.log) {
+          global.console.log(message);
+        } else {
+          global.status += message;
+        }
       }
     },
 
@@ -295,7 +302,7 @@
   compileSelector =
     function(selector, source) {
 
-      var k = 0, expr, match, result, status, test, type;
+      var k = 0, expr, match, name, result, status, test, type;
 
       while (selector) {
 
@@ -334,24 +341,24 @@
             emit('Unsupported operator in attribute selectors "' + selector + '"');
             return '';
           }
+          name = match[1].toLowerCase();
           if (match[2] && match[4] && (type = Operators[match[2]])) {
+            test = name in INSENSITIVE_MAP;
             match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
-            expr = 'n=(e.getAttribute("' + match[1] + '")+"").toLowerCase();';
-            type = type.replace(/\%m/g, match[4].toLowerCase());
-          } else if (match[2] == '!=' || match[2] == '=') {
-            expr = 'n=e.getAttribute("' + match[1] + '");';
-            type = 'n' + match[2] + '="' + match[4] + '"';
+            type = type.replace(/\%m/g,  test ? match[4].toLowerCase() : match[4]);
+            expr = 'n=s.getAttr(e,"' + name + '")' + (test ? '.toLowerCase()' : '') + ';';
           } else if (!match[2]) {
-            if (REFLECTED[match[1].toLowerCase()]) {
-              test = 'default' +
-                match[1].charAt(0).toUpperCase() +
-                match[1].slice(1).toLowerCase();
+            if (REFLECTED[name]) {
+              test = 'default' + name.charAt(0).toUpperCase() + name.slice(1);
               expr = 'n=e["' + test + '"];';
               type = 'n';
             } else {
-              expr = 'n=e.getAttributeNode("' + match[1] + '");';
-              type = 'n&&n.specified';
+              expr = 'n=e.attributes["' + name + '"];';
+              type = IE_LT_9 ? 'n&&n.specified' : 'n';
             }
+          } else if (match[2] == '!=' || match[2] == '=') {
+            expr = 'n=e.attributes["' + name + '"];';
+            type = 'n&&n.value' + match[2] + '="' + match[4] + '"';
           } else {
             expr = '';
             type = 'false';
@@ -457,6 +464,9 @@
         emit('Empty selector string');
         return [ ];
       } else if (typeof selector != 'string') {
+        return [ ];
+      } else if (from && !(/1|9|11/).test(from.nodeType)) {
+        emit('Invalid context element');
         return [ ];
       } else if (lastContext !== from) {
         switchContext(from || (from = doc));

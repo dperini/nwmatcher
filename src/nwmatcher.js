@@ -805,27 +805,19 @@
   // control user notifications
   emit =
     function(message) {
+      message = 'SYNTAX_ERR: ' + message + ' ';
       if (Config.VERBOSITY) {
         // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
         if (typeof global.DOMException != 'undefined') {
-          var err = new Error();
-          err.message = 'SYNTAX_ERR: (Selectors) ' + message;
-          err.code = 12;
-          throw err;
+          throw { code: 12, message: message };
         } else {
-          throw new Error(12, 'SYNTAX_ERR: (Selectors) ' + message);
+          throw new Error(12, message);
         }
       } else {
-        var console = global.console;
-        if (console && console.log) {
-          console.log(message);
+        if (global.console && global.console.log) {
+          global.console.log(message);
         } else {
-          if (/exception/i.test(message)) {
-            global.status = message;
-            global.defaultStatus = message;
-          } else {
-            global.status += message;
-          }
+          global.status += message;
         }
       }
     },
@@ -1311,7 +1303,9 @@
         emit('Empty selector string');
         return [ ];
       } else if (typeof selector != 'string') {
-        // QSA capable browsers do not throw
+        return [ ];
+      } else if (from && !(/1|9|11/).test(from.nodeType)) {
+        emit('Invalid context element');
         return [ ];
       } else if (lastContext !== from) {
         // reset context data when it changes
