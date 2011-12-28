@@ -85,7 +85,7 @@
   saveResults =
     function(selector, from, doc, data) {
       Contexts[selector] = from;
-      Results[selector]  = data;
+      Results[selector] = data;
       return;
     },
 
@@ -148,7 +148,7 @@
       Results = { };
     };
 
-  if (!NATIVE_MUTATION_EVENTS && Element && Element.prototype) {
+  if (!NATIVE_MUTATION_EVENTS && root.addEventListener && Element && Element.prototype) {
     if (mutationTest('DOMNodeInserted', function(e) { e.appendChild(document.createElement('div')); }) &&
         mutationTest('DOMNodeRemoved', function(e) { e.removeChild(e.appendChild(document.createElement('div'))); })) {
       HACKED_MUTATION_EVENTS = true;
