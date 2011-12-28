@@ -141,7 +141,7 @@
   REFLECTED = { value: 1, checked: 1, selected: 1 },
 
   IE_LT_9 = typeof doc.addEventListener != 'function',
-  ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
+  ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break;else continue main;',
   REJECT_NODE = IE_LT_9 ? 'if(e.nodeName<"A")continue;' : '',
 
   Config = {
@@ -564,6 +564,8 @@
     pseudoparms: pseudoparms,
     quotedvalue: quotedvalue
   };
+
+  Dom.ACCEPT_NODE = ACCEPT_NODE;
 
   Dom.emit = emit;
 

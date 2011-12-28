@@ -856,9 +856,8 @@
 
   /*---------------------------- COMPILER METHODS ----------------------------*/
 
-  // do not change this, it is searched & replaced
-  // in multiple places to build compiled functions
-  ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
+  // code string reused to build compiled functions
+  ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break;else continue main;',
 
   // compile a comma separated group of selector
   // @mode boolean true for select, false for match
@@ -1525,6 +1524,9 @@
   };
 
   /*------------------------------- PUBLIC API -------------------------------*/
+
+  // code referenced by extensions
+  Dom.ACCEPT_NODE = ACCEPT_NODE;
 
   // log resolvers errors/warnings
   Dom.emit = emit;
