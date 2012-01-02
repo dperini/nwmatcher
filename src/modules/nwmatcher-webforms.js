@@ -22,9 +22,6 @@ NW.Dom.registerSelector(
 
   var status = true,
 
-  // do not change this, it is searched & replaced
-  ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
-
   HTML5PseudoClasses = {
       'default': 4, 'indeterminate': 4, 'invalid': 4, 'valid': 4,
       'optional': 4, 'required': 4, 'read-write': 4, 'read-only': 4

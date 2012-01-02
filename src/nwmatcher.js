@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.5beta
  * Created: 20070722
- * Release: 20110730
+ * Release: 20111222
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -357,6 +357,7 @@
       return pattern.length ?
         new RegExp(pattern.join('|')) :
         { 'test': function() { return false; } };
+
     })() :
     true,
 
@@ -376,7 +377,8 @@
 
   // boolean attributes should return attribute name instead of true/false
   ATTR_BOOLEAN = {
-    checked: 1, disabled: 1, ismap: 1, multiple: 1, readonly: 1, selected: 1
+    'checked': 1, 'disabled': 1, 'ismap': 1,
+    'multiple': 1, 'readonly': 1, 'selected': 1
   },
 
   // dynamic attributes that needs to be checked against original HTML value
@@ -496,8 +498,9 @@
   concatCall =
     function(data, elements, callback) {
       var i = -1, element;
-      while ((element = elements[++i]))
-        callback(data[data.length] = element);
+      while ((element = elements[++i])) {
+        if (false === callback(data[data.length] = element)) { break; }
+      }
       return data;
     },
 
@@ -741,6 +744,7 @@
     },
 
   // check node emptyness
+  // @return boolean
   isEmpty =
     function(node) {
       node = node.firstChild;
@@ -804,27 +808,19 @@
   // control user notifications
   emit =
     function(message) {
+      message = 'SYNTAX_ERR: ' + message + ' ';
       if (Config.VERBOSITY) {
         // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
         if (typeof global.DOMException != 'undefined') {
-          var err = new Error();
-          err.message = 'SYNTAX_ERR: (Selectors) ' + message;
-          err.code = 12;
-          throw err;
+          throw { code: 12, message: message };
         } else {
-          throw new Error(12, 'SYNTAX_ERR: (Selectors) ' + message);
+          throw new Error(12, message);
         }
       } else {
-        var console = global.console;
-        if (console && console.log) {
-          console.log(message);
+        if (global.console && global.console.log) {
+          global.console.log(message);
         } else {
-          if (/exception/i.test(message)) {
-            global.status = message;
-            global.defaultStatus = message;
-          } else {
-            global.status += message;
-          }
+          global.status += message;
         }
       }
     },
@@ -856,9 +852,8 @@
 
   /*---------------------------- COMPILER METHODS ----------------------------*/
 
-  // do not change this, it is searched & replaced
-  // in multiple places to build compiled functions
-  ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
+  // code string reused to build compiled functions
+  ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break;else continue main;',
 
   // compile a comma separated group of selector
   // @mode boolean true for select, false for match
@@ -1311,7 +1306,9 @@
         emit('Empty selector string');
         return [ ];
       } else if (typeof selector != 'string') {
-        // QSA capable browsers do not throw
+        return [ ];
+      } else if (from && !(/1|9|11/).test(from.nodeType)) {
+        emit('Invalid context element');
         return [ ];
       } else if (lastContext !== from) {
         // reset context data when it changes
@@ -1525,6 +1522,9 @@
   };
 
   /*------------------------------- PUBLIC API -------------------------------*/
+
+  // code referenced by extensions
+  Dom.ACCEPT_NODE = ACCEPT_NODE;
 
   // log resolvers errors/warnings
   Dom.emit = emit;

@@ -21,9 +21,7 @@ NW.Dom.registerSelector(
   /^\:(even|odd|eq|lt|gt|first|last|nth)(?:\(([^()]*)\))?(.*)/,
   function(match, source) {
 
-  var status = true,
-  // do not change this, it is searched & replaced
-  ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;';
+  var status = true, ACCEPT_NODE = NW.Dom.ACCEPT_NODE;
 
   switch (match[1]) {
     case 'even':
@@ -70,9 +68,7 @@ NW.Dom.registerSelector(
   /^\:(has|checkbox|file|image|password|radio|reset|submit|text|button|input|header|hidden|visible|parent)(?:\((["']*)([^'"()]*)\2\))?(.*)/,
   function(match, source) {
 
-  var status = true,
-  // do not change this, it is searched & replaced
-  ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;';
+  var status = true, ACCEPT_NODE = NW.Dom.ACCEPT_NODE;
 
   switch(match[1]) {
     case 'has':

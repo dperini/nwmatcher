@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2007-2011 Diego Perini & NWBOX
+ * Copyright (C) 2007-2011 Diego Perini
  * All rights reserved.
  *
- * nwmatcher.js - A fast CSS selector engine and matcher
+ * nwmatcher-base.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.5beta
  * Created: 20070722
- * Release: 20110730
+ * Release: 20111222
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -102,6 +102,11 @@
 
   reOptimizeSelector = RegExp(identifier + '|^$'),
 
+  ATTR_URIDATA = {
+    action: 2, cite: 2, codebase: 2, data: 2, href: 2,
+    longdesc: 2, lowsrc: 2, src: 2, usemap: 2
+  },
+
   Selectors = { },
 
   Operators = {
@@ -133,22 +138,30 @@
 
   QUIRKS_MODE,
   XML_DOCUMENT,
-  TO_UPPER_CASE,
 
   GEBTN = 'getElementsByTagName' in doc,
   GEBCN = 'getElementsByClassName' in doc,
 
-  REFLECTED = { value: 1, checked: 1, selected: 1 },
-
   IE_LT_9 = typeof doc.addEventListener != 'function',
-  ACCEPT_NODE = 'f&&f(c[k]);r[r.length]=c[k];continue main;',
+
+  INSENSITIVE_MAP = {
+    'href': 1, 'lang': 1, 'src': 1, 'style': 1, 'title': 1,
+    'type': 1, 'xmlns': 1, 'xml:lang': 1, 'xml:space': 1
+  },
+
+  REFLECTED = { 'value': 1, 'checked': 1, 'selected': 1 },
+
+  TO_UPPER_CASE = IE_LT_9 ? '.toUpperCase()' : '',
+
+  ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break;else continue main;',
   REJECT_NODE = IE_LT_9 ? 'if(e.nodeName<"A")continue;' : '',
 
   Config = {
     CACHING: false,
     SIMPLENOT: true,
     USE_HTML5: false,
-    USE_QSAPI: false
+    USE_QSAPI: false,
+    VERBOSITY: true
   },
 
   configure =
@@ -161,9 +174,9 @@
           selectContexts = { };
           selectResolvers = { };
           Config['USE_QSAPI'] = false;
-          reValidator = new RegExp(extendedValidator, 'g');
+          reValidator = RegExp(extendedValidator, 'g');
         } else if (i == 'USE_QSAPI') {
-          reValidator = new RegExp(standardValidator, 'g');
+          reValidator = RegExp(standardValidator, 'g');
         }
       }
     },
@@ -171,20 +184,27 @@
   concatCall =
     function(data, elements, callback) {
       var i = -1, element;
-      while ((element = elements[++i]))
-        callback(data[data.length] = element);
+      while ((element = elements[++i])) {
+        if (false === callback(data[data.length] = element)) { break; }
+      }
       return data;
     },
 
   emit =
     function(message) {
-      if (typeof global.DOMException != 'undefined') {
-        var err = Error();
-        err.message = 'SYNTAX_ERR: (Selectors) ' + message;
-        err.code = 12;
-        throw err;
+      message = 'SYNTAX_ERR: ' + message + ' ';
+      if (Config.VERBOSITY) {
+        if (typeof global.DOMException != 'undefined') {
+          throw { code: 12, message: message };
+        } else {
+          throw new Error(12, message);
+        }
       } else {
-        throw Error(12, 'SYNTAX_ERR: (Selectors) ' + message);
+        if (global.console && global.console.log) {
+          global.console.log(message);
+        } else {
+          global.status += message;
+        }
       }
     },
 
@@ -196,7 +216,6 @@
       if (force || oldDoc !== doc) {
         root = doc.documentElement;
         XML_DOCUMENT = doc.createElement('DiV').nodeName == 'DiV';
-        TO_UPPER_CASE = XML_DOCUMENT ? '.toUpperCase()' : '';
         QUIRKS_MODE = !XML_DOCUMENT &&
           typeof doc.compatMode == 'string' ?
           doc.compatMode.indexOf('CSS') < 0 :
@@ -246,21 +265,28 @@
       return _byId(id, from);
     },
 
+  getAttr =
+    function(node, attribute) {
+      return (
+        ATTR_URIDATA[attribute] ? node.getAttribute(attribute, 2) || '' :
+          ((node = node.attributes[attribute]) && node.value) || '');
+    },
+
   compile =
     function(selector, source, mode) {
 
       var parts = typeof selector == 'string' ? selector.match(reSplitGroup) : selector;
 
+      typeof source == 'string' || (source = '');
+
       if (parts.length == 1) {
-        source += (mode ? 'e=c[k];' : 'e=k;') +
-          compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+        source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;');
       } else {
         var i = -1, seen = { }, token;
         while ((token = parts[++i])) {
           token = token.replace(reTrimSpaces, '');
           if (!seen[token] && (seen[token] = true)) {
-            source += (i > 0 ? (mode ? 'e=c[k];' : 'e=k;') : '') +
-              compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+            source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
           }
         }
       }
@@ -276,7 +302,7 @@
   compileSelector =
     function(selector, source) {
 
-      var k = 0, expr, match, result, status, test, type;
+      var k = 0, expr, match, name, result, status, test, type;
 
       while (selector) {
 
@@ -288,8 +314,8 @@
 
         else if ((match = selector.match(Patterns.id))) {
           source = 'if(' + (XML_DOCUMENT ?
-            'e.getAttribute("id")' :
-            '(e.submit?e.getAttribute("id"):e.id)') +
+            's.getAttr(e,"id")' :
+            '(e.submit?s.getAttr(e,"id"):e.id)') +
             '=="' + match[1] + '"' +
             '){' + source + '}';
         }
@@ -315,24 +341,24 @@
             emit('Unsupported operator in attribute selectors "' + selector + '"');
             return '';
           }
+          name = match[1].toLowerCase();
           if (match[2] && match[4] && (type = Operators[match[2]])) {
+            test = name in INSENSITIVE_MAP;
             match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
-            expr = 'n=(e.getAttribute("' + match[1] + '")+"").toLowerCase();';
-            type = type.replace(/\%m/g, match[4].toLowerCase());
-          } else if (match[2] == '!=' || match[2] == '=') {
-            expr = 'n=e.getAttribute("' + match[1] + '");';
-            type = 'n' + match[2] + '="' + match[4] + '"';
+            type = type.replace(/\%m/g,  test ? match[4].toLowerCase() : match[4]);
+            expr = 'n=s.getAttr(e,"' + name + '")' + (test ? '.toLowerCase()' : '') + ';';
           } else if (!match[2]) {
-            if (REFLECTED[match[1].toLowerCase()]) {
-              test = 'default' +
-                match[1].charAt(0).toUpperCase() +
-                match[1].slice(1).toLowerCase();
+            if (REFLECTED[name]) {
+              test = 'default' + name.charAt(0).toUpperCase() + name.slice(1);
               expr = 'n=e["' + test + '"];';
               type = 'n';
             } else {
-              expr = 'n=e.getAttributeNode("' + match[1] + '");';
-              type = 'n&&n.specified';
+              expr = 'n=e.attributes["' + name + '"];';
+              type = IE_LT_9 ? 'n&&n.specified' : 'n';
             }
+          } else if (match[2] == '!=' || match[2] == '=') {
+            expr = 'n=e.attributes["' + name + '"];';
+            type = 'n&&n.value' + match[2] + '="' + match[4] + '"';
           } else {
             expr = '';
             type = 'false';
@@ -439,6 +465,9 @@
         return [ ];
       } else if (typeof selector != 'string') {
         return [ ];
+      } else if (from && !(/1|9|11/).test(from.nodeType)) {
+        emit('Invalid context element');
+        return [ ];
       } else if (lastContext !== from) {
         switchContext(from || (from = doc));
       }
@@ -521,15 +550,14 @@
       if (!elements) {
         if (IE_LT_9) {
           elements = /^(?:applet|object)$/i.test(from.nodeName) ?
-            from.childNodes : from.getElementsByTagName('*');
-          REJECT_NODE = 'if(e.nodeName<"A")continue;';
+            from.childNodes : from.all;
         } else {
           elements = from.getElementsByTagName('*');
         }
       }
 
       if (!selectResolvers[selector] || selectContexts[selector] !== from) {
-        selectResolvers[selector] = compile(isSingleSelect ? [selector] : parts, '', true);
+        selectResolvers[selector] = compile(isSingleSelect ? [selector] : parts, REJECT_NODE, true);
         selectContexts[selector] = from;
       }
 
@@ -549,7 +577,8 @@
   Snapshot = {
     byId: _byId,
     match: match,
-    select: select
+    select: select,
+    getAttr: getAttr
   };
 
   Tokens = {
@@ -564,6 +593,8 @@
     pseudoparms: pseudoparms,
     quotedvalue: quotedvalue
   };
+
+  Dom.ACCEPT_NODE = ACCEPT_NODE;
 
   Dom.emit = emit;
 
