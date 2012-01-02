@@ -357,6 +357,7 @@
       return pattern.length ?
         new RegExp(pattern.join('|')) :
         { 'test': function() { return false; } };
+
     })() :
     true,
 
@@ -376,7 +377,8 @@
 
   // boolean attributes should return attribute name instead of true/false
   ATTR_BOOLEAN = {
-    checked: 1, disabled: 1, ismap: 1, multiple: 1, readonly: 1, selected: 1
+    'checked': 1, 'disabled': 1, 'ismap': 1,
+    'multiple': 1, 'readonly': 1, 'selected': 1
   },
 
   // dynamic attributes that needs to be checked against original HTML value
@@ -742,6 +744,7 @@
     },
 
   // check node emptyness
+  // @return boolean
   isEmpty =
     function(node) {
       node = node.firstChild;
