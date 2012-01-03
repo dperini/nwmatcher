@@ -7,7 +7,8 @@
   "keywords": [
     "css",
     "matcher",
-    "selector"
+    "selector",
+    "ender"
   ],
   "licenses": [
     {
@@ -33,5 +34,6 @@
   "repository": {
     "type": "git",
     "url": "git://github.com/dperini/nwmatcher.git"
-  }
+  },
+  "ender": "./lib/ender/bridge.js"
 }
