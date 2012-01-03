@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.5beta
  * Created: 20070722
- * Release: 20111222
+ * Release: 20120101
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -452,6 +452,11 @@
       return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback);
     },
 
+  first =
+    function(selector, from) {
+      return select(selector, from, function() { return false; })[0] || null;
+    },
+
   select =
     function(selector, from, callback) {
 
@@ -600,6 +605,7 @@
 
   Dom.byId = byId;
   Dom.match = match;
+  Dom.first = first;
   Dom.select = select;
   Dom.compile = compile;
   Dom.configure = configure;

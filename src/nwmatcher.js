@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.5beta
  * Created: 20070722
- * Release: 20111222
+ * Release: 20120101
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -1290,6 +1290,13 @@
       return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback);
     },
 
+  // select only the first element
+  // matching selector (document ordered)
+  first =
+    function(selector, from) {
+      return select(selector, from, function() { return false; })[0] || null;
+    },
+
   // select elements matching selector
   // using new Query Selector API
   // or cross-browser client API
@@ -1551,6 +1558,9 @@
 
   // element match selector, return boolean true/false
   Dom.match = match;
+
+  // first element match only, return element or null
+  Dom.first = first;
 
   // elements matching selector, starting from element
   Dom.select = select;
