@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2007-2011 Diego Perini
+ * Copyright (C) 2007-2012 Diego Perini
  * All rights reserved.
  *
  * nwmatcher-base.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.2.5beta
+ * Version: 1.2.5
  * Created: 20070722
  * Release: 20120101
  *
@@ -17,7 +17,7 @@
 
 (function(global) {
 
-  var version = 'nwmatcher-1.2.5beta',
+  var version = 'nwmatcher-1.2.5',
 
   Dom = typeof exports == 'object' ? exports :
     ((global.NW || (global.NW = { })) &&
@@ -120,7 +120,7 @@
 
   Optimize = {
     ID: RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
-    TAG: RegExp(/*REM*/'^(' + encoding + '+)|' + skipgroup),
+    TAG: RegExp('^(' + encoding + '+)|' + skipgroup),
     CLASS: RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
   },
 
@@ -478,7 +478,7 @@
       }
 
       if (Config.CACHING && (elements = Dom.loadResults(original, from, doc, root))) {
-        return callback ? concatCall([ ], elements, callback) : elements; 
+        return callback ? concatCall([ ], elements, callback) : elements;
       }
 
       selector = selector.replace(reTrimSpaces, '');

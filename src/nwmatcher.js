@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2007-2011 Diego Perini
+ * Copyright (C) 2007-2012 Diego Perini
  * All rights reserved.
  *
  * nwmatcher.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.2.5beta
+ * Version: 1.2.5
  * Created: 20070722
  * Release: 20120101
  *
@@ -17,7 +17,7 @@
 
 (function(global) {
 
-  var version = 'nwmatcher-1.2.5beta',
+  var version = 'nwmatcher-1.2.5',
 
   // export the public API for CommonJS implementations,
   // for headless JS engines or for standard web browsers

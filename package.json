@@ -1,6 +1,6 @@
 {
   "name": "nwmatcher",
-  "version": "1.2.5beta",
+  "version": "1.2.5",
   "description": "A CSS3-compliant JavaScript selector engine.",
   "homepage": "http://javascript.nwbox.com/NWMatcher/",
   "main": "./src/nwmatcher",
