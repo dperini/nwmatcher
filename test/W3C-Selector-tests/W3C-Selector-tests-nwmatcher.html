@@ -225,13 +225,12 @@
   <script>
     document.querySelector = document.querySelectorAll = null;
   </script>
-  <script type="text/javascript" src="../../src/nwmatcher.js"></script>                                                                                                                                             
-<!--
-  <script type="text/javascript" src="../../src/nwmatcher-base.js"></script>
-  <script type="text/javascript" src="../../src/modules/nwmatcher-pseudos.js"></script>
--->
+  <script type="text/javascript" src="../../src/nwmatcher.js"></script>
   <script>
 	window.onload = function(){
+
+		var $ = NW.Dom.select;
+
 		document.getElementById("toggle").onclick = function(){
 			document.documentElement.className = this.checked ? "unitTest nopass" : "unitTest";
 		};
@@ -327,14 +326,12 @@
 
 		function cacheCheck( type, root ) {
 			try {
-				var pre = NW.Dom.select( "div", root ), preLength = pre.length;
-//				var pre = root.querySelectorAll( "div" ), preLength = pre.length;
+				var pre = $( "div", root ), preLength = pre.length;
 
 				var div = document.createElement("div");
 				(root.body || root).appendChild( div );
 
-				var post = NW.Dom.select( "div", root ), postLength = post.length;
-//				var post = root.querySelectorAll( "div" ), postLength = post.length;
+				var post = $( "div", root ), postLength = post.length;
 
 				assert( pre.length == preLength, type + ": StaticNodeList" );
 				assert( post.length != pre.length, type + ": StaticNodeList" );
@@ -351,63 +348,51 @@
 		function runTest( css, type, root, expect ) {
 			var pass = false;
 			try {
-				NW.Dom.select("", root);
-//				root.querySelectorAll("");
-//			} catch(e){ pass = typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR; }
+				$("", root);
 			} catch(e){ pass = typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR || e.number == 12; }
 			assert( pass, type + ".querySelectorAll Empty String" );
 
 			pass = false;
 			try {
-				pass = NW.Dom.select(null, root).length === 0;
-//				pass = root.querySelectorAll(null).length === 0;
+				pass = $(null, root).length === 0;
 			} catch(e){ pass = false; }
 			assert( pass, type + ".querySelectorAll null" );
 
 			pass = false;
 			try {
-				pass = NW.Dom.select(undefined, root).length === 0;
-//				pass = root.querySelectorAll(undefined).length === 0;
+				pass = $(undefined, root).length === 0;
 			} catch(e){ pass = false; }
 			assert( pass, type + ".querySelectorAll undefined" );
 
 			pass = false;
 			try {
-				if ( NW.Dom.select )
-//				if ( root.querySelectorAll )
-					NW.Dom.select();
-//					root.querySelectorAll();
+				if ( $ )
+					$();
 			} catch(e){ pass = true; }
 			assert( pass, type + ".querySelectorAll no value" );
 
 			var pass = false;
 			try {
-				NW.Dom.select("", root)[0];
-//				root.querySelector("");
-//			} catch(e){ pass = typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR; }
+				$("", root)[0];
 			} catch(e){ pass = typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR || e.number == 12; }
 			assert( pass, type + ".querySelector Empty String" );
 
 			pass = false;
 			try {
-				pass = !NW.Dom.select(null, root)[0];
-//				pass = root.querySelector(null) === null;
+				pass = !$(null, root)[0];
 			} catch(e){ pass = false; }
 			assert( pass, type + ".querySelector null" );
 
 			pass = false;
 			try {
-				pass = !NW.Dom.select(undefined, root)[0];
-//				pass = root.querySelector(undefined) === null;
+				pass = !$(undefined, root)[0];
 			} catch(e){ pass = false; }
 			assert( pass, type + ".querySelector undefined" );
 
 			pass = false;
 			try {
-				if ( NW.Dom.select )
-//				if ( root.querySelector )
-					NW.Dom.select()[0];
-//					root.querySelector();
+				if ( $ )
+					$()[0];
 			} catch(e){ pass = true; }
 			assert( pass, type + ".querySelector no value" );
 
@@ -417,8 +402,7 @@
 					var query = test[0], color = test[1].match(/: ([^\s;]+)/)[1];
 	
 					try {
-						var found = NW.Dom.select(query, root );
-//						var found = root.querySelectorAll(query);
+						var found = $(query, root );
 	
 						for ( var f = 0; f < found.length; f++ ) {
 							found[f].style.backgroundColor = color;
@@ -428,7 +412,6 @@
 
 						assert(expect && pass, type + ".querySelectorAll: " + query);
 					} catch(e){
-//						var pass = !expect && typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR || false;
 						var pass = !expect && typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR || e.number == 12;
 						assert(pass, type + ".querySelectorAll: " + query);
 					}
@@ -437,8 +420,7 @@
 						var pass = false;
 
 						try {
-							var found2 = NW.Dom.select( "  \t\r\n  " + query + "  \t\r\n  ", root );
-//							var found2 = root.querySelectorAll( "  \t\r\n  " + query + "  \t\r\n  " );
+							var found2 = $( "  \t\r\n  " + query + "  \t\r\n  ", root );
 							pass = found2.length == found.length;
 						} catch(e) {}
 
@@ -446,15 +428,13 @@
 					}
 
 					try {
-						var single = NW.Dom.select(query, root )[0];
-//						var single = root.querySelector(query);
+						var single = $(query, root )[0];
 
 						var pass = found.length == 0 && single === null ||
 							found.length && found[0] == single;
 
 						assert(expect, type + ".querySelector: " + query);
 					} catch(e){
-//						var pass = !expect && typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR || false;
 						var pass = !expect && typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR || e.number == 12;
 						assert(pass, type + ".querySelector: " + query);
 					}
@@ -506,11 +486,8 @@
 
 			function query(q, resolver){
 				try {
-//					return root[select](q, resolver);
-					return NW.Dom.select(q, root);
+					return $(q, root);
 				} catch(e) {
-//					if ( e.message.indexOf("ERR") > -1 || typeof DOMException !== "undefined" && e.code == DOMException.NAMESPACE_ERR ||
-//						typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR)
 					if (typeof DOMException !== "undefined" && (e.code == DOMException.NAMESPACE_ERR || e.code == DOMException.SYNTAX_ERR) || e.number == 12)
 						throw e;
 				}
@@ -586,10 +563,8 @@
 			}
 
 			if ( root.parentNode || root == document ) {
-//				var rootQuery = query(":root *");
-				var rootQuery = NW.Dom.select(":root *", root);
-//				assert( rootQuery && rootQuery.length == query("*").length - (root == document ? 1 : 0), type + ": :root All Selector" ); 
-				assert( rootQuery && rootQuery.length == NW.Dom.select("*", root).length - (root == document ? 1 : 0), type + ": :root All Selector" );
+				var rootQuery = $(":root *", root);
+				assert( rootQuery && rootQuery.length == $("*", root).length - (root == document ? 1 : 0), type + ": :root All Selector" );
 			}
 
 			t( "Element Selector", "p", ["firstp","ap","sndp","en","sap","first"] );
@@ -618,8 +593,8 @@
 			t( "ID selector with existing ID descendant", "#firstp #simon1", ["simon1"] );
 			t( "ID selector with non-existant descendant", "#firstp #foobar", [] );
 
-			t( "ID selector using UTF8", "#台北Táiběi", ["台北Táiběi"] );
-			t( "Multiple ID selectors using UTF8", "#台北Táiběi, #台北", ["台北Táiběi","台北"] );
+			t( "ID selector using UTF8", "#台北Táiběi", ["台北Táiběi"] );
+			t( "Multiple ID selectors using UTF8", "#台北Táiběi, #台北", ["台北Táiběi","台北"] );
 			t( "Descendant ID selector using UTF8", "div #台北", ["台北"] );
 			t( "Child ID selector using UTF8", "form > #台北", ["台北"] );
 	
@@ -646,17 +621,17 @@
 			t( "Class Selector w/ Element", "a.blog", ["mark","simon"] );
 			t( "Parent Class Selector", "p .blog", ["mark","simon"] );
 	
-			t( "Class selector using UTF8", ".台北Táiběi", ["utf8class1"] );
+			t( "Class selector using UTF8", ".台北Táiběi", ["utf8class1"] );
 			t( "Class selector using UTF8", ".台北", ["utf8class1","utf8class2"] );
-			t( "Class selector using UTF8", ".台北Táiběi.台北", ["utf8class1"] );
-			t( "Class selector using UTF8", ".台北Táiběi, .台北", ["utf8class1","utf8class2"] );
-			t( "Descendant class selector using UTF8", "div .台北Táiběi", ["utf8class1"] );
-			t( "Child class selector using UTF8", "form > .台北Táiběi", ["utf8class1"] );
+			t( "Class selector using UTF8", ".台北Táiběi.台北", ["utf8class1"] );
+			t( "Class selector using UTF8", ".台北Táiběi, .台北", ["utf8class1","utf8class2"] );
+			t( "Descendant class selector using UTF8", "div .台北Táiběi", ["utf8class1"] );
+			t( "Child class selector using UTF8", "form > .台北Táiběi", ["utf8class1"] );
 	
 			t( "Escaped Class", ".foo\\:bar", ["foo:bar"] );
 			t( "Escaped Class", ".test\\.foo\\[5\\]bar", ["test.foo[5]bar"] );
-			t( "Descendant scaped Class", "div .foo\\:bar", ["foo:bar"] );
-			t( "Descendant scaped Class", "div .test\\.foo\\[5\\]bar", ["test.foo[5]bar"] );
+			t( "Descendant escaped Class", "div .foo\\:bar", ["foo:bar"] );
+			t( "Descendant escaped Class", "div .test\\.foo\\[5\\]bar", ["test.foo[5]bar"] );
 			t( "Child escaped Class", "form > .foo\\:bar", ["foo:bar"] );
 			t( "Child escaped Class", "form > .test\\.foo\\[5\\]bar", ["test.foo[5]bar"] );
 
@@ -1276,9 +1251,9 @@
 
 			</object>
 			
-			<span id="台北Táiběi"></span>
+			<span id="台北Táiběi"></span>
 			<span id="台北" lang="中文"></span>
-			<span id="utf8class1" class="台北Táiběi 台北"></span>
+			<span id="utf8class1" class="台北Táiběi 台北"></span>
 			<span id="utf8class2" class="台北"></span>
 			<span id="foo:bar" class="foo:bar"></span>
 			<span id="test.foo[5]bar" class="test.foo[5]bar"></span>
