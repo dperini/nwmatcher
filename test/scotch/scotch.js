@@ -255,7 +255,7 @@
         callback();
         return this.addFailure("`assertThrowsException`: Function: %o, Message: %s.", method, message ? sprintf(message, toArray.call(arguments, 3)) : "The function did not throw any exceptions");
       } catch (exception) {
-        return ((isRegExp && expected.test(exception)) || (isFunction && expected.call(this, exception, this))) ? this.addAssertion() : this.addError(exception);
+        return ((isRegExp && expected.test(exception.message)) || (isFunction && expected.call(this, exception, this))) ? this.addAssertion() : this.addError(exception);
       }
     }
     function assertThrowsNothing(method, message){
