@@ -1,0 +1,7 @@
+bin/
+build/
+test/
+test/ender/.gitignore
+.gitattributes
+.gitignore
+Makefile
