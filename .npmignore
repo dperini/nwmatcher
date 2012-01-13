@@ -5,3 +5,4 @@ test/ender/.gitignore
 .gitattributes
 .gitignore
 Makefile
+node_modules/
