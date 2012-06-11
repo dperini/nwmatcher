@@ -15,6 +15,8 @@
  *  http://javascript.nwbox.com/NWMatcher/nwmatcher.js
  */
 
+var uuid = 1;
+ 
 (function(global) {
 
   var version = 'nwmatcher-1.2.5',
@@ -888,7 +890,7 @@
       } else {
         // for match method
         return new Function('e,s,r,d,h,g,f',
-          'var N,n,x=0,k=e;' + source + 'return false;');
+          'var visited={};var N,n,x=0,k=e;' + source + 'return false;');
       }
     },
 
@@ -1012,7 +1014,7 @@
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
+          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){e.uuid=e.uuid || (++uuid);if(visited["N' + k + '" + e.uuid])continue;visited["N' + k + '" + e.uuid]=true;' + source + '}e=N' + k + ';';
         }
 
         // *** Structural pseudo-classes
