@@ -14,8 +14,6 @@
  * Download:
  *  http://javascript.nwbox.com/NWMatcher/nwmatcher.js
  */
-
-var uuid = 1;
  
 (function(global) {
 
@@ -1014,7 +1012,7 @@ var uuid = 1;
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){e.uuid=e.uuid || (++uuid);if(visited["N' + k + '" + e.uuid])continue;visited["N' + k + '" + e.uuid]=true;' + source + '}e=N' + k + ';';
+          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){visited["N' + k + '"]=visited["N' + k + '"] || [];var vs=visited["N' + k + '"];var k=vs.length-1;while(k>=0&&vs[k]!==e)k--;if(k!==-1){continue;}vs.push(e);' + source + '}e=N' + k + ';';
         }
 
         // *** Structural pseudo-classes
