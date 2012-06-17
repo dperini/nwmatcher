@@ -867,7 +867,7 @@
       typeof source == 'string' || (source = '');
 
       if (parts.length == 1) {
-        source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+        source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
       } else {
         // for each selector in the group
         var i = -1, seen = { }, token;
@@ -876,7 +876,7 @@
           // avoid repeating the same token
           // in comma separated group (p, p)
           if (!seen[token] && (seen[token] = true)) {
-            source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+            source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
           }
         }
       }
@@ -895,14 +895,17 @@
   // compile a CSS3 string selector into ad-hoc javascript matching function
   // @return string (to be compiled)
   compileSelector =
-    function(selector, source) {
+    function(selector, source, mode) {
 
       var a, b, n, k = 0, expr, match, result, status, test, type;
 
       while (selector) {
 
         k++;
-        var visitedFilter = 'vs=visited["' + k + '"];if(!vs){vs=[];visited["' + k + '"]=vs;};vi=vs.length-1;while(vi>=0&&vs[vi]!==e)vi--;if(vi!==-1){break;}vs.push(e);';
+        var visitedFilter = 'vs=visited["' + k + '"];if(!vs){vs=[];visited["' + k + '"]=vs;};vi=vs.length-1;while(vi>=0&&vs[vi]!==e)vi--;if(vi!==-1){continue;}vs.push(e);';
+        if (mode) {
+          visitedFilter = '';
+        }
 
         // *** Universal selector
         // * match all (empty block, do not remove)
