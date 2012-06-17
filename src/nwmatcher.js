@@ -888,7 +888,7 @@
       } else {
         // for match method
         return new Function('e,s,r,d,h,g,f',
-          'var visited=[],vs,vi,N,n,x=0,k=e;' + source + 'return false;');
+          'var visited={},vs,vi,N,n,x=0,k=e;' + source + 'return false;');
       }
     },
 
@@ -902,7 +902,7 @@
       while (selector) {
 
         k++;
-        var visitedFilter = 'vs=visited["' + k + '"];if(!vs){vs=[];visited["' + k + '"]=vs;};vi=vs.length-1;while(vi>=0&&vs[vi]!==e)vi--;if(vi!==-1){continue;}vs.push(e);';
+        var visitedFilter = 'vs=visited["' + k + '"];if(!vs){vs=[];visited["' + k + '"]=vs;};vi=vs.length-1;while(vi>=0&&vs[vi]!==e)vi--;if(vi!==-1){break;}vs.push(e);';
         if (mode) {
           visitedFilter = '';
         }
@@ -1517,7 +1517,7 @@
     match: match
   };
 
-  Tokens = {
+  var Tokens = {
     prefixes: prefixes,
     encoding: encoding,
     operators: operators,
