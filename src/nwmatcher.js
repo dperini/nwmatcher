@@ -14,7 +14,7 @@
  * Download:
  *  http://javascript.nwbox.com/NWMatcher/nwmatcher.js
  */
- 
+
 (function(global) {
 
   var version = 'nwmatcher-1.2.5',
@@ -888,7 +888,7 @@
       } else {
         // for match method
         return new Function('e,s,r,d,h,g,f',
-          'var visited={};var N,n,x=0,k=e;' + source + 'return false;');
+          'var visited=[],vs,vi,N,n,x=0,k=e;' + source + 'return false;');
       }
     },
 
@@ -902,6 +902,7 @@
       while (selector) {
 
         k++;
+        var visitedFilter = 'vs=visited["' + k + '"];if(!vs){vs=[];visited["' + k + '"]=vs;};vi=vs.length-1;while(vi>=0&&vs[vi]!==e)vi--;if(vi!==-1){break;}vs.push(e);';
 
         // *** Universal selector
         // * match all (empty block, do not remove)
@@ -989,30 +990,28 @@
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
           source = NATIVE_TRAVERSAL_API ?
-            'var N' + k + '=e;if(e&&(e=e.previousElementSibling)){' + source + '}e=N' + k + ';' :
-            'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}e=N' + k + ';';
+            'var N' + k + '=e;while(e&&(e=e.previousElementSibling)){' + visitedFilter + source + 'break;}e=N' + k + ';' :
+            'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + visitedFilter + source + 'break;}}e=N' + k + ';';
         }
 
         // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
           source = NATIVE_TRAVERSAL_API ?
-            ('var N' + k + '=e;e=e.parentNode.firstElementChild;' +
-            'while(e&&e!==N' + k + '){' + source + 'e=e.nextElementSibling;}e=N' + k + ';') :
-            ('var N' + k + '=e;e=e.parentNode.firstChild;' +
-            'while(e&&e!==N' + k + '){if(e.nodeName>"@"){' + source + '}e=e.nextSibling;}e=N' + k + ';');
+            'var N' + k + '=e;while(e&&(e=e.previousElementSibling)){' + visitedFilter + source + '}e=N' + k + ';' :
+            'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + visitedFilter + source + '}}e=N' + k + ';';
         }
 
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'var N' + k + '=e;if(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
+          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + visitedFilter + source + 'break;}e=N' + k + ';';
         }
 
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){visited["N' + k + '"]=visited["N' + k + '"] || [];var vs=visited["N' + k + '"];var k=vs.length-1;while(k>=0&&vs[k]!==e)k--;if(k!==-1){continue;}vs.push(e);' + source + '}e=N' + k + ';';
+          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + visitedFilter + source + '}e=N' + k + ';';
         }
 
         // *** Structural pseudo-classes
