@@ -867,7 +867,7 @@
       typeof source == 'string' || (source = '');
 
       if (parts.length == 1) {
-        source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
+        source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;');
       } else {
         // for each selector in the group
         var i = -1, seen = { }, token;
@@ -876,15 +876,16 @@
           // avoid repeating the same token
           // in comma separated group (p, p)
           if (!seen[token] && (seen[token] = true)) {
-            source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
+            source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
           }
         }
       }
 
+
       if (mode) {
         // for select method
         return new Function('c,s,r,d,h,g,f',
-          'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
+          'var visited,vs,vi,N,n,x=0,k=-1,e;main:while((e=c[++k])){visited={};' + source + '}return r;');
       } else {
         // for match method
         return new Function('e,s,r,d,h,g,f',
@@ -895,7 +896,7 @@
   // compile a CSS3 string selector into ad-hoc javascript matching function
   // @return string (to be compiled)
   compileSelector =
-    function(selector, source, mode) {
+    function(selector, source) {
 
       var a, b, n, k = 0, expr, match, result, status, test, type;
 
@@ -903,9 +904,7 @@
 
         k++;
         var visitedFilter = 'vs=visited["' + k + '"];if(!vs){vs=[];visited["' + k + '"]=vs;};vi=vs.length-1;while(vi>=0&&vs[vi]!==e)vi--;if(vi!==-1){break;}vs.push(e);';
-        if (mode) {
-          visitedFilter = '';
-        }
+
 
         // *** Universal selector
         // * match all (empty block, do not remove)
@@ -1239,6 +1238,7 @@
         // we do not throw real DOMExceptions above
         selector = match && match[match.length - 1];
       }
+
 
       return source;
     },
