@@ -881,15 +881,14 @@
         }
       }
 
-
       if (mode) {
         // for select method
         return new Function('c,s,r,d,h,g,f',
-          'var visited,vs,vi,N,n,x=0,k=-1,e;main:while((e=c[++k])){visited={};' + source + '}return r;');
+          'var visited,elementIndex,vs,vi,N,n,x=0,k=-1,e;main:while((e=c[++k])){visited=[];elementIndex=1;' + source + '}return r;');
       } else {
         // for match method
         return new Function('e,s,r,d,h,g,f',
-          'var visited={},vs,vi,N,n,x=0,k=e;' + source + 'return false;');
+          'var visited=[],elementIndex=1,vs,vi,N,n,x=0,k=e;' + source + 'return false;');
       }
     },
 
@@ -903,7 +902,7 @@
       while (selector) {
 
         k++;
-        var visitedFilter = 'vs=visited["' + k + '"];if(!vs){vs=[];visited["' + k + '"]=vs;};vi=vs.length-1;while(vi>=0&&vs[vi]!==e)vi--;if(vi!==-1){break;}vs.push(e);';
+        var visitedFilter = 'if (visited[' + k + '] >= elementIndex) break; visited[' + k + '] = elementIndex;';
 
 
         // *** Universal selector
@@ -992,28 +991,28 @@
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
           source = NATIVE_TRAVERSAL_API ?
-            'var N' + k + '=e;while(e&&(e=e.previousElementSibling)){' + visitedFilter + source + 'break;}e=N' + k + ';' :
-            'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + visitedFilter + source + 'break;}}e=N' + k + ';';
+            'var N' + k + '=e;var EI' + k +'=elementIndex;while(e&&(elementIndex+=1024,e=e.previousElementSibling)){' + visitedFilter + source + 'break;}e=N' + k + ';elementIndex=EI' + k + ';' :
+            'var N' + k + '=e;var EI' + k +'=elementIndex;while(e&&(elementIndex+=1024,e=e.previousSibling)){if(e.nodeName>"@"){' + visitedFilter + source + 'break;}}e=N' + k + ';elementIndex=EI' + k + ';';
         }
 
         // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
           source = NATIVE_TRAVERSAL_API ?
-            'var N' + k + '=e;while(e&&(e=e.previousElementSibling)){' + visitedFilter + source + '}e=N' + k + ';' :
-            'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + visitedFilter + source + '}}e=N' + k + ';';
+            'var N' + k + '=e;var EI' + k +'=elementIndex;while(e&&(elementIndex+=1024,e=e.previousElementSibling)){' + visitedFilter + source + '}e=N' + k + ';elementIndex=EI' + k + ';' :
+            'var N' + k + '=e;var EI' + k +'=elementIndex;while(e&&(elementIndex+=1024,e=e.previousSibling)){if(e.nodeName>"@"){' + visitedFilter + source + '}}e=N' + k + ';elementIndex=EI' + k + ';';
         }
 
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + visitedFilter + source + 'break;}e=N' + k + ';';
+          source = 'var N' + k + '=e;var EI' + k +'=elementIndex;elementIndex=elementIndex&1023;while(e&&e!==h&&e!==g&&(++elementIndex,e=e.parentNode)){' + visitedFilter + source + 'break;}e=N' + k + ';elementIndex=EI' + k + ';';
         }
 
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + visitedFilter + source + '}e=N' + k + ';';
+          source = 'var N' + k + '=e;var EI' + k +'=elementIndex;elementIndex=elementIndex&1023;while(e&&e!==h&&e!==g&&(++elementIndex,e=e.parentNode)){' + visitedFilter + source + '}e=N' + k + ';elementIndex=EI' + k + ';';
         }
 
         // *** Structural pseudo-classes
@@ -1238,7 +1237,6 @@
         // we do not throw real DOMExceptions above
         selector = match && match[match.length - 1];
       }
-
 
       return source;
     },
