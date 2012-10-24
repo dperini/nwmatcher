@@ -5,9 +5,9 @@
  * nwmatcher.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.2.5
+ * Version: 1.2.6beta
  * Created: 20070722
- * Release: 20120101
+ * Release: 20121024
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -17,7 +17,7 @@
 
 (function(global) {
 
-  var version = 'nwmatcher-1.2.5',
+  var version = 'nwmatcher-1.2.6beta',
 
   // export the public API for CommonJS implementations,
   // for headless JS engines or for standard web browsers
@@ -867,7 +867,7 @@
       typeof source == 'string' || (source = '');
 
       if (parts.length == 1) {
-        source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+        source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
       } else {
         // for each selector in the group
         var i = -1, seen = { }, token;
@@ -876,26 +876,33 @@
           // avoid repeating the same token
           // in comma separated group (p, p)
           if (!seen[token] && (seen[token] = true)) {
-            source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+            source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
           }
         }
       }
 
       if (mode) {
         // for select method
-        return new Function('c,s,r,d,h,g,f',
+        return new Function('c,s,r,d,h,g,f,v',
           'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
       } else {
         // for match method
-        return new Function('e,s,r,d,h,g,f',
+        return new Function('e,s,r,d,h,g,f,v',
           'var N,n,x=0,k=e;' + source + 'return false;');
       }
     },
 
+  // allows to cache already visited nodes
+  FILTER =
+    'var z=v[@]||(v[@]=[]),l=z.length-1;' +
+    'while(l>=0&&z[l]!==e)--l;' +
+    'if(l!==-1){break;}' +
+    'z[z.length]=e;',
+
   // compile a CSS3 string selector into ad-hoc javascript matching function
   // @return string (to be compiled)
   compileSelector =
-    function(selector, source) {
+    function(selector, source, mode) {
 
       var a, b, n, k = 0, expr, match, result, status, test, type;
 
@@ -988,14 +995,16 @@
         // *** Adjacent sibling combinator
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
+          source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
           source = NATIVE_TRAVERSAL_API ?
-            'var N' + k + '=e;if(e&&(e=e.previousElementSibling)){' + source + '}e=N' + k + ';' :
+            'var N' + k + '=e;while(e&&(e=e.previousElementSibling)){' + source + 'break;}e=N' + k + ';' :
             'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}e=N' + k + ';';
         }
 
         // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
+          source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
           source = NATIVE_TRAVERSAL_API ?
             ('var N' + k + '=e;e=e.parentNode.firstElementChild;' +
             'while(e&&e!==N' + k + '){' + source + 'e=e.nextElementSibling;}e=N' + k + ';') :
@@ -1006,12 +1015,14 @@
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = 'var N' + k + '=e;if(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
+          source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
+          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + 'break;}e=N' + k + ';';
         }
 
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
+          source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
           source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
         }
 
@@ -1287,7 +1298,7 @@
         matchContexts[selector] = from;
       }
 
-      return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback);
+      return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback, { });
     },
 
   // select only the first element
@@ -1471,7 +1482,7 @@
         selectContexts[selector] = from;
       }
 
-      elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback);
+      elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback, { });
 
       Config.CACHING && Dom.saveResults(original, from, doc, elements);
 
@@ -1513,7 +1524,7 @@
     // selection/matching
     select: select,
     match: match
-  };
+  },
 
   Tokens = {
     prefixes: prefixes,

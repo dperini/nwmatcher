@@ -5,9 +5,9 @@
  * nwmatcher-base.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.2.5
+ * Version: 1.2.6beta
  * Created: 20070722
- * Release: 20120101
+ * Release: 20121024
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -17,7 +17,7 @@
 
 (function(global) {
 
-  var version = 'nwmatcher-1.2.5',
+  var version = 'nwmatcher-1.2.6beta',
 
   Dom = typeof exports == 'object' ? exports :
     ((global.NW || (global.NW = { })) &&
@@ -280,27 +280,33 @@
       typeof source == 'string' || (source = '');
 
       if (parts.length == 1) {
-        source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+        source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
       } else {
         var i = -1, seen = { }, token;
         while ((token = parts[++i])) {
           token = token.replace(reTrimSpaces, '');
           if (!seen[token] && (seen[token] = true)) {
-            source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+            source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
           }
         }
       }
 
       if (mode)
-        return Function('c,s,r,d,h,g,f',
+        return Function('c,s,r,d,h,g,f,v',
           'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
       else
-        return Function('e,s,r,d,h,g,f',
+        return Function('e,s,r,d,h,g,f,v',
           'var N,n,x=0,k=e;' + source + 'return false;');
     },
 
+  FILTER =
+    'var z=v[@]||(v[@]=[]),l=z.length-1;' +
+    'while(l>=0&&z[l]!==e)--l;' +
+    'if(l!==-1){break;}' +
+    'z[z.length]=e;', 
+
   compileSelector =
-    function(selector, source) {
+    function(selector, source, mode) {
 
       var k = 0, expr, match, name, result, status, test, type;
 
@@ -367,18 +373,22 @@
         }
 
         else if ((match = selector.match(Patterns.adjacent))) {
+          source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
           source = 'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}e=N' + k + ';';
         }
 
         else if ((match = selector.match(Patterns.relative))) {
-          source = 'var N' + k + '=e;e=e.parentNode.firstChild;while(e&&e!=N' + k + '){if(e.nodeName>"@"){' + source + '}e=e.nextSibling;}e=N' + k + ';';
+          source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
+          source = 'var N' + k + '=e;e=e.parentNode.firstChild;while(e&&e!==N' + k + '){if(e.nodeName>"@"){' + source + '}e=e.nextSibling;}e=N' + k + ';';
         }
 
         else if ((match = selector.match(Patterns.children))) {
-          source = 'var N' + k + '=e;if(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
+          source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
+          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + 'break;}e=N' + k + ';';
         }
 
         else if ((match = selector.match(Patterns.ancestor))) {
+          source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
           source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
         }
 
@@ -449,7 +459,7 @@
         matchContexts[selector] = from;
       }
 
-      return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback);
+      return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback, { });
     },
 
   first =
@@ -566,7 +576,7 @@
         selectContexts[selector] = from;
       }
 
-      elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback);
+      elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback, { });
 
       Config.CACHING && Dom.saveResults(original, from, doc, elements);
 
