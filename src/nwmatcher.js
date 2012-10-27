@@ -15,18 +15,31 @@
  *  http://javascript.nwbox.com/NWMatcher/nwmatcher.js
  */
 
-(function(global) {
+(function(global, factory) {
+  if (typeof module === 'object' && typeof exports === 'object') {
+    // In a Node.js environment, this module exports a single function that
+    // accepts a `browserGlobal` object, and returns an object with the
+    // nwmatcher functions operating on that browser environment.
+    module.exports = function (browserGlobal) {
+      var exports = {};
+      factory(browserGlobal, exports);
+      return exports;
+    };
+  } else {
+    // In a browser environment, the nwmatcher functions are attached to
+    // `global.NW.Dom`.
+    if (!global.NW) {
+      global.NW = {};
+    }
+    if (!global.NW.Dom) {
+      global.NW.Dom = {};
+    }
+    factory(global, global.NW.Dom);
+  }
+}(this, function(global, exports) {
 
   var version = 'nwmatcher-1.2.6beta',
-
-  // export the public API for CommonJS implementations,
-  // for headless JS engines or for standard web browsers
-  Dom =
-    // as CommonJS/NodeJS module
-    typeof exports == 'object' ? exports :
-    // create or extend NW namespace
-    ((global.NW || (global.NW = { })) &&
-    (global.NW.Dom || (global.NW.Dom = { }))),
+  Dom = exports,
 
   // processing context & root element
   doc = global.document,
@@ -1634,4 +1647,4 @@
   // init context specific variables
   switchContext(doc, true);
 
-})(this);
+}));
