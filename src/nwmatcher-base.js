@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.6beta
  * Created: 20070722
- * Release: 20121024
+ * Release: 20121107
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -15,13 +15,27 @@
  *  http://javascript.nwbox.com/NWMatcher/nwmatcher.js
  */
 
-(function(global) {
+(function(global, factory) {
+  if (typeof module === 'object' && typeof exports === 'object') {
+    module.exports = function (browserGlobal) {
+      var exports = { };
+      factory(browserGlobal, exports);
+      return exports;
+    };
+  } else {
+    if (!global.NW) {
+      global.NW = { };
+    }
+    if (!global.NW.Dom) {
+      global.NW.Dom = { };
+    }
+    factory(global, global.NW.Dom);
+  }
+})(this, function(global, exports) {
 
   var version = 'nwmatcher-1.2.6beta',
 
-  Dom = typeof exports == 'object' ? exports :
-    ((global.NW || (global.NW = { })) &&
-    (global.NW.Dom || (global.NW.Dom = { }))),
+  Dom = exports,
 
   doc = global.document,
   root = doc.documentElement,
@@ -303,7 +317,7 @@
     'var z=v[@]||(v[@]=[]),l=z.length-1;' +
     'while(l>=0&&z[l]!==e)--l;' +
     'if(l!==-1){break;}' +
-    'z[z.length]=e;', 
+    'z[z.length]=e;',
 
   compileSelector =
     function(selector, source, mode) {
@@ -647,4 +661,4 @@
 
   switchContext(doc, true);
 
-})(this);
+});
