@@ -823,17 +823,9 @@
   // control user notifications
   emit =
     function(message) {
-      var err;
       message = 'SYNTAX_ERR: ' + message + ' ';
       if (Config.VERBOSITY) {
-        // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
-        if (typeof global.DOMException != 'undefined') {
-          err = new SyntaxError(message);
-          err.code = 12;
-        } else {
-          err = new Error(12, message);
-        }
-        throw err;
+        throw new SyntaxError(message);
       } else {
         if (global.console && global.console.log) {
           global.console.log(message);

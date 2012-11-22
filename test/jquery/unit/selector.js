@@ -63,12 +63,12 @@ if ( location.protocol != "file:" ) {
 }
 */
 test("broken", function() {
-	expect(12);
+	expect(13);
 	function broken(name, selector) {
 		try {
 			t(name, selector, [ ]);
 		} catch(e){
-			ok( typeof e === "object" && e.code == 12 || e.number == 12,
+			ok( 'SyntaxError' == e.name,
 				name + ": " + selector );
 		}
 	}

@@ -353,7 +353,7 @@
 			var pass = false;
 			try {
 				$("", root);
-			} catch(e){ pass = typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR || e.number == 12; }
+			} catch(e){ pass = /syntax|error/i.test(e.name); }
 			assert( pass, type + ".querySelectorAll Empty String" );
 
 			pass = false;
@@ -378,7 +378,7 @@
 			var pass = false;
 			try {
 				$("", root)[0];
-			} catch(e){ pass = typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR || e.number == 12; }
+			} catch(e){ pass = /syntax|error/i.test(e.name); }
 			assert( pass, type + ".querySelector Empty String" );
 
 			pass = false;
@@ -416,7 +416,7 @@
 
 						assert(expect && pass, type + ".querySelectorAll: " + query);
 					} catch(e){
-						var pass = !expect && typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR || e.number == 12;
+						var pass = !expect && /syntax|error/i.test(e.name);
 						assert(pass, type + ".querySelectorAll: " + query);
 					}
 
@@ -439,7 +439,7 @@
 
 						assert(expect, type + ".querySelector: " + query);
 					} catch(e){
-						var pass = !expect && typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR || e.number == 12;
+						var pass = !expect && /syntax|error/i.test(e.name);
 						assert(pass, type + ".querySelector: " + query);
 					}
 				}
@@ -492,7 +492,7 @@
 				try {
 					return $(q, root);
 				} catch(e) {
-					if (typeof DOMException !== "undefined" && (e.code == DOMException.NAMESPACE_ERR || e.code == DOMException.SYNTAX_ERR) || e.number == 12)
+					if (/syntax|error/i.test(e.name))
 						throw e;
 				}
 			}
@@ -513,7 +513,7 @@
 					var results = query(q);
 					pass = hasPassed( results, ids );
 				} catch(e) {
-				  	pass = typeof DOMException !== "undefined" && e.code == DOMException.SYNTAX_ERR || e.number == 12;
+				  	pass = /syntax|error/i.test(e.name);
 				}
 	
 				assert( pass, type + ": " + name + " (" + nq + ")" +
