@@ -821,14 +821,17 @@
   // control user notifications
   emit =
     function(message) {
+      var err;
       message = 'SYNTAX_ERR: ' + message + ' ';
       if (Config.VERBOSITY) {
         // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
         if (typeof global.DOMException != 'undefined') {
-          throw { code: 12, message: message };
+          err = new SyntaxError(message);
+          err.code = 12;
         } else {
-          throw new Error(12, message);
+          err = new Error(12, message);
         }
+        throw err;
       } else {
         if (global.console && global.console.log) {
           global.console.log(message);
@@ -1047,7 +1050,6 @@
         else if ((match = selector.match(Patterns.spseudos)) && match[1]) {
 
           switch (match[1]) {
-
             case 'root':
               // element root of the document
               if (match[3]) {
@@ -1106,7 +1108,7 @@
                 n = /only/.test(match[1]) ? 'previous' : 'next';
                 b = /first|last/.test(match[1]);
 
-                type = /-of-type/.test(match[1]) ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
+                type = /of-type/.test(match[1]) ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
 
                 source = 'if(e!==h){' +
                   ( 'n=e;while((n=n.' + a + 'Sibling)' + type + ');if(!n){' + (b ? source :
@@ -1224,13 +1226,12 @@
           // invoked if expressions match selectors
           expr = false;
           status = false;
-
           for (expr in Selectors) {
             if ((match = selector.match(Selectors[expr].Expression)) && match[1]) {
               result = Selectors[expr].Callback(match, source);
               source = result.source;
               status = result.status;
-              if (status) break;
+              if (status) { break; }
             }
           }
 
@@ -1260,7 +1261,6 @@
         // ensure "match" is not null or empty since
         // we do not throw real DOMExceptions above
         selector = match && match[match.length - 1];
-
       }
 
       return source;

@@ -206,13 +206,16 @@
 
   emit =
     function(message) {
+      var err;
       message = 'SYNTAX_ERR: ' + message + ' ';
       if (Config.VERBOSITY) {
         if (typeof global.DOMException != 'undefined') {
-          throw { code: 12, message: message };
+          err = new SyntaxError(message);
+          err.code = 12;
         } else {
-          throw new Error(12, message);
+          err = new Error(12, message);
         }
+        throw err;
       } else {
         if (global.console && global.console.log) {
           global.console.log(message);
