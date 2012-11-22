@@ -1079,12 +1079,12 @@
                 // build test expression out of structural pseudo (an+b) parameters
                 // see here: http://www.w3.org/TR/css3-selectors/#nth-child-pseudo
                 test = a > 1 ?
-                  /last/.test(match[1]) ? '(n-(' + b + '))%' + a + '==0' :
+                  (/last/.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
                   'n>=' + b + '&&(n-(' + b + '))%' + a + '==0' : a < -1 ?
-                  /last/.test(match[1]) ? '(n-(' + b + '))%' + a + '==0' :
+                  (/last/.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
                   'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a=== 0 ?
                   'n==' + b :
-                  /last/.test(match[1]) ?
+                  (/last/.test(match[1])) ?
                     a == -1 ? 'n>=' + b : 'n<=' + b :
                     a == -1 ? 'n<=' + b : 'n>=' + b;
 

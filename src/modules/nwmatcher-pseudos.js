@@ -125,12 +125,12 @@ NW.Dom.registerSelector(
           if (n && n[1] == '-') a = -1;
         }
         test = a > 1 ?
-          /last/.test(match[1]) ? '(n-(' + b + '))%' + a + '==0' :
+          (/last/.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
           'n>=' + b + '&&(n-(' + b + '))%' + a + '==0' : a < -1 ?
-          /last/.test(match[1]) ? '(n-(' + b + '))%' + a + '==0' :
+          (/last/.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
           'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a=== 0 ?
           'n==' + b :
-          /last/.test(match[1]) ?
+          (/last/.test(match[1])) ?
           a == -1 ? 'n>=' + b : 'n<=' + b :
           a == -1 ? 'n<=' + b : 'n>=' + b;
         source =
