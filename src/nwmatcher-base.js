@@ -183,9 +183,11 @@
   },
 
   configure =
-    function(options) {
-      for (var i in options) {
-        Config[i] = !!options[i];
+    function(option) {
+      if (typeof option == 'string') { return Config[option]; }
+      if (typeof option != 'object') { return false; }
+      for (var i in option) {
+        Config[i] = !!option[i];
         if (i == 'SIMPLENOT') {
           matchContexts = { };
           matchResolvers = { };
@@ -197,6 +199,7 @@
           reValidator = RegExp(standardValidator, 'g');
         }
       }
+      return true;
     },
 
   concatCall =

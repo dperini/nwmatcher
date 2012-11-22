@@ -801,11 +801,13 @@
 
   /*------------------------------- DEBUGGING --------------------------------*/
 
-  // set working mode
+  // get/set (string/object) working modes
   configure =
-    function(options) {
-      for (var i in options) {
-        Config[i] = !!options[i];
+    function(option) {
+      if (typeof option == 'string') { return Config[option]; }
+      if (typeof option != 'object') { return false; }
+      for (var i in option) {
+        Config[i] = !!option[i];
         if (i == 'SIMPLENOT') {
           matchContexts = { };
           matchResolvers = { };
@@ -814,10 +816,11 @@
           Config['USE_QSAPI'] = false;
           reValidator = new RegExp(extendedValidator, 'g');
         } else if (i == 'USE_QSAPI') {
-          Config[i] = !!options[i] && NATIVE_QSAPI;
+          Config[i] = !!option[i] && NATIVE_QSAPI;
           reValidator = new RegExp(standardValidator, 'g');
         }
       }
+      return true;
     },
 
   // control user notifications
