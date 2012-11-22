@@ -59,7 +59,7 @@
   operators = '([~*^$|!]?={1})',
   whitespace = '[\\x20\\t\\n\\r\\f]*',
   combinators = '[\\x20]|[>+~][^>+~]',
-  pseudoparms = '[-+]?\\d*n?[-+]?\\d*',
+  pseudoparms = '(?:[-+]?\\d*n)?[-+]?\\d*',
   quotedvalue = '"[^"]*"' + "|'[^']*'",
   skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
 

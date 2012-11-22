@@ -77,7 +77,7 @@
   combinators = '[\\x20]|[>+~][^>+~]',
 
   // an+b format params for pseudo-classes
-  pseudoparms = '[-+]?\\d*n?[-+]?\\d*',
+  pseudoparms = '(?:[-+]?\\d*n)?[-+]?\\d*',
 
   // CSS quoted string values
   quotedvalue = '"[^"]*"' + "|'[^']*'",
@@ -471,7 +471,7 @@
   // precompiled Regular Expressions
   Patterns = {
     // structural pseudo-classes and child selectors
-    spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\((even|odd|[+-]{0,1}\d*n?[+-]{0,1}\d*)\))?(.*)/,
+    spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\((even|odd|(?:[+-]{0,1}\d*n)?[+-]{0,1}\d*)\))?(.*)/,
     // uistates + dynamic + negation pseudo-classes
     dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/,
     // element attribute matcher

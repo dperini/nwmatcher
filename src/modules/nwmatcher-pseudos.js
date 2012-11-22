@@ -89,7 +89,7 @@
 
 NW.Dom.registerSelector(
   'nwmatcher:spseudos',
-  /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\((even|odd|[+-]{0,1}\d*n?[+-]{0,1}\d*)\))?(.*)/,
+  /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\((even|odd|(?:[+-]{0,1}\d*n)?[+-]{0,1}\d*)\))?(.*)/,
   function(match, source) {
 
   var a, n, b, status = true, test, type;
