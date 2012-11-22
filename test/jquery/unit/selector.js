@@ -79,6 +79,8 @@ test("broken", function() {
 	broken( "Broken Selector", "<", [] );
 	broken( "Broken Selector", "()", [] );
 	broken( "Broken Selector", "<>", [] );
+	// curly braces could be used in extensions
+	//broken( "Broken Selector", "{}", [] );
 
 	broken( "Nth-child", ":nth-child(2n+-0)", [] );
 	broken( "Nth-child", ":nth-child(- 1n)", [] );
@@ -86,9 +88,8 @@ test("broken", function() {
 	broken( "First-child", ":first-child(n)", [] );
 	broken( "Last-child", ":last-child(n)", [] );
 	broken( "Only-child", ":only-child(n)", [] );
+	broken( "Nth-child", ":nth-child(2+0)", [] );
 
-    // curly braces could be used in extensions
-	//broken( "Broken Selector", "{}", [] );
 });
 
 test("id", function() {
