@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.6beta
  * Created: 20070722
- * Release: 20121107
+ * Release: 20121122
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -471,9 +471,9 @@
   // precompiled Regular Expressions
   Patterns = {
     // structural pseudo-classes and child selectors
-    spseudos: /^\:((root|empty|nth-)?(?:(first|last|only)-)?(child)?-?(of-type)?)(?:\(([^\x29]*)\))?(.*)/,
+    spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\((even|odd|[+-]{0,1}\d*n?[+-]{0,1}\d*)\))?(.*)/,
     // uistates + dynamic + negation pseudo-classes
-    dpseudos: /^\:(link|visited|target|lang|not|active|focus|hover|checked|disabled|enabled|selected)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
+    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/,
     // element attribute matcher
     attribute: new RegExp('^\\[' + attrmatcher + '\\](.*)'),
     // E > F
@@ -1046,11 +1046,11 @@
         // :nth-child(), :nth-last-child(), :nth-of-type(), :nth-last-of-type()
         else if ((match = selector.match(Patterns.spseudos)) && match[1]) {
 
-          switch (match[2]) {
+          switch (match[1]) {
 
             case 'root':
               // element root of the document
-              if (match[7]) {
+              if (match[3]) {
                 source = 'if(e===h||s.contains(h,e)){' + source + '}';
               } else {
                 source = 'if(e===h){' + source + '}';
@@ -1063,50 +1063,50 @@
               break;
 
             default:
-              if (match[2] && match[6]) {
-                if (match[6] == 'n') {
+              if (match[1] && match[2]) {
+                if (match[2] == 'n') {
                   source = 'if(e!==h){' + source + '}';
                   break;
-                } else if (match[6] == 'even') {
+                } else if (match[2] == 'even') {
                   a = 2;
                   b = 0;
-                } else if (match[6] == 'odd') {
+                } else if (match[2] == 'odd') {
                   a = 2;
                   b = 1;
                 } else {
                   // assumes correct "an+b" format, "b" before "a" to keep "n" values
-                  b = ((n = match[6].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
-                  a = ((n = match[6].match(/(-?\d*)n/)) ? parseInt(n[1], 10) : 0);
+                  b = ((n = match[2].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
+                  a = ((n = match[2].match(/(-?\d*)n/)) ? parseInt(n[1], 10) : 0);
                   if (n && n[1] == '-') a = -1;
                 }
 
                 // build test expression out of structural pseudo (an+b) parameters
                 // see here: http://www.w3.org/TR/css3-selectors/#nth-child-pseudo
-                test =  b < 1 && a > 1 ? '(n-(' + b + '))%' + a + '==0' : a > +1 ?
-                  (match[3] == 'last') ? '(n-(' + b + '))%' + a + '==0' :
+                test = a > 1 ?
+                  /last/.test(match[1]) ? '(n-(' + b + '))%' + a + '==0' :
                   'n>=' + b + '&&(n-(' + b + '))%' + a + '==0' : a < -1 ?
-                  (match[3] == 'last') ? '(n-(' + b + '))%' + a + '==0' :
+                  /last/.test(match[1]) ? '(n-(' + b + '))%' + a + '==0' :
                   'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a=== 0 ?
                   'n==' + b :
-                  (match[3] == 'last') ?
+                  /last/.test(match[1]) ?
                     a == -1 ? 'n>=' + b : 'n<=' + b :
                     a == -1 ? 'n<=' + b : 'n>=' + b;
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
                 source =
                   'if(e!==h){' +
-                    'n=s[' + (match[5] ? '"nthOfType"' : '"nthElement"') + ']' +
-                      '(e,' + (match[3] == 'last' ? 'true' : 'false') + ');' +
+                    'n=s[' + (/-of-type/.test(match[1]) ? '"nthOfType"' : '"nthElement"') + ']' +
+                      '(e,' + (/last/.test(match[1]) ? 'true' : 'false') + ');' +
                     'if(' + test + '){' + source + '}' +
                   '}';
 
               } else {
                 // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
-                a = match[3] == 'first' ? 'previous' : 'next';
-                n = match[3] == 'only' ? 'previous' : 'next';
-                b = match[3] == 'first' || match[3] == 'last';
+                a = /first/.test(match[1]) ? 'previous' : 'next';
+                n = /only/.test(match[1]) ? 'previous' : 'next';
+                b = /first|last/.test(match[1]);
 
-                type = match[5] ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
+                type = /-of-type/.test(match[1]) ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
 
                 source = 'if(e!==h){' +
                   ( 'n=e;while((n=n.' + a + 'Sibling)' + type + ');if(!n){' + (b ? source :
@@ -1124,7 +1124,7 @@
         // CSS3 :link, :visited
         else if ((match = selector.match(Patterns.dpseudos)) && match[1]) {
 
-          switch (match[1]) {
+          switch (match[1].match(/^\w+/)[0]) {
             // CSS3 negation pseudo-class
             case 'not':
               // compile nested selectors, DO NOT pass the callback parameter
@@ -1163,10 +1163,10 @@
             // CSS3 lang pseudo-class
             case 'lang':
               test = '';
-              if (match[3]) test = match[3].substr(0, 2) + '-';
+              if (match[2]) test = match[2].substr(0, 2) + '-';
               source = 'do{(n=e.lang||"").toLowerCase();' +
-                'if((n==""&&h.lang=="' + match[3].toLowerCase() + '")||' +
-                '(n&&(n=="' + match[3].toLowerCase() +
+                'if((n==""&&h.lang=="' + match[2].toLowerCase() + '")||' +
+                '(n&&(n=="' + match[2].toLowerCase() +
                 '"||n.substr(0,3)=="' + test.toLowerCase() + '")))' +
                 '{' + source + 'break;}}while((e=e.parentNode)&&e!==g);';
               break;
@@ -1223,7 +1223,7 @@
           // this is where external extensions are
           // invoked if expressions match selectors
           expr = false;
-          status = true;
+          status = false;
 
           for (expr in Selectors) {
             if ((match = selector.match(Selectors[expr].Expression)) && match[1]) {
@@ -1260,6 +1260,7 @@
         // ensure "match" is not null or empty since
         // we do not throw real DOMExceptions above
         selector = match && match[match.length - 1];
+
       }
 
       return source;

@@ -84,19 +84,20 @@
   NW.Dom.Snapshot['isEmpty'] = isEmpty;
   NW.Dom.Snapshot['nthOfType'] = nthOfType;
   NW.Dom.Snapshot['nthElement'] = nthElement;
+
 })();
 
 NW.Dom.registerSelector(
   'nwmatcher:spseudos',
-  /^\:((root|empty|nth-)?(?:(first|last|only)-)?(child)?-?(of-type)?)(?:\(([^\x29]*)\))?(.*)/,
+  /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\((even|odd|[+-]{0,1}\d*n?[+-]{0,1}\d*)\))?(.*)/,
   function(match, source) {
 
   var a, n, b, status = true, test, type;
 
-  switch (match[2]) {
+  switch (match[1]) {
 
     case 'root':
-      if (match[7])
+      if (match[3])
         source = 'if(e===h||s.contains(h,e)){' + source + '}';
       else
         source = 'if(e===h){' + source + '}';
@@ -107,44 +108,44 @@ NW.Dom.registerSelector(
       break;
 
     default:
-      if (match[2] && match[6]) {
+      if (match[1] && match[2]) {
 
-        if (match[6] == 'n') {
+        if (match[2] == 'n') {
           source = 'if(e!==h){' + source + '}';
           break;
-        } else if (match[6] == 'even') {
+        } else if (match[2] == 'even') {
           a = 2;
           b = 0;
-        } else if (match[6] == 'odd') {
+        } else if (match[2] == 'odd') {
           a = 2;
           b = 1;
         } else {
-          b = ((n = match[6].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
-          a = ((n = match[6].match(/(-?\d*)n/)) ? parseInt(n[1], 10) : 0);
+          b = ((n = match[2].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
+          a = ((n = match[2].match(/(-?\d*)n/)) ? parseInt(n[1], 10) : 0);
           if (n && n[1] == '-') a = -1;
         }
-        test =  b < 1 && a > 1 ? '(n-(' + b + '))%' + a + '==0' : a > +1 ?
-          (match[3] == 'last') ? '(n-(' + b + '))%' + a + '==0' :
-                   'n>=' + b + '&&(n-(' + b + '))%' + a + '==0' : a < -1 ?
-          (match[3] == 'last') ? '(n-(' + b + '))%' + a + '==0' :
-                   'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a=== 0 ?
+        test = a > 1 ?
+          /last/.test(match[1]) ? '(n-(' + b + '))%' + a + '==0' :
+          'n>=' + b + '&&(n-(' + b + '))%' + a + '==0' : a < -1 ?
+          /last/.test(match[1]) ? '(n-(' + b + '))%' + a + '==0' :
+          'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a=== 0 ?
           'n==' + b :
-          (match[3] == 'last') ?
+          /last/.test(match[1]) ?
             a == -1 ? 'n>=' + b : 'n<=' + b :
             a == -1 ? 'n<=' + b : 'n>=' + b;
         source =
           'if(e!==h){' +
-            'n=s[' + (match[5] ? '"nthOfType"' : '"nthElement"') + ']' +
-              '(e,' + (match[3] == 'last' ? 'true' : 'false') + ');' +
+            'n=s[' + (/-of-type/.test(match[1]) ? '"nthOfType"' : '"nthElement"') + ']' +
+              '(e,' + (/last/.test(match[1]) ? 'true' : 'false') + ');' +
             'if(' + test + '){' + source + '}' +
           '}';
 
-      } else if (match[3]) {
+      } else if (match[1]) {
 
-        a = match[3] == 'first' ? 'previous' : 'next';
-        n = match[3] == 'only' ? 'previous' : 'next';
-        b = match[3] == 'first' || match[3] == 'last';
-        type = match[5] ? '&&n.nodeName!==e.nodeName' : '&&n.nodeName<"@"';
+        a = /first/.test(match[1]) ? 'previous' : 'next';
+        n = /only/.test(match[1]) ? 'previous' : 'next';
+        b = /first|last/.test(match[1]);
+        type = /-of-type/.test(match[1]) ? '&&n.nodeName!==e.nodeName' : '&&n.nodeName<"@"';
         source = 'if(e!==h){' +
           ( 'n=e;while((n=n.' + a + 'Sibling)' + type + ');if(!n){' + (b ? source :
             'n=e;while((n=n.' + n + 'Sibling)' + type + ');if(!n){' + source + '}') + '}' ) + '}';
@@ -161,11 +162,12 @@ NW.Dom.registerSelector(
     'source': source,
     'status': status
   };
+
 });
 
 NW.Dom.registerSelector(
   'nwmatcher:dpseudos',
-  /^\:(link|visited|target|lang|not|active|focus|hover|checked|disabled|enabled|selected)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
+  /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/,
   (function() {
 
     var doc = document,
@@ -184,7 +186,7 @@ NW.Dom.registerSelector(
 
       var expr, status = true, test;
 
-      switch (match[1]) {
+      switch (match[1].match(/^\w+/)[0]) {
 
         case 'not':
           expr = match[3].replace(reTrimSpace, '');
@@ -214,10 +216,10 @@ NW.Dom.registerSelector(
 
         case 'lang':
           test = '';
-          if (match[3]) test = match[3].substr(0, 2) + '-';
+          if (match[2]) test = match[2].substr(0, 2) + '-';
           source = 'do{(n=e.lang||"").toLowerCase();' +
-            'if((n==""&&h.lang=="' + match[3].toLowerCase() + '")||' +
-            '(n&&(n=="' + match[3].toLowerCase() +
+            'if((n==""&&h.lang=="' + match[2].toLowerCase() + '")||' +
+            '(n&&(n=="' + match[2].toLowerCase() +
             '"||n.substr(0,3)=="' + test.toLowerCase() + '")))' +
             '{' + source + 'break;}}while((e=e.parentNode)&&e!==g);';
           break;
@@ -266,4 +268,5 @@ NW.Dom.registerSelector(
       };
 
     };
+
   })());

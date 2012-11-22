@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.2.6beta
  * Created: 20070722
- * Release: 20121107
+ * Release: 20121122
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -407,14 +407,15 @@
         }
 
         else {
+
           expr = false;
-          status = true;
+          status = false;
           for (expr in Selectors) {
             if ((match = selector.match(Selectors[expr].Expression)) && match[1]) {
               result = Selectors[expr].Callback(match, source);
               source = result.source;
               status = result.status;
-              if (status) break;
+              if (status) { break; }
             }
           }
           if (!status) {
@@ -425,6 +426,7 @@
             emit('Unknown token in selector "' + selector + '"');
             return '';
           }
+
         }
 
         if (!match) {
