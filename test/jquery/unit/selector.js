@@ -63,7 +63,7 @@ if ( location.protocol != "file:" ) {
 }
 */
 test("broken", function() {
-	expect(6);
+	expect(12);
 	function broken(name, selector) {
 		try {
 			t(name, selector, [ ]);
@@ -79,6 +79,14 @@ test("broken", function() {
 	broken( "Broken Selector", "<", [] );
 	broken( "Broken Selector", "()", [] );
 	broken( "Broken Selector", "<>", [] );
+
+	broken( "Nth-child", ":nth-child(2n+-0)", [] );
+	broken( "Nth-child", ":nth-child(- 1n)", [] );
+	broken( "Nth-child", ":nth-child(-1 n)", [] );
+	broken( "First-child", ":first-child(n)", [] );
+	broken( "Last-child", ":last-child(n)", [] );
+	broken( "Only-child", ":only-child(n)", [] );
+
     // curly braces could be used in extensions
 	//broken( "Broken Selector", "{}", [] );
 });
