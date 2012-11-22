@@ -5,7 +5,7 @@
  * nwmatcher-base.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.2.6beta
+ * Version: 1.3.0beta
  * Created: 20070722
  * Release: 20121122
  *
@@ -16,6 +16,7 @@
  */
 
 (function(global, factory) {
+
   if (typeof module === 'object' && typeof exports === 'object') {
     module.exports = function (browserGlobal) {
       var exports = { };
@@ -31,9 +32,10 @@
     }
     factory(global, global.NW.Dom);
   }
+
 })(this, function(global, exports) {
 
-  var version = 'nwmatcher-1.2.6beta',
+  var version = 'nwmatcher-1.3.0beta',
 
   Dom = exports,
 
@@ -60,6 +62,7 @@
   whitespace = '[\\x20\\t\\n\\r\\f]*',
   combinators = '[\\x20]|[>+~][^>+~]',
   pseudoparms = '(?:[-+]?\\d*n)?[-+]?\\d*',
+
   quotedvalue = '"[^"]*"' + "|'[^']*'",
   skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
 
@@ -69,6 +72,7 @@
   attrcheck = '(' + quotedvalue + '|' + identifier + ')',
   attributes = whitespace + '(' + encoding + '+:?' + encoding + '+)' +
     whitespace + '(?:' + operators + whitespace + attrcheck + ')?' + whitespace,
+
   attrmatcher = attributes.replace(attrcheck, '([\\x22\\x27]*)((?:\\\\?.)*?)\\3'),
 
   pseudoclass = '((?:' +
@@ -210,10 +214,10 @@
       message = 'SYNTAX_ERR: ' + message + ' ';
       if (Config.VERBOSITY) {
         if (typeof global.DOMException != 'undefined') {
-          err = new SyntaxError(message);
+          err = SyntaxError(message);
           err.code = 12;
         } else {
-          err = new Error(12, message);
+          err = Error(12, message);
         }
         throw err;
       } else {

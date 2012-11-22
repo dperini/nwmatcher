@@ -5,7 +5,7 @@
  * nwmatcher.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.2.6beta
+ * Version: 1.3.0beta
  * Created: 20070722
  * Release: 20121122
  *
@@ -16,6 +16,7 @@
  */
 
 (function(global, factory) {
+
   if (typeof module === 'object' && typeof exports === 'object') {
     // in a Node.js environment, the nwmatcher functions will operate on
     // the passed "browserGlobal" and will be returned in an object
@@ -35,9 +36,10 @@
     }
     factory(global, global.NW.Dom);
   }
+
 })(this, function(global, exports) {
 
-  var version = 'nwmatcher-1.2.6beta',
+  var version = 'nwmatcher-1.3.0beta',
 
   Dom = exports,
 

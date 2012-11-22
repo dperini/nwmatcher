@@ -131,8 +131,8 @@ NW.Dom.registerSelector(
           'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a=== 0 ?
           'n==' + b :
           /last/.test(match[1]) ?
-            a == -1 ? 'n>=' + b : 'n<=' + b :
-            a == -1 ? 'n<=' + b : 'n>=' + b;
+          a == -1 ? 'n>=' + b : 'n<=' + b :
+          a == -1 ? 'n<=' + b : 'n>=' + b;
         source =
           'if(e!==h){' +
             'n=s[' + (/-of-type/.test(match[1]) ? '"nthOfType"' : '"nthElement"') + ']' +
