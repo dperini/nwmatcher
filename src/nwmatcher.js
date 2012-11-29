@@ -147,7 +147,7 @@
     // dom properties selector (extension)
     '|\\{' + extensions + '\\}' +
     // selector group separator (comma)
-    '|,' +
+    '|(?:,|' + whitespace + ')' +
     // close match group
     ')+',
 
@@ -174,7 +174,7 @@
   // split comma groups, exclude commas from
   // quotes '' "" and from brackets () [] {}
   reSplitGroup = new RegExp('(' +
-    '[^,\\\\\\[\\]]+' +
+    '[^,\\\\()[\\]]+' +
     '|' + skipsquare +
     '|' + skipround +
     '|' + skipcurly +
@@ -473,9 +473,9 @@
   // precompiled Regular Expressions
   Patterns = {
     // structural pseudo-classes and child selectors
-    spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\((even|odd|(?:[+-]{0,1}\d*n)?[+-]{0,1}\d*)\))?(.*)/,
+    spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
     // uistates + dynamic + negation pseudo-classes
-    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/,
+    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/i,
     // element attribute matcher
     attribute: new RegExp('^\\[' + attrmatcher + '\\](.*)'),
     // E > F
@@ -1077,37 +1077,37 @@
                 } else {
                   // assumes correct "an+b" format, "b" before "a" to keep "n" values
                   b = ((n = match[2].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
-                  a = ((n = match[2].match(/(-?\d*)n/)) ? parseInt(n[1], 10) : 0);
+                  a = ((n = match[2].match(/(-?\d*)n/i)) ? parseInt(n[1], 10) : 0);
                   if (n && n[1] == '-') a = -1;
                 }
 
                 // build test expression out of structural pseudo (an+b) parameters
                 // see here: http://www.w3.org/TR/css3-selectors/#nth-child-pseudo
                 test = a > 1 ?
-                  (/last/.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
+                  (/last/i.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
                   'n>=' + b + '&&(n-(' + b + '))%' + a + '==0' : a < -1 ?
-                  (/last/.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
+                  (/last/i.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
                   'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a=== 0 ?
                   'n==' + b :
-                  (/last/.test(match[1])) ?
+                  (/last/i.test(match[1])) ?
                     a == -1 ? 'n>=' + b : 'n<=' + b :
                     a == -1 ? 'n<=' + b : 'n>=' + b;
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
                 source =
                   'if(e!==h){' +
-                    'n=s[' + (/-of-type/.test(match[1]) ? '"nthOfType"' : '"nthElement"') + ']' +
-                      '(e,' + (/last/.test(match[1]) ? 'true' : 'false') + ');' +
+                    'n=s[' + (/-of-type/i.test(match[1]) ? '"nthOfType"' : '"nthElement"') + ']' +
+                      '(e,' + (/last/i.test(match[1]) ? 'true' : 'false') + ');' +
                     'if(' + test + '){' + source + '}' +
                   '}';
 
               } else {
                 // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
-                a = /first/.test(match[1]) ? 'previous' : 'next';
-                n = /only/.test(match[1]) ? 'previous' : 'next';
-                b = /first|last/.test(match[1]);
+                a = /first/i.test(match[1]) ? 'previous' : 'next';
+                n = /only/i.test(match[1]) ? 'previous' : 'next';
+                b = /first|last/i.test(match[1]);
 
-                type = /of-type/.test(match[1]) ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
+                type = /of-type/i.test(match[1]) ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
 
                 source = 'if(e!==h){' +
                   ( 'n=e;while((n=n.' + a + 'Sibling)' + type + ');if(!n){' + (b ? source :

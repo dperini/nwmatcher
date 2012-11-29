@@ -93,7 +93,7 @@
     '|\\[' + attributes + '\\]' +
     '|\\(' + pseudoclass + '\\)' +
     '|\\{' + extensions + '\\}' +
-    '|,' +
+    '|(?:,|' + whitespace + ')' +
     ')+',
 
   extendedValidator = standardValidator.replace(pseudoclass, '.*'),
@@ -104,7 +104,7 @@
     whitespace + '|' + whitespace + '$', 'g'),
 
   reSplitGroup = RegExp('(' +
-    '[^,\\\\\\[\\]]+' +
+    '[^,\\\\()[\\]]+' +
     '|\\[[^[\\]]*\\]|\\[.*\\]' +
     '|\\([^()]+\\)|\\(.*\\)' +
     '|\\{[^{}]+\\}|\\{.*\\}' +

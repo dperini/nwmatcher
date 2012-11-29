@@ -89,7 +89,7 @@
 
 NW.Dom.registerSelector(
   'nwmatcher:spseudos',
-  /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\((even|odd|(?:[+-]{0,1}\d*n)?[+-]{0,1}\d*)\))?(.*)/,
+  /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
   function(match, source) {
 
   var a, n, b, status = true, test, type;
@@ -121,31 +121,31 @@ NW.Dom.registerSelector(
           b = 1;
         } else {
           b = ((n = match[2].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
-          a = ((n = match[2].match(/(-?\d*)n/)) ? parseInt(n[1], 10) : 0);
+          a = ((n = match[2].match(/(-?\d*)n/i)) ? parseInt(n[1], 10) : 0);
           if (n && n[1] == '-') a = -1;
         }
         test = a > 1 ?
-          (/last/.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
+          (/last/i.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
           'n>=' + b + '&&(n-(' + b + '))%' + a + '==0' : a < -1 ?
-          (/last/.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
+          (/last/i.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
           'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a=== 0 ?
           'n==' + b :
-          (/last/.test(match[1])) ?
+          (/last/i.test(match[1])) ?
           a == -1 ? 'n>=' + b : 'n<=' + b :
           a == -1 ? 'n<=' + b : 'n>=' + b;
         source =
           'if(e!==h){' +
-            'n=s[' + (/-of-type/.test(match[1]) ? '"nthOfType"' : '"nthElement"') + ']' +
-              '(e,' + (/last/.test(match[1]) ? 'true' : 'false') + ');' +
+            'n=s[' + (/-of-type/i.test(match[1]) ? '"nthOfType"' : '"nthElement"') + ']' +
+              '(e,' + (/last/i.test(match[1]) ? 'true' : 'false') + ');' +
             'if(' + test + '){' + source + '}' +
           '}';
 
       } else if (match[1]) {
 
-        a = /first/.test(match[1]) ? 'previous' : 'next';
-        n = /only/.test(match[1]) ? 'previous' : 'next';
-        b = /first|last/.test(match[1]);
-        type = /-of-type/.test(match[1]) ? '&&n.nodeName!==e.nodeName' : '&&n.nodeName<"@"';
+        a = /first/i.test(match[1]) ? 'previous' : 'next';
+        n = /only/i.test(match[1]) ? 'previous' : 'next';
+        b = /first|last/i.test(match[1]);
+        type = /-of-type/i.test(match[1]) ? '&&n.nodeName!==e.nodeName' : '&&n.nodeName<"@"';
         source = 'if(e!==h){' +
           ( 'n=e;while((n=n.' + a + 'Sibling)' + type + ');if(!n){' + (b ? source :
             'n=e;while((n=n.' + n + 'Sibling)' + type + ');if(!n){' + source + '}') + '}' ) + '}';
@@ -167,7 +167,7 @@ NW.Dom.registerSelector(
 
 NW.Dom.registerSelector(
   'nwmatcher:dpseudos',
-  /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/,
+  /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/i,
   (function() {
 
     var doc = document,
@@ -194,7 +194,7 @@ NW.Dom.registerSelector(
             NW.Dom.emit('Negation pseudo-class only accepts simple selectors "' + match.join('') + '"');
           } else {
             if ('compatMode' in doc) {
-              source = 'if(!' + NW.Dom.compile([ expr ], '', false) + '(e,s,r,d,h,g)){' + source + '}';
+              source = 'if(!' + NW.Dom.compile(expr, '', false) + '(e,s,r,d,h,g)){' + source + '}';
             } else {
               source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",g)){' + source +'}';
             }
