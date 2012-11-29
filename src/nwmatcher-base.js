@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.3.0beta
  * Created: 20070722
- * Release: 20121122
+ * Release: 20121129
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -178,7 +178,6 @@
     CACHING: false,
     SIMPLENOT: true,
     USE_HTML5: true,
-    USE_QSAPI: false,
     VERBOSITY: true
   },
 
@@ -193,11 +192,12 @@
           matchResolvers = { };
           selectContexts = { };
           selectResolvers = { };
-          Config['USE_QSAPI'] = false;
-          reValidator = RegExp(extendedValidator, 'g');
-        } else if (i == 'USE_QSAPI') {
-          reValidator = RegExp(standardValidator, 'g');
         }
+      }
+      if (Config.SIMPLENOT) {
+        reValidator = RegExp(standardValidator, 'g');
+      } else {
+        reValidator = RegExp(extendedValidator, 'g');
       }
       return true;
     },
@@ -369,8 +369,8 @@
             test = name in INSENSITIVE_MAP;
             match[4] = match[4].replace(/(\x22|\x27)/g, '\\$1');
             match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
-            type = type.replace(/\%m/g,  test ? match[4].toLowerCase() : match[4]);
-            expr = 'n=s.getAttr(e,"' + name + '")' + (test ? '.toLowerCase()' : '') + ';';
+            type = type.replace(/\%m/g,  match[4].toLowerCase());
+            expr = 'n=s.getAttr(e,"' + name + '").toLowerCase();';
           } else if (!match[2]) {
             if (REFLECTED[name]) {
               test = 'default' + name.charAt(0).toUpperCase() + name.slice(1);
