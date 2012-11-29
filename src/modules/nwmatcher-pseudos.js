@@ -249,7 +249,7 @@ NW.Dom.registerSelector(
 
         case 'focus':
           source = 'hasFocus' in doc ?
-            'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href)){' + source + '}' :
+            'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href|!isNaN(e.tabIndex))){' + source + '}' :
             'if(e===d.activeElement&&(e.type||e.href)){' + source + '}';
           break;
 
