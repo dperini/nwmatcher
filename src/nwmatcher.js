@@ -1201,7 +1201,7 @@
             case 'focus':
               if (XML_DOCUMENT) break;
               source = NATIVE_FOCUS ?
-                'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href|!isNaN(e.tabIndex))){' + source + '}' :
+                'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href||!isNaN(e.tabIndex))){' + source + '}' :
                 'if(e===d.activeElement&&(e.type||e.href)){' + source + '}';
               break;
 
