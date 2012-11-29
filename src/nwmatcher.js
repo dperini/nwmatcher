@@ -866,7 +866,7 @@
   /*---------------------------- COMPILER METHODS ----------------------------*/
 
   // code string reused to build compiled functions
-  ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break;else continue main;',
+  ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break main;else continue main;',
 
   // compile a comma separated group of selector
   // @mode boolean true for select, false for match

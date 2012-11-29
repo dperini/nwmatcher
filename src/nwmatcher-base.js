@@ -171,7 +171,7 @@
 
   TO_UPPER_CASE = IE_LT_9 ? '.toUpperCase()' : '',
 
-  ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break;else continue main;',
+  ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break main;else continue main;',
   REJECT_NODE = IE_LT_9 ? 'if(e.nodeName<"A")continue;' : '',
 
   Config = {
