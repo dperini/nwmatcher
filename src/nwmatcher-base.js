@@ -259,13 +259,13 @@
 
   _byId = !('fileSize' in doc) ?
     function(id, from) {
-      id = id.replace(/\\/g, '');
+      id = id.replace(/\\([^\\]{1})/g, '$1');
       return from.getElementById && from.getElementById(id) ||
         byIdRaw(id, from.getElementsByTagName('*'));
     } :
     function(id, from) {
       var element = null;
-      id = id.replace(/\\/g, '');
+      id = id.replace(/\\([^\\]{1})/g, '$1');
       if (XML_DOCUMENT || from.nodeType != 9) {
         return byIdRaw(id, from.getElementsByTagName('*'));
       }
@@ -367,6 +367,7 @@
           name = match[1].toLowerCase();
           if (match[2] && match[4] && (type = Operators[match[2]])) {
             test = name in INSENSITIVE_MAP;
+            match[4] = match[4].replace(/(\x22|\x27)/g, '\\$1');
             match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
             type = type.replace(/\%m/g,  test ? match[4].toLowerCase() : match[4]);
             expr = 'n=s.getAttr(e,"' + name + '")' + (test ? '.toLowerCase()' : '') + ';';
@@ -381,6 +382,7 @@
             }
           } else if (match[2] == '!=' || match[2] == '=') {
             expr = 'n=e.attributes["' + name + '"];';
+            match[4] = match[4].replace(/(\x22|\x27)/g, '\\$1');
             type = 'n&&n.value' + match[2] + '="' + match[4] + '"';
           } else {
             expr = '';
@@ -552,12 +554,9 @@
             if ('#' + token == selector) {
               callback && callback(element);
               elements = [ element ];
-            }
-            if (/[>+~]/.test(selector)) {
+            } else if (/[>+~]/.test(selector)) {
               from = element.parentNode;
             } else {
-              selector = selector.replace('#' + token, '*');
-              lastPosition -= token.length + 1;
               from = element;
             }
           } else elements = [ ];
