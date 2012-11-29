@@ -177,7 +177,7 @@
   Config = {
     CACHING: false,
     SIMPLENOT: true,
-    USE_HTML5: false,
+    USE_HTML5: true,
     USE_QSAPI: false,
     VERBOSITY: true
   },
