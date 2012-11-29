@@ -1110,7 +1110,7 @@
                 n = /only/i.test(match[1]) ? 'previous' : 'next';
                 b = /first|last/i.test(match[1]);
 
-                type = /of-type/i.test(match[1]) ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
+                type = /-of-type/i.test(match[1]) ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
 
                 source = 'if(e!==h){' +
                   ( 'n=e;while((n=n.' + a + 'Sibling)' + type + ');if(!n){' + (b ? source :
