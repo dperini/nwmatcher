@@ -352,7 +352,7 @@
       // IE8 QSA has problems too and throws error with these dynamic pseudos
       element = doc.createElement('input');
       element.setAttribute('type', 'hidden');
-      expect(':enabled', div, element, 1) &&
+      expect(':enabled', div, element, 0) &&
         pattern.push(':enabled', ':disabled');
 
       // :link bugs with hyperlinks matching (Firefox/Safari)
@@ -853,7 +853,7 @@
     SIMPLENOT: true,
 
     // HTML5 handling for the ":checked" pseudo-class
-    USE_HTML5: false,
+    USE_HTML5: true,
 
     // controls enabling the Query Selector API branch
     USE_QSAPI: NATIVE_QSAPI,
@@ -1149,16 +1149,21 @@
             // CSS3 UI element states
             case 'checked':
               // for radio buttons checkboxes (HTML4) and options (HTML5)
-              test = 'if((typeof e.form!="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)&&e.checked)';
-              source = (Config.USE_HTML5 ? test + '||(/^option$/i.test(e.nodeName)&&e.selected)' : test) + '){' + source + '}';
+              source = 'if((typeof e.form!=="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)&&e.checked)' +
+                (Config.USE_HTML5 ? '||(/^option$/i.test(e.nodeName)&&(e.selected||e.checked))' : '') +
+                '){' + source + '}';
               break;
             case 'disabled':
               // does not consider hidden input fields
-              source = 'if(((typeof e.form!="undefined"&&!(/^hidden$/i).test(e.type))||s.isLink(e))&&e.disabled){' + source + '}';
+              source = 'if(((typeof e.form!=="undefined"' +
+                (Config.USE_HTML5 ? '' : '&&!(/^hidden$/i).test(e.type)') +
+                ')||s.isLink(e))&&e.disabled===true){' + source + '}';
               break;
             case 'enabled':
               // does not consider hidden input fields
-              source = 'if(((typeof e.form!="undefined"&&!(/^hidden$/i).test(e.type))||s.isLink(e))&&!e.disabled){' + source + '}';
+              source = 'if(((typeof e.form!=="undefined"' +
+                (Config.USE_HTML5 ? '' : '&&!(/^hidden$/i).test(e.type)') +
+                ')||s.isLink(e))&&e.disabled===false){' + source + '}';
               break;
 
             // CSS3 lang pseudo-class

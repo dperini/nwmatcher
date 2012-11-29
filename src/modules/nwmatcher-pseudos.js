@@ -202,16 +202,21 @@ NW.Dom.registerSelector(
           break;
 
         case 'checked':
-          test = 'if((typeof e.form!=="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)&&e.checked)';
-          source = (Config.USE_HTML5 ? test + '||(/^option$/i.test(e.nodeName)&&e.selected)' : test) + '){' + source + '}';
+          source = 'if((typeof e.form!=="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)&&e.checked)' +
+            (Config.USE_HTML5 ? '||(/^option$/i.test(e.nodeName)&&(e.selected||e.checked))' : '') +
+            '){' + source + '}';
           break;
 
         case 'disabled':
-          source = 'if(((typeof e.form!=="undefined"&&!(/hidden/i).test(e.type))||s.isLink(e))&&e.disabled){' + source + '}';
+          source = 'if(((typeof e.form!=="undefined"' +
+            (Config.USE_HTML5 ? '' : '&&!(/^hidden$/i).test(e.type)') +
+            ')||s.isLink(e))&&e.disabled===true){' + source + '}';
           break;
 
         case 'enabled':
-          source = 'if(((typeof e.form!=="undefined"&&!(/hidden/i).test(e.type))||s.isLink(e))&&!e.disabled){' + source + '}';
+          source = 'if(((typeof e.form!=="undefined"' +
+            (Config.USE_HTML5 ? '' : '&&!(/^hidden$/i).test(e.type)') +
+            ')||s.isLink(e))&&e.disabled===false){' + source + '}';
           break;
 
         case 'lang':
