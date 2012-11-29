@@ -18,26 +18,17 @@
 // for structural pseudo-classes extensions
 NW.Dom.registerSelector(
   'jquery:child',
-  /^\:(even|odd|eq|lt|gt|first|last|nth)(?:\(([^()]*)\))?(.*)/,
-  function(match, source) {
+  /^\:((?:(nth|eq|lt|gt)\(([^()]*)\))|(?:even|odd|first|last))(.*)/i,
+  function(match, source, selector) {
 
   var status = true, ACCEPT_NODE = NW.Dom.ACCEPT_NODE;
 
-  switch (match[1]) {
-    case 'even':
-      source = source.replace(ACCEPT_NODE, 'if((x=x^1)==1){' + ACCEPT_NODE + '}');
-      break;
+  switch (match[1].toLowerCase()) {
     case 'odd':
       source = source.replace(ACCEPT_NODE, 'if((x=x^1)==0){' + ACCEPT_NODE + '}');
       break;
-    case 'eq':
-      source = source.replace(ACCEPT_NODE, 'if(x++==' + match[2] + '){' + ACCEPT_NODE + '}');
-      break;
-    case 'lt':
-      source = source.replace(ACCEPT_NODE, 'if(x++<' + match[2] + '){' + ACCEPT_NODE + '}');
-      break;
-    case 'gt':
-      source = source.replace(ACCEPT_NODE, 'if(x++>' + match[2] + '){' + ACCEPT_NODE + '}');
+    case 'even':
+      source = source.replace(ACCEPT_NODE, 'if((x=x^1)==1){' + ACCEPT_NODE + '}');
       break;
     case 'first':
       source = 'n=h.getElementsByTagName(e.nodeName);if(n.length&&n[0]===e){' + source + '}';
@@ -45,11 +36,24 @@ NW.Dom.registerSelector(
     case 'last':
       source = 'n=h.getElementsByTagName(e.nodeName);if(n.length&&n[n.length-1]===e){' + source + '}';
       break;
-    case 'nth':
-      source = 'n=h.getElementsByTagName(e.nodeName);if(n.length&&n[' + match[2] + ']===e){' + source + '}';
-      break;
-    default:
-      status = false;
+	default:
+      switch (match[2].toLowerCase()) {
+        case 'nth':
+          source = 'n=h.getElementsByTagName(e.nodeName);if(n.length&&n[' + match[3] + ']===e){' + source + '}';
+          break;
+        case 'eq':
+          source = source.replace(ACCEPT_NODE, 'if(x++==' + match[3] + '){' + ACCEPT_NODE + '}');
+          break;
+        case 'lt':
+          source = source.replace(ACCEPT_NODE, 'if(x++<' + match[3] + '){' + ACCEPT_NODE + '}');
+          break;
+        case 'gt':
+          source = source.replace(ACCEPT_NODE, 'if(x++>' + match[3] + '){' + ACCEPT_NODE + '}');
+          break;
+        default:
+          status = false;
+          break;
+      }
       break;
   }
 
@@ -65,14 +69,14 @@ NW.Dom.registerSelector(
 // for element pseudo-classes extensions
 NW.Dom.registerSelector(
   'jquery:pseudo',
-  /^\:(has|checkbox|file|image|password|radio|reset|submit|text|button|input|header|hidden|visible|parent)(?:\((["']*)([^'"()]*)\2\))?(.*)/,
+  /^\:(has|checkbox|file|image|password|radio|reset|submit|text|button|input|header|hidden|visible|parent)(?:\(\s*(["']*)?([^'"()]*)\2\s*\))?(.*)/i,
   function(match, source) {
 
   var status = true, ACCEPT_NODE = NW.Dom.ACCEPT_NODE;
 
-  switch(match[1]) {
+  switch(match[1].toLowerCase()) {
     case 'has':
-      source = source.replace(ACCEPT_NODE, 'if(e.getElementsByTagName("' + match[3] + '")[0]){' + ACCEPT_NODE + '}');
+      source = source.replace(ACCEPT_NODE, 'if(e.getElementsByTagName("' + match[3].replace(/^\s|\s$/g, '') + '")[0]){' + ACCEPT_NODE + '}');
       break;
     case 'checkbox':
     case 'file':
@@ -82,7 +86,7 @@ NW.Dom.registerSelector(
     case 'reset':
     case 'submit':
     case 'text':
-      // :checkbox, :file, :image, :password, :radio, :reset, :submit, :text, ... ;-)
+      // :checkbox, :file, :image, :password, :radio, :reset, :submit, :text
       source = 'if(e.type&&e.type=="' + match[1] + '"){' + source + '}';
       break;
     case 'button':
