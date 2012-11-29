@@ -302,7 +302,7 @@ new Test.Unit.Runner({
   
   testSelectorWithEnabledDisabledChecked: function() {
     this.assertEnumEqual([$('disabled_text_field')], $$('#troubleForm > *:disabled'));
-    this.assertEnumEqual($('troubleForm').getInputs().without($('disabled_text_field'), $('hidden')), $$('#troubleForm > *:enabled'));
+    this.assertEnumEqual($('troubleForm').getInputs().without($('disabled_text_field')), $$('#troubleForm > *:enabled'));
     this.assertEnumEqual($('checked_box', 'checked_radio'), $$('#troubleForm *:checked'));
   },
   
