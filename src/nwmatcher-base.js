@@ -194,11 +194,8 @@
           selectResolvers = { };
         }
       }
-      if (Config.SIMPLENOT) {
-        reValidator = RegExp(standardValidator, 'g');
-      } else {
-        reValidator = RegExp(extendedValidator, 'g');
-      }
+      reValidator = RegExp(Config.SIMPLENOT ?
+        standardValidator : extendedValidator, 'g');
       return true;
     },
 
@@ -213,15 +210,9 @@
 
   emit =
     function(message) {
-      message = 'SYNTAX_ERR: ' + message + ' ';
-      if (Config.VERBOSITY) {
-        throw SyntaxError(message);
-      } else {
-        if (global.console && global.console.log) {
-          global.console.log(message);
-        } else {
-          global.status += message;
-        }
+      if (Config.VERBOSITY) { throw Error(message); }
+      if (global.console && global.console.log) {
+        global.console.log(message);
       }
     },
 

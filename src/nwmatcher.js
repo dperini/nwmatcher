@@ -818,26 +818,17 @@
           Config[i] = !!option[i] && NATIVE_QSAPI;
         }
       }
-      if (Config.SIMPLENOT) {
-        reValidator = new RegExp(standardValidator, 'g');
-      } else {
-        reValidator = new RegExp(extendedValidator, 'g');
-      }
+      reValidator = new RegExp(Config.SIMPLENOT ?
+        standardValidator : extendedValidator, 'g');
       return true;
     },
 
   // control user notifications
   emit =
     function(message) {
-      message = 'SYNTAX_ERR: ' + message + ' ';
-      if (Config.VERBOSITY) {
-        throw new SyntaxError(message);
-      } else {
-        if (global.console && global.console.log) {
-          global.console.log(message);
-        } else {
-          global.status += message;
-        }
+      if (Config.VERBOSITY) { throw new Error(message); }
+      if (global.console && global.console.log) {
+        global.console.log(message);
       }
     },
 
