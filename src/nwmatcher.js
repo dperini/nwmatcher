@@ -347,9 +347,10 @@
       expect(':checked', div, element, 0) &&
         pattern.push(':checked');
 
-      // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
-      // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
-      // IE8 QSA has problems too and throws error with these dynamic pseudos
+      // :enabled :disabled bugs with hidden fields (Firefox 3.5)
+      // http://www.w3.org/TR/html5/links.html#selector-enabled
+      // http://www.w3.org/TR/css3-selectors/#enableddisabled
+      // not supported by IE8 Query Selector
       element = doc.createElement('input');
       element.setAttribute('type', 'hidden');
       expect(':enabled', div, element, 0) &&
