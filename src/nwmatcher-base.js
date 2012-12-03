@@ -414,10 +414,12 @@
               if (status) { break; }
             }
           }
+
           if (!status) {
             emit('Unknown pseudo-class selector "' + selector + '"');
             return '';
           }
+
           if (!expr) {
             emit('Unknown token in selector "' + selector + '"');
             return '';
