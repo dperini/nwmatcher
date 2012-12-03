@@ -68,7 +68,7 @@ test("broken", function() {
 		try {
 			t(name, selector, [ ]);
 		} catch(e){
-			ok( 'SyntaxError' == e.name,
+			ok( /error/i.test(e.name),
 				name + ": " + selector );
 		}
 	}
