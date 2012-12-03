@@ -485,15 +485,15 @@
       var i, changed, element, elements, parts, token, original = selector;
 
       if (arguments.length === 0) {
-        emit('Missing required selector parameters');
-        return [ ];
-      } else if (selector === '') {
-        emit('Empty selector string');
+        emit('Not enough arguments');
         return [ ];
       } else if (typeof selector != 'string') {
         return [ ];
+      } else if (!(/[>+~*\w\u00a1-\uffff]/.test(selector))) {
+        emit('Invalid or illegal selector string');
+        return [ ];
       } else if (from && !(/1|9|11/).test(from.nodeType)) {
-        emit('Invalid context element');
+        emit('Invalid or illegal context element');
         return [ ];
       } else if (lastContext !== from) {
         switchContext(from || (from = doc));
