@@ -185,7 +185,7 @@
   reSplitToken = new RegExp('(' +
     '\\[' + attributes + '\\]|' +
     '\\(' + pseudoclass + '\\)|' +
-    '[^\\x20>+~]|\\\\.)+', 'g'),
+    '[^\\x20\\t\\r\\n\\f>+~]|\\\\.)+', 'g'),
 
   // for in excess whitespace removal
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
