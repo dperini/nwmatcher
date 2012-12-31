@@ -847,6 +847,10 @@
     // ':not()' pseudo-classes, as for specifications
     SIMPLENOT: true,
 
+    // strict QSA match all non-unique IDs (false)
+    // speed & libs compat match unique ID (true)
+    UNIQUE_ID: true,
+
     // HTML5 handling for the ":checked" pseudo-class
     USE_HTML5: true,
 
@@ -1354,7 +1358,7 @@
       if (!OPERA_QSAPI && RE_SIMPLE_SELECTOR.test(selector)) {
         switch (selector.charAt(0)) {
           case '#':
-            if ((element = _byId(selector.slice(1), from))) {
+            if (Config.UNIQUE_ID && (element = _byId(selector.slice(1), from))) {
               elements = [ element ];
             } else elements = [ ];
             break;
@@ -1419,7 +1423,7 @@
         }
 
         // ID optimization RTL, to reduce number of elements to visit
-        if ((parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
+        if (Config.UNIQUE_ID && (parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
           if ((element = _byId(token, from))) {
             if (match(element, selector)) {
               callback && callback(element);
@@ -1429,7 +1433,7 @@
         }
 
         // ID optimization LTR, to reduce selection context searches
-        else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
+        else if (Config.UNIQUE_ID && (parts = selector.match(Optimize.ID)) && (token = parts[1])) {
           if ((element = _byId(token, doc))) {
             if ('#' + token == selector) {
               callback && callback(element);

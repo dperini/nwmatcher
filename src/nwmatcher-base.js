@@ -177,6 +177,7 @@
   Config = {
     CACHING: false,
     SIMPLENOT: true,
+    UNIQUE_ID: true,
     USE_HTML5: true,
     VERBOSITY: true
   },
@@ -533,7 +534,7 @@
           lastPosition = selector.length - token.length;
         }
 
-        if ((parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
+        if (Config.UNIQUE_ID && (parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
           if ((element = _byId(token, from))) {
             if (match(element, selector)) {
               callback && callback(element);
@@ -542,7 +543,7 @@
           }
         }
 
-        else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
+        else if (Config.UNIQUE_ID && (parts = selector.match(Optimize.ID)) && (token = parts[1])) {
           if ((element = _byId(token, doc))) {
             if ('#' + token == selector) {
               callback && callback(element);
