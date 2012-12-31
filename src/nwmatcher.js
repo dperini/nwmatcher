@@ -827,7 +827,7 @@
   // control user notifications
   emit =
     function(message) {
-      if (Config.VERBOSITY) { throw new Error(message); }
+      if (Config.VERBOSITY) { throw new SyntaxError(message); }
       if (global.console && global.console.log) {
         global.console.log(message);
       }
