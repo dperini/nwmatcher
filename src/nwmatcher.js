@@ -728,6 +728,7 @@
       return node.getAttribute(attribute) || '';
     } :
     function(node, attribute) {
+      attribute = attribute.toLowerCase();
       return (
         // type needs using native getAttribute
         attribute == 'type' ? node.getAttribute(attribute) || '' :
@@ -747,6 +748,7 @@
         node.hasAttribute(attribute);
     } :
     function(node, attribute) {
+      attribute = attribute.toLowerCase();
       if (ATTR_DEFAULT[attribute]) {
         return !!node[ATTR_DEFAULT[attribute]];
       }

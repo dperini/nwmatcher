@@ -281,6 +281,7 @@
 
   getAttribute =
     function(node, attribute) {
+      attribute = attribute.toLowerCase();
       if (typeof node[attribute] == 'object') {
         return node.attributes[attribute] &&
           node.attributes[attribute].value || '';
