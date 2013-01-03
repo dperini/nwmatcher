@@ -728,15 +728,13 @@
       return node.getAttribute(attribute) || '';
     } :
     function(node, attribute) {
-      attribute = attribute.toLowerCase();
-      if (ATTR_DEFAULT[attribute]) {
-        return node[ATTR_DEFAULT[attribute]] || '';
-      }
       return (
+        // type needs using native getAttribute
+        attribute == 'type' ? node.getAttribute(attribute) || '' :
         // specific URI data attributes (parameter 2 to fix IE bug)
         ATTR_URIDATA[attribute] ? node.getAttribute(attribute, 2) || '' :
         // boolean attributes should return name instead of true/false
-        ATTR_BOOLEAN[attribute] ? node.getAttribute(attribute) ? attribute : '' :
+        ATTR_BOOLEAN[attribute] ? node.getAttribute(attribute) ? attribute : 'false' :
           ((node = node.getAttributeNode(attribute)) && node.value) || '');
     },
 
@@ -749,7 +747,6 @@
         node.hasAttribute(attribute);
     } :
     function(node, attribute) {
-      attribute = attribute.toLowerCase();
       if (ATTR_DEFAULT[attribute]) {
         return !!node[ATTR_DEFAULT[attribute]];
       }

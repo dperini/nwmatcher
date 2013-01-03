@@ -120,6 +120,11 @@
 
   reOptimizeSelector = RegExp(identifier + '|^$'),
 
+  ATTR_BOOLEAN = {
+    checked: 1, disabled: 1, ismap: 1,
+    multiple: 1, readonly: 1, selected: 1
+  },
+
   ATTR_URIDATA = {
     action: 2, cite: 2, codebase: 2, data: 2, href: 2,
     longdesc: 2, lowsrc: 2, src: 2, usemap: 2
@@ -274,11 +279,17 @@
       return _byId(id, from);
     },
 
-  getAttr =
+  getAttribute =
     function(node, attribute) {
+      if (typeof node[attribute] == 'object') {
+        return node.attributes[attribute] &&
+          node.attributes[attribute].value || '';
+      }
       return (
+        attribute == 'type' ? node.getAttribute(attribute) || '' :
         ATTR_URIDATA[attribute] ? node.getAttribute(attribute, 2) || '' :
-          ((node = node.attributes[attribute]) && node.value) || '');
+        ATTR_BOOLEAN[attribute] ? node.getAttribute(attribute) ? attribute : 'false' :
+          ((node = node.getAttributeNode(attribute)) && node.value) || '');
     },
 
   compile =
@@ -329,8 +340,8 @@
 
         else if ((match = selector.match(Patterns.id))) {
           source = 'if(' + (XML_DOCUMENT ?
-            's.getAttr(e,"id")' :
-            '(e.submit?s.getAttr(e,"id"):e.id)') +
+            's.getAttribute(e,"id")' :
+            '(e.submit?s.getAttribute(e,"id"):e.id)') +
             '=="' + match[1] + '"' +
             '){' + source + '}';
         }
@@ -362,7 +373,7 @@
             match[4] = match[4].replace(/(\x22|\x27)/g, '\\$1');
             match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
             type = type.replace(/\%m/g,  match[4].toLowerCase());
-            expr = 'n=s.getAttr(e,"' + name + '").toLowerCase();';
+            expr = 'n=s.getAttribute(e,"' + name + '").toLowerCase();';
           } else if (!match[2]) {
             if (REFLECTED[name]) {
               test = 'default' + name.charAt(0).toUpperCase() + name.slice(1);
@@ -605,7 +616,7 @@
     byId: _byId,
     match: match,
     select: select,
-    getAttr: getAttr
+    getAttribute: getAttribute
   };
 
   Tokens = {
