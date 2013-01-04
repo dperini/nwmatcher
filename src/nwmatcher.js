@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.3.0
  * Created: 20070722
- * Release: 20121203
+ * Release: 20121231
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -84,14 +84,14 @@
   // CSS quoted string values
   quotedvalue = '"[^"]*"' + "|'[^']*'",
 
-  // skip group of round brackets
+  // skip round brackets groups
   skipround = '\\([^()]+\\)|\\(.*\\)',
-  // skip group of curly brackets
+  // skip curly brackets groups
   skipcurly = '\\{[^{}]+\\}|\\{.*\\}',
-  // skip group of square brackets
+  // skip square brackets groups
   skipsquare = '\\[[^[\\]]*\\]|\\[.*\\]',
 
-  // skip [ ], ( ), { } groups in token tails
+  // skip [ ], ( ), { } brackets groups
   skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
 
   // http://www.w3.org/TR/css3-syntax/#characters
@@ -404,7 +404,7 @@
     'selected': 'defaultSelected'
   },
 
-  // attribute referencing URI data values need special treatment in IE
+  // attributes referencing URI data values need special treatment in IE
   ATTR_URIDATA = {
     'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
     'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2
@@ -734,7 +734,7 @@
           node.attributes[attribute].value || '';
       }
       return (
-        // type needs using native getAttribute
+        // 'type' can only be read by using native getAttribute
         attribute == 'type' ? node.getAttribute(attribute) || '' :
         // specific URI data attributes (parameter 2 to fix IE bug)
         ATTR_URIDATA[attribute] ? node.getAttribute(attribute, 2) || '' :
