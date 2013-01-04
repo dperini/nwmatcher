@@ -729,6 +729,10 @@
     } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
+      if (typeof node[attribute] == 'object') {
+        return node.attributes[attribute] &&
+          node.attributes[attribute].value || '';
+      }
       return (
         // type needs using native getAttribute
         attribute == 'type' ? node.getAttribute(attribute) || '' :
