@@ -759,10 +759,9 @@
       if (ATTR_DEFAULT[attribute]) {
         return !!node[ATTR_DEFAULT[attribute]];
       }
-      // need to get at AttributeNode first on IE
+      // read the attribute node
       node = node.getAttributeNode(attribute);
-      // use both "specified" & "nodeValue" properties
-      return !!(node && (node.specified || node.nodeValue));
+      return !!(node && node.specified);
     },
 
   // check node emptyness

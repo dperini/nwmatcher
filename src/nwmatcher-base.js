@@ -125,6 +125,12 @@
     multiple: 1, readonly: 1, selected: 1
   },
 
+  ATTR_DEFAULT = {
+    value: 'defaultValue',
+    checked: 'defaultChecked',
+    selected: 'defaultSelected'
+  },
+
   ATTR_URIDATA = {
     action: 2, cite: 2, codebase: 2, data: 2, href: 2,
     longdesc: 2, lowsrc: 2, src: 2, usemap: 2
@@ -171,8 +177,6 @@
     'href': 1, 'lang': 1, 'src': 1, 'style': 1, 'title': 1,
     'type': 1, 'xmlns': 1, 'xml:lang': 1, 'xml:space': 1
   },
-
-  REFLECTED = { 'value': 1, 'checked': 1, 'selected': 1 },
 
   TO_UPPER_CASE = IE_LT_9 ? '.toUpperCase()' : '',
 
@@ -294,6 +298,19 @@
           ((node = node.getAttributeNode(attribute)) && node.value) || '');
     },
 
+  hasAttribute = root.hasAttribute ?
+    function(node, attribute) {
+        return node.hasAttribute(attribute);
+    } :
+    function(node, attribute) {
+      attribute = attribute.toLowerCase();
+      if (ATTR_DEFAULT[attribute]) {
+        return !!node[ATTR_DEFAULT[attribute]];
+      }
+      node = node.getAttributeNode(attribute);
+      return !!(node && node.specified);
+    },
+
   compile =
     function(selector, source, mode) {
 
@@ -369,31 +386,21 @@
             emit('Unsupported operator in attribute selectors "' + selector + '"');
             return '';
           }
-          name = match[1].toLowerCase();
-          if (match[2] && match[4] && (type = Operators[match[2]])) {
-            test = name in INSENSITIVE_MAP;
-            match[4] = match[4].replace(/(\x22|\x27)/g, '\\$1');
-            match[4] = match[4].replace(/\\([0-9a-f]{2,2})/g, '\\x$1');
-            type = type.replace(/\%m/g,  match[4].toLowerCase());
-            expr = 'n=s.getAttribute(e,"' + name + '").toLowerCase();';
-          } else if (!match[2]) {
-            if (REFLECTED[name]) {
-              test = 'default' + name.charAt(0).toUpperCase() + name.slice(1);
-              expr = 'n=e["' + test + '"];';
-              type = 'n';
-            } else {
-              expr = 'n=e.attributes["' + name + '"];';
-              type = IE_LT_9 ? 'n&&n.specified' : 'n';
-            }
-          } else if (match[2] == '!=' || match[2] == '=') {
-            expr = 'n=e.attributes["' + name + '"];';
-            match[4] = match[4].replace(/(\x22|\x27)/g, '\\$1');
-            type = 'n&&n.value' + match[2] + '="' + match[4] + '"';
-          } else {
-            expr = '';
-            type = 'false';
+          test = 'false';
+          if (match[4]) {
+            type = INSENSITIVE_MAP[match[1].toLowerCase()];
+            match[4] =
+              (type ? match[4].toLowerCase() : match[4])
+              .replace(/\\([0-9a-f]{2,2})/g, '\\x$1')
+              .replace(/(\x22|\x27)/g, '\\$1');
           }
-          source = expr + 'if(' + type + '){' + source + '}';
+          if (match[2] && match[4] && (test = Operators[match[2]])) {
+            test = test.replace(/\%m/g, match[4]);
+          } else if (match[2] == '!=' || match[2] == '=') {
+            test = 'n' + match[2] + '="' + match[4] + '"';
+          }
+          expr = 'n=s.' + (match[2] ? 'get' : 'has') + 'Attribute(e,"' + match[1] + '")' + (type ? '.toLowerCase();' : ';');
+          source = expr + 'if(' + (match[2] ? test : 'n') + '){' + source + '}';
         }
 
         else if ((match = selector.match(Patterns.adjacent))) {
@@ -618,7 +625,8 @@
     byId: _byId,
     match: match,
     select: select,
-    getAttribute: getAttribute
+    getAttribute: getAttribute,
+    hasAttribute: hasAttribute
   };
 
   Tokens = {
