@@ -613,7 +613,8 @@
   // @return reference or null
   byId =
     function(id, from) {
-      switchContext(from || (from = doc));
+      from || (from = doc);
+      if (lastContext !== from) { switchContext(from); }
       return _byId(id, from);
     },
 
@@ -662,7 +663,8 @@
   // @return array
   byTag =
     function(tag, from) {
-      switchContext(from || (from = doc));
+      from || (from = doc);
+      if (lastContext !== from) { switchContext(from); }
       return _byTag(tag, from);
     },
 
@@ -701,7 +703,8 @@
   // @return array
   byClass =
     function(name, from) {
-      switchContext(from || (from = doc));
+      from || (from = doc);
+      if (lastContext !== from) { switchContext(from); }
       return _byClass(name, from);
     },
 

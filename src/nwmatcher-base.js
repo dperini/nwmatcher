@@ -275,7 +275,8 @@
 
   byId =
     function(id, from) {
-      switchContext(from || (from = doc));
+      from || (from = doc);
+      if (lastContext !== from) { switchContext(from); }
       return _byId(id, from);
     },
 
