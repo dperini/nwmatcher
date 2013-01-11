@@ -128,7 +128,7 @@ function getById(element){
     },
     'E[foo="bar"]': function(){
       this.assertEquivalent(select('a[href="#"]'), getById('link_1', 'link_2', 'link_3'));
-      this.assertThrowsException(/SYNTAX_ERR/, function(){
+      this.assertThrowsException(/Error/, function(){
         select('a[href=#]');
       });
       this.assertEqual(select('#troubleForm2 input[name="brackets[5][]"][value="2"]')[0], getById('chk_2'));
@@ -169,7 +169,7 @@ function getById(element){
     'E[foo*="bar"]': function(){
       this.assertEquivalent(select('div[class*="ers m"]'), getById('father', 'uncle'), 'matching substring');
       this.assertEquivalent(select('#level1 *[id*="2"]'), getById('level2_1', 'level3_2', 'level2_2', 'level2_3'));
-      this.assertThrowsException(/SYNTAX_ERR/, function(){
+      this.assertThrowsException(/Error/, function(){
         select('#level1 *[id*=2]');
       });
       if(RUN_BENCHMARKS){
@@ -184,7 +184,7 @@ function getById(element){
 	// *** these should throw SYNTAX_ERR ***
 
     'E[id=-1]': function(){
-      this.assertThrowsException(/SYNTAX_ERR/, function(){
+      this.assertThrowsException(/Error/, function(){
         select('#level1 *[id=-1]');
       });
       if(RUN_BENCHMARKS){
@@ -196,7 +196,7 @@ function getById(element){
       }
     },
     'E[class=-45deg]': function(){
-      this.assertThrowsException(/SYNTAX_ERR/, function(){
+      this.assertThrowsException(/Error/, function(){
         select('#level1 *[class=-45deg]');
       });
       if(RUN_BENCHMARKS){
@@ -208,7 +208,7 @@ function getById(element){
       }
     },
     'E[class=8mm]': function(){
-      this.assertThrowsException(/SYNTAX_ERR/, function(){
+      this.assertThrowsException(/Error/, function(){
         select('#level1 *[class=8mm]');
       });
       if(RUN_BENCHMARKS){
@@ -292,7 +292,7 @@ function getById(element){
         this.assertEquivalent(select('#level_only_child:empty'), [], 'newlines count as content!');
       }else{
         this.assertEqual(select('#level3_1:empty')[0], getById('level3_1'), 'IE forced empty content!');
-        this.skip("IE forced empty content!");
+        //this.skip("IE forced empty content!");
       }
       //Shouldn't return anything
       this.assertEquivalent(select('span:empty > *'), []);
