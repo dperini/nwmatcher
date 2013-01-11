@@ -101,9 +101,9 @@
    * nwmatcher.js - A fast CSS selector engine and matcher
    *
    * Author: Diego Perini <diego.perini at gmail com>
-   * Version: 1.2.5
+   * Version: 1.3.0
    * Created: 20070722
-   * Release: 20120101
+   * Release: 20130110
    *
    * License:
    *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -111,18 +111,33 @@
    *  http://javascript.nwbox.com/NWMatcher/nwmatcher.js
    */
   
-  (function(global) {
+  (function(global, factory) {
   
-    var version = 'nwmatcher-1.2.5',
+    if (typeof module === 'object' && typeof exports === 'object') {
+      // in a Node.js environment, the nwmatcher functions will operate on
+      // the passed "browserGlobal" and will be returned in an object
+      module.exports = function (browserGlobal) {
+        var exports = { };
+        factory(browserGlobal, exports);
+        return exports;
+      };
+    } else {
+      // in a browser environment, the nwmatcher functions will operate on
+      // the "global" loading them and be attached to "global.NW.Dom"
+      if (!global.NW) {
+        global.NW = { };
+      }
+      if (!global.NW.Dom) {
+        global.NW.Dom = { };
+      }
+      factory(global, global.NW.Dom);
+    }
   
-    // export the public API for CommonJS implementations,
-    // for headless JS engines or for standard web browsers
-    Dom =
-      // as CommonJS/NodeJS module
-      typeof exports == 'object' ? exports :
-      // create or extend NW namespace
-      ((global.NW || (global.NW = { })) &&
-      (global.NW.Dom || (global.NW.Dom = { }))),
+  })(this, function(global, exports) {
+  
+    var version = 'nwmatcher-1.3.0',
+  
+    Dom = exports,
   
     // processing context & root element
     doc = global.document,
@@ -160,19 +175,19 @@
     combinators = '[\\x20]|[>+~][^>+~]',
   
     // an+b format params for pseudo-classes
-    pseudoparms = '[-+]?\\d*n?[-+]?\\d*',
+    pseudoparms = '(?:[-+]?\\d*n)?[-+]?\\d*',
   
     // CSS quoted string values
     quotedvalue = '"[^"]*"' + "|'[^']*'",
   
-    // skip group of round brackets
+    // skip round brackets groups
     skipround = '\\([^()]+\\)|\\(.*\\)',
-    // skip group of curly brackets
+    // skip curly brackets groups
     skipcurly = '\\{[^{}]+\\}|\\{.*\\}',
-    // skip group of square brackets
+    // skip square brackets groups
     skipsquare = '\\[[^[\\]]*\\]|\\[.*\\]',
   
-    // skip [ ], ( ), { } groups in token tails
+    // skip [ ], ( ), { } brackets groups
     skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
   
     // http://www.w3.org/TR/css3-syntax/#characters
@@ -228,7 +243,7 @@
       // dom properties selector (extension)
       '|\\{' + extensions + '\\}' +
       // selector group separator (comma)
-      '|,' +
+      '|(?:,|' + whitespace + ')' +
       // close match group
       ')+',
   
@@ -255,7 +270,7 @@
     // split comma groups, exclude commas from
     // quotes '' "" and from brackets () [] {}
     reSplitGroup = new RegExp('(' +
-      '[^,\\\\\\[\\]]+' +
+      '[^,\\\\()[\\]]+' +
       '|' + skipsquare +
       '|' + skipround +
       '|' + skipcurly +
@@ -266,7 +281,7 @@
     reSplitToken = new RegExp('(' +
       '\\[' + attributes + '\\]|' +
       '\\(' + pseudoclass + '\\)|' +
-      '[^\\x20>+~]|\\\\.)+', 'g'),
+      '[^\\x20\\t\\r\\n\\f>+~]|\\\\.)+', 'g'),
   
     // for in excess whitespace removal
     reWhiteSpace = /[\x20\t\n\r\f]+/g,
@@ -428,12 +443,13 @@
         expect(':checked', div, element, 0) &&
           pattern.push(':checked');
   
-        // :enabled :disabled bugs with hidden fields (Firefox 3.5 QSA bug)
-        // http://www.w3.org/TR/html5/interactive-elements.html#selector-enabled
-        // IE8 QSA has problems too and throws error with these dynamic pseudos
+        // :enabled :disabled bugs with hidden fields (Firefox 3.5)
+        // http://www.w3.org/TR/html5/links.html#selector-enabled
+        // http://www.w3.org/TR/css3-selectors/#enableddisabled
+        // not supported by IE8 Query Selector
         element = doc.createElement('input');
         element.setAttribute('type', 'hidden');
-        expect(':enabled', div, element, 1) &&
+        expect(':enabled', div, element, 0) &&
           pattern.push(':enabled', ':disabled');
   
         // :link bugs with hyperlinks matching (Firefox/Safari)
@@ -479,12 +495,12 @@
   
     // dynamic attributes that needs to be checked against original HTML value
     ATTR_DEFAULT = {
-      value: 'defaultValue',
-      checked: 'defaultChecked',
-      selected: 'defaultSelected'
+      'value': 'defaultValue',
+      'checked': 'defaultChecked',
+      'selected': 'defaultSelected'
     },
   
-    // attribute referencing URI data values need special treatment in IE
+    // attributes referencing URI data values need special treatment in IE
     ATTR_URIDATA = {
       'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
       'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2
@@ -554,9 +570,9 @@
     // precompiled Regular Expressions
     Patterns = {
       // structural pseudo-classes and child selectors
-      spseudos: /^\:((root|empty|nth-)?(?:(first|last|only)-)?(child)?-?(of-type)?)(?:\(([^\x29]*)\))?(.*)/,
+      spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
       // uistates + dynamic + negation pseudo-classes
-      dpseudos: /^\:(link|visited|target|lang|not|active|focus|hover|checked|disabled|enabled|selected)(?:\((["']*)(.*?(\(.*\))?[^'"()]*?)\2\))?(.*)/,
+      dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/i,
       // element attribute matcher
       attribute: new RegExp('^\\[' + attrmatcher + '\\](.*)'),
       // E > F
@@ -672,13 +688,13 @@
     // @return reference or null
     _byId = !BUGGY_GEBID ?
       function(id, from) {
-        id = id.replace(/\\/g, '');
+        id = id.replace(/\\([^\\]{1})/g, '$1');
         return from.getElementById && from.getElementById(id) ||
           byIdRaw(id, from.getElementsByTagName('*'));
       } :
       function(id, from) {
         var element = null;
-        id = id.replace(/\\/g, '');
+        id = id.replace(/\\([^\\]{1})/g, '$1');
         if (XML_DOCUMENT || from.nodeType != 9) {
           return byIdRaw(id, from.getElementsByTagName('*'));
         }
@@ -693,7 +709,8 @@
     // @return reference or null
     byId =
       function(id, from) {
-        switchContext(from || (from = doc));
+        from || (from = doc);
+        if (lastContext !== from) { switchContext(from); }
         return _byId(id, from);
       },
   
@@ -742,7 +759,8 @@
     // @return array
     byTag =
       function(tag, from) {
-        switchContext(from || (from = doc));
+        from || (from = doc);
+        if (lastContext !== from) { switchContext(from); }
         return _byTag(tag, from);
       },
   
@@ -750,7 +768,7 @@
     // @return array
     byName =
       function(name, from) {
-        return select('[name="' + name.replace(/\\/g, '') + '"]', from);
+        return select('[name="' + name.replace(/\\([^\\]{1})/g, '$1') + '"]', from);
       },
   
     // elements by class (raw)
@@ -758,7 +776,7 @@
     byClassRaw =
       function(name, from) {
         var i = -1, j = i, data = [ ], element, elements = _byTag('*', from), n;
-        name = ' ' + (QUIRKS_MODE ? name.toLowerCase() : name).replace(/\\/g, '') + ' ';
+        name = ' ' + (QUIRKS_MODE ? name.toLowerCase() : name).replace(/\\([^\\]{1})/g, '$1') + ' ';
         while ((element = elements[++i])) {
           n = XML_DOCUMENT ? element.getAttribute('class') : element.className;
           if (n && n.length && (' ' + (QUIRKS_MODE ? n.toLowerCase() : n).
@@ -774,14 +792,15 @@
     _byClass =
       function(name, from) {
         return (BUGGY_GEBCN || BUGGY_QUIRKS_GEBCN || XML_DOCUMENT || !from.getElementsByClassName) ?
-          byClassRaw(name, from) : slice.call(from.getElementsByClassName(name.replace(/\\/g, '')), 0);
+          byClassRaw(name, from) : slice.call(from.getElementsByClassName(name.replace(/\\([^\\]{1})/g, '$1')), 0);
       },
   
     // publicly exposed byClass
     // @return array
     byClass =
       function(name, from) {
-        switchContext(from || (from = doc));
+        from || (from = doc);
+        if (lastContext !== from) { switchContext(from); }
         return _byClass(name, from);
       },
   
@@ -809,14 +828,17 @@
       } :
       function(node, attribute) {
         attribute = attribute.toLowerCase();
-        if (ATTR_DEFAULT[attribute]) {
-          return node[ATTR_DEFAULT[attribute]] || '';
+        if (typeof node[attribute] == 'object') {
+          return node.attributes[attribute] &&
+            node.attributes[attribute].value || '';
         }
         return (
+          // 'type' can only be read by using native getAttribute
+          attribute == 'type' ? node.getAttribute(attribute) || '' :
           // specific URI data attributes (parameter 2 to fix IE bug)
           ATTR_URIDATA[attribute] ? node.getAttribute(attribute, 2) || '' :
           // boolean attributes should return name instead of true/false
-          ATTR_BOOLEAN[attribute] ? node.getAttribute(attribute) ? attribute : '' :
+          ATTR_BOOLEAN[attribute] ? node.getAttribute(attribute) ? attribute : 'false' :
             ((node = node.getAttributeNode(attribute)) && node.value) || '');
       },
   
@@ -833,10 +855,9 @@
         if (ATTR_DEFAULT[attribute]) {
           return !!node[ATTR_DEFAULT[attribute]];
         }
-        // need to get at AttributeNode first on IE
+        // read the attribute node
         node = node.getAttributeNode(attribute);
-        // use both "specified" & "nodeValue" properties
-        return !!(node && (node.specified || node.nodeValue));
+        return !!(node && node.specified);
       },
   
     // check node emptyness
@@ -882,42 +903,34 @@
   
     /*------------------------------- DEBUGGING --------------------------------*/
   
-    // set working mode
+    // get/set (string/object) working modes
     configure =
-      function(options) {
-        for (var i in options) {
-          Config[i] = !!options[i];
+      function(option) {
+        if (typeof option == 'string') { return Config[option]; }
+        if (typeof option != 'object') { return false; }
+        for (var i in option) {
+          Config[i] = !!option[i];
           if (i == 'SIMPLENOT') {
             matchContexts = { };
             matchResolvers = { };
             selectContexts = { };
             selectResolvers = { };
             Config['USE_QSAPI'] = false;
-            reValidator = new RegExp(extendedValidator, 'g');
           } else if (i == 'USE_QSAPI') {
-            Config[i] = !!options[i] && NATIVE_QSAPI;
-            reValidator = new RegExp(standardValidator, 'g');
+            Config[i] = !!option[i] && NATIVE_QSAPI;
           }
         }
+        reValidator = new RegExp(Config.SIMPLENOT ?
+          standardValidator : extendedValidator, 'g');
+        return true;
       },
   
     // control user notifications
     emit =
       function(message) {
-        message = 'SYNTAX_ERR: ' + message + ' ';
-        if (Config.VERBOSITY) {
-          // FF/Safari/Opera DOMException.SYNTAX_ERR = 12
-          if (typeof global.DOMException != 'undefined') {
-            throw { code: 12, message: message };
-          } else {
-            throw new Error(12, message);
-          }
-        } else {
-          if (global.console && global.console.log) {
-            global.console.log(message);
-          } else {
-            global.status += message;
-          }
+        if (Config.VERBOSITY) { throw new Error(message); }
+        if (global.console && global.console.log) {
+          global.console.log(message);
         }
       },
   
@@ -935,8 +948,12 @@
       // ':not()' pseudo-classes, as for specifications
       SIMPLENOT: true,
   
+      // strict QSA match all non-unique IDs (false)
+      // speed & libs compat match unique ID (true)
+      UNIQUE_ID: true,
+  
       // HTML5 handling for the ":checked" pseudo-class
-      USE_HTML5: false,
+      USE_HTML5: true,
   
       // controls enabling the Query Selector API branch
       USE_QSAPI: NATIVE_QSAPI,
@@ -949,7 +966,7 @@
     /*---------------------------- COMPILER METHODS ----------------------------*/
   
     // code string reused to build compiled functions
-    ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break;else continue main;',
+    ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break main;else continue main;',
   
     // compile a comma separated group of selector
     // @mode boolean true for select, false for match
@@ -963,7 +980,7 @@
         typeof source == 'string' || (source = '');
   
         if (parts.length == 1) {
-          source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+          source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
         } else {
           // for each selector in the group
           var i = -1, seen = { }, token;
@@ -972,26 +989,33 @@
             // avoid repeating the same token
             // in comma separated group (p, p)
             if (!seen[token] && (seen[token] = true)) {
-              source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;');
+              source += compileSelector(token, mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
             }
           }
         }
   
         if (mode) {
           // for select method
-          return new Function('c,s,r,d,h,g,f',
+          return new Function('c,s,r,d,h,g,f,v',
             'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
         } else {
           // for match method
-          return new Function('e,s,r,d,h,g,f',
+          return new Function('e,s,r,d,h,g,f,v',
             'var N,n,x=0,k=e;' + source + 'return false;');
         }
       },
   
+    // allows to cache already visited nodes
+    FILTER =
+      'var z=v[@]||(v[@]=[]),l=z.length-1;' +
+      'while(l>=0&&z[l]!==e)--l;' +
+      'if(l!==-1){break;}' +
+      'z[z.length]=e;',
+  
     // compile a CSS3 string selector into ad-hoc javascript matching function
     // @return string (to be compiled)
     compileSelector =
-      function(selector, source) {
+      function(selector, source, mode) {
   
         var a, b, n, k = 0, expr, match, result, status, test, type;
   
@@ -1066,10 +1090,12 @@
               // case treatment depends on document
               HTML_TABLE['class'] = QUIRKS_MODE ? 1 : 0;
               // replace escaped values and HTML entities
-              match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
+              match[4] = match[4].replace(/(\x22|\x27)/g, '\\$1');
+              match[4] = match[4].replace(/\\([0-9a-f]{2,2})/g, '\\x$1');
               test = (XML_DOCUMENT ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
               type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
             } else if (match[2] == '!=' || match[2] == '=') {
+              match[4] = match[4].replace(/(\x22|\x27)/g, '\\$1');
               type = 'n' + match[2] + '="' + match[4] + '"';
             }
   
@@ -1084,14 +1110,16 @@
           // *** Adjacent sibling combinator
           // E + F (F adiacent sibling of E)
           else if ((match = selector.match(Patterns.adjacent))) {
+            source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
             source = NATIVE_TRAVERSAL_API ?
-              'var N' + k + '=e;if(e&&(e=e.previousElementSibling)){' + source + '}e=N' + k + ';' :
+              'var N' + k + '=e;while(e&&(e=e.previousElementSibling)){' + source + 'break;}e=N' + k + ';' :
               'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}e=N' + k + ';';
           }
   
           // *** General sibling combinator
           // E ~ F (F relative sibling of E)
           else if ((match = selector.match(Patterns.relative))) {
+            source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
             source = NATIVE_TRAVERSAL_API ?
               ('var N' + k + '=e;e=e.parentNode.firstElementChild;' +
               'while(e&&e!==N' + k + '){' + source + 'e=e.nextElementSibling;}e=N' + k + ';') :
@@ -1102,12 +1130,14 @@
           // *** Child combinator
           // E > F (F children of E)
           else if ((match = selector.match(Patterns.children))) {
-            source = 'var N' + k + '=e;if(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
+            source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
+            source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + 'break;}e=N' + k + ';';
           }
   
           // *** Descendant combinator
           // E F (E ancestor of F)
           else if ((match = selector.match(Patterns.ancestor))) {
+            source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
             source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
           }
   
@@ -1118,11 +1148,10 @@
           // :nth-child(), :nth-last-child(), :nth-of-type(), :nth-last-of-type()
           else if ((match = selector.match(Patterns.spseudos)) && match[1]) {
   
-            switch (match[2]) {
-  
+            switch (match[1]) {
               case 'root':
                 // element root of the document
-                if (match[7]) {
+                if (match[3]) {
                   source = 'if(e===h||s.contains(h,e)){' + source + '}';
                 } else {
                   source = 'if(e===h){' + source + '}';
@@ -1135,50 +1164,50 @@
                 break;
   
               default:
-                if (match[2] && match[6]) {
-                  if (match[6] == 'n') {
+                if (match[1] && match[2]) {
+                  if (match[2] == 'n') {
                     source = 'if(e!==h){' + source + '}';
                     break;
-                  } else if (match[6] == 'even') {
+                  } else if (match[2] == 'even') {
                     a = 2;
                     b = 0;
-                  } else if (match[6] == 'odd') {
+                  } else if (match[2] == 'odd') {
                     a = 2;
                     b = 1;
                   } else {
                     // assumes correct "an+b" format, "b" before "a" to keep "n" values
-                    b = ((n = match[6].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
-                    a = ((n = match[6].match(/(-?\d*)n/)) ? parseInt(n[1], 10) : 0);
+                    b = ((n = match[2].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
+                    a = ((n = match[2].match(/(-?\d*)n/i)) ? parseInt(n[1], 10) : 0);
                     if (n && n[1] == '-') a = -1;
                   }
   
                   // build test expression out of structural pseudo (an+b) parameters
                   // see here: http://www.w3.org/TR/css3-selectors/#nth-child-pseudo
-                  test =  b < 1 && a > 1 ? '(n-(' + b + '))%' + a + '==0' : a > +1 ?
-                    (match[3] == 'last') ? '(n-(' + b + '))%' + a + '==0' :
+                  test = a > 1 ?
+                    (/last/i.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
                     'n>=' + b + '&&(n-(' + b + '))%' + a + '==0' : a < -1 ?
-                    (match[3] == 'last') ? '(n-(' + b + '))%' + a + '==0' :
+                    (/last/i.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
                     'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a=== 0 ?
                     'n==' + b :
-                    (match[3] == 'last') ?
+                    (/last/i.test(match[1])) ?
                       a == -1 ? 'n>=' + b : 'n<=' + b :
                       a == -1 ? 'n<=' + b : 'n>=' + b;
   
                   // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
                   source =
                     'if(e!==h){' +
-                      'n=s[' + (match[5] ? '"nthOfType"' : '"nthElement"') + ']' +
-                        '(e,' + (match[3] == 'last' ? 'true' : 'false') + ');' +
+                      'n=s[' + (/-of-type/i.test(match[1]) ? '"nthOfType"' : '"nthElement"') + ']' +
+                        '(e,' + (/last/i.test(match[1]) ? 'true' : 'false') + ');' +
                       'if(' + test + '){' + source + '}' +
                     '}';
   
                 } else {
                   // 6 cases: 3 (first, last, only) x 1 (child) x 2 (-of-type)
-                  a = match[3] == 'first' ? 'previous' : 'next';
-                  n = match[3] == 'only' ? 'previous' : 'next';
-                  b = match[3] == 'first' || match[3] == 'last';
+                  a = /first/i.test(match[1]) ? 'previous' : 'next';
+                  n = /only/i.test(match[1]) ? 'previous' : 'next';
+                  b = /first|last/i.test(match[1]);
   
-                  type = match[5] ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
+                  type = /-of-type/i.test(match[1]) ? '&&n.nodeName!=e.nodeName' : '&&n.nodeName<"@"';
   
                   source = 'if(e!==h){' +
                     ( 'n=e;while((n=n.' + a + 'Sibling)' + type + ');if(!n){' + (b ? source :
@@ -1196,7 +1225,7 @@
           // CSS3 :link, :visited
           else if ((match = selector.match(Patterns.dpseudos)) && match[1]) {
   
-            switch (match[1]) {
+            switch (match[1].match(/^\w+/)[0]) {
               // CSS3 negation pseudo-class
               case 'not':
                 // compile nested selectors, DO NOT pass the callback parameter
@@ -1210,7 +1239,7 @@
                   return '';
                 } else {
                   if ('compatMode' in doc) {
-                    source = 'if(!' + compile([expr], '', false) + '(e,s,r,d,h,g)){' + source + '}';
+                    source = 'if(!' + compile(expr, '', false) + '(e,s,r,d,h,g)){' + source + '}';
                   } else {
                     source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",g)){' + source +'}';
                   }
@@ -1220,25 +1249,30 @@
               // CSS3 UI element states
               case 'checked':
                 // for radio buttons checkboxes (HTML4) and options (HTML5)
-                test = 'if((typeof e.form!="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)&&e.checked)';
-                source = (Config.USE_HTML5 ? test + '||(/^option$/i.test(e.nodeName)&&e.selected)' : test) + '){' + source + '}';
+                source = 'if((typeof e.form!=="undefined"&&(/^(?:radio|checkbox)$/i).test(e.type)&&e.checked)' +
+                  (Config.USE_HTML5 ? '||(/^option$/i.test(e.nodeName)&&(e.selected||e.checked))' : '') +
+                  '){' + source + '}';
                 break;
               case 'disabled':
                 // does not consider hidden input fields
-                source = 'if(((typeof e.form!="undefined"&&!(/^hidden$/i).test(e.type))||s.isLink(e))&&e.disabled){' + source + '}';
+                source = 'if(((typeof e.form!=="undefined"' +
+                  (Config.USE_HTML5 ? '' : '&&!(/^hidden$/i).test(e.type)') +
+                  ')||s.isLink(e))&&e.disabled===true){' + source + '}';
                 break;
               case 'enabled':
                 // does not consider hidden input fields
-                source = 'if(((typeof e.form!="undefined"&&!(/^hidden$/i).test(e.type))||s.isLink(e))&&!e.disabled){' + source + '}';
+                source = 'if(((typeof e.form!=="undefined"' +
+                  (Config.USE_HTML5 ? '' : '&&!(/^hidden$/i).test(e.type)') +
+                  ')||s.isLink(e))&&e.disabled===false){' + source + '}';
                 break;
   
               // CSS3 lang pseudo-class
               case 'lang':
                 test = '';
-                if (match[3]) test = match[3].substr(0, 2) + '-';
+                if (match[2]) test = match[2].substr(0, 2) + '-';
                 source = 'do{(n=e.lang||"").toLowerCase();' +
-                  'if((n==""&&h.lang=="' + match[3].toLowerCase() + '")||' +
-                  '(n&&(n=="' + match[3].toLowerCase() +
+                  'if((n==""&&h.lang=="' + match[2].toLowerCase() + '")||' +
+                  '(n&&(n=="' + match[2].toLowerCase() +
                   '"||n.substr(0,3)=="' + test.toLowerCase() + '")))' +
                   '{' + source + 'break;}}while((e=e.parentNode)&&e!==g);';
                 break;
@@ -1272,7 +1306,7 @@
               case 'focus':
                 if (XML_DOCUMENT) break;
                 source = NATIVE_FOCUS ?
-                  'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href)){' + source + '}' :
+                  'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href||!isNaN(e.tabIndex))){' + source + '}' :
                   'if(e===d.activeElement&&(e.type||e.href)){' + source + '}';
                 break;
   
@@ -1281,7 +1315,7 @@
               case 'selected':
                 // fix Safari selectedIndex property bug
                 expr = BUGGY_SELECTED ? '||(n=e.parentNode)&&n.options[n.selectedIndex]===e' : '';
-                source = 'if(/^option$/i.test(e.nodeName)&&(e.selected' + expr + ')){' + source + '}';
+                source = 'if(/^option$/i.test(e.nodeName)&&(e.selected||e.checked' + expr + ')){' + source + '}';
                 break;
   
               default:
@@ -1295,14 +1329,13 @@
             // this is where external extensions are
             // invoked if expressions match selectors
             expr = false;
-            status = true;
-  
+            status = false;
             for (expr in Selectors) {
               if ((match = selector.match(Selectors[expr].Expression)) && match[1]) {
                 result = Selectors[expr].Callback(match, source);
                 source = result.source;
                 status = result.status;
-                if (status) break;
+                if (status) { break; }
               }
             }
   
@@ -1383,7 +1416,14 @@
           matchContexts[selector] = from;
         }
   
-        return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback);
+        return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback, { });
+      },
+  
+    // select only the first element
+    // matching selector (document ordered)
+    first =
+      function(selector, from) {
+        return select(selector, from, function() { return false; })[0] || null;
       },
   
     // select elements matching selector
@@ -1396,15 +1436,15 @@
         var i, changed, element, elements, parts, token, original = selector;
   
         if (arguments.length === 0) {
-          emit('Missing required selector parameters');
-          return [ ];
-        } else if (selector === '') {
-          emit('Empty selector string');
+          emit('Not enough arguments');
           return [ ];
         } else if (typeof selector != 'string') {
           return [ ];
+        } else if (!(/[>+~*\w\u00a1-\uffff]/.test(selector))) {
+          emit('Invalid or illegal selector string');
+          return [ ];
         } else if (from && !(/1|9|11/).test(from.nodeType)) {
-          emit('Invalid context element');
+          emit('Invalid or illegal context element');
           return [ ];
         } else if (lastContext !== from) {
           // reset context data when it changes
@@ -1419,7 +1459,7 @@
         if (!OPERA_QSAPI && RE_SIMPLE_SELECTOR.test(selector)) {
           switch (selector.charAt(0)) {
             case '#':
-              if ((element = _byId(selector.slice(1), from))) {
+              if (Config.UNIQUE_ID && (element = _byId(selector.slice(1), from))) {
                 elements = [ element ];
               } else elements = [ ];
               break;
@@ -1484,7 +1524,7 @@
           }
   
           // ID optimization RTL, to reduce number of elements to visit
-          if ((parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
+          if (Config.UNIQUE_ID && (parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
             if ((element = _byId(token, from))) {
               if (match(element, selector)) {
                 callback && callback(element);
@@ -1494,17 +1534,14 @@
           }
   
           // ID optimization LTR, to reduce selection context searches
-          else if ((parts = selector.match(Optimize.ID)) && (token = parts[1])) {
+          else if (Config.UNIQUE_ID && (parts = selector.match(Optimize.ID)) && (token = parts[1])) {
             if ((element = _byId(token, doc))) {
               if ('#' + token == selector) {
                 callback && callback(element);
                 elements = [ element ];
-              }
-              if (/[>+~]/.test(selector)) {
+              } else if (/[>+~]/.test(selector)) {
                 from = element.parentNode;
               } else {
-                selector = selector.replace('#' + token, '*');
-                lastPosition -= token.length + 1;
                 from = element;
               }
             } else elements = [ ];
@@ -1560,7 +1597,7 @@
           selectContexts[selector] = from;
         }
   
-        elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback);
+        elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback, { });
   
         Config.CACHING && Dom.saveResults(original, from, doc, elements);
   
@@ -1568,6 +1605,9 @@
       },
   
     /*-------------------------------- STORAGE ---------------------------------*/
+  
+    // empty function handler
+    FN = function(x) { return x; },
   
     // compiled match functions returning booleans
     matchContexts = { },
@@ -1602,7 +1642,7 @@
       // selection/matching
       select: select,
       match: match
-    };
+    },
   
     Tokens = {
       prefixes: prefixes,
@@ -1648,6 +1688,9 @@
     // element match selector, return boolean true/false
     Dom.match = match;
   
+    // first element match only, return element or null
+    Dom.first = first;
+  
     // elements matching selector, starting from element
     Dom.select = select;
   
@@ -1661,16 +1704,16 @@
     Dom.configure = configure;
   
     // initialize caching for each document
-    Dom.setCache = function() { return; };
+    Dom.setCache = FN;
   
     // load previously collected result set
-    Dom.loadResults = function() { return; };
+    Dom.loadResults = FN;
   
     // save previously collected result set
-    Dom.saveResults = function() { return; };
+    Dom.saveResults = FN;
   
     // handle missing context in selector strings
-    Dom.shortcuts = function(x) { return x; };
+    Dom.shortcuts = FN;
   
     // options enabing specific engine functionality
     Dom.Config = Config;
@@ -1708,11 +1751,10 @@
   
     // init context specific variables
     switchContext(doc, true);
-  
-  })(this);
-  
 
-  provide("nwmatcher", module.exports);
+  });
+
+  provide("nwmatcher", module.exports(this));
 
   !function (doc, $) {
     // a bunch of this code is borrowed from Qwery so NW is a drop-in replacement
