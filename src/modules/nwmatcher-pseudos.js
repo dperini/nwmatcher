@@ -259,7 +259,7 @@ NW.Dom.registerSelector(
           break;
 
         case 'selected':
-          source = 'if(e.nodeName.toLowerCase()=="option"&&e.selected){' + source + '}';
+          source = 'if(/^option$/i.test(e.nodeName)&&(e.selected||e.checked)){' + source + '}';
           break;
 
         default:
