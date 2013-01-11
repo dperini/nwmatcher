@@ -216,7 +216,7 @@
 
   emit =
     function(message) {
-      if (Config.VERBOSITY) { throw SyntaxError(message); }
+      if (Config.VERBOSITY) { throw Error(message); }
       if (global.console && global.console.log) {
         global.console.log(message);
       }
