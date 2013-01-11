@@ -174,9 +174,7 @@ NW.Dom.registerSelector(
     Config = NW.Dom.Config,
     Tokens = NW.Dom.Tokens,
 
-    reTrimSpace = RegExp(
-      '^' + Tokens.whitespace +
-      '|' + Tokens.whitespace + '$', 'g'),
+    reTrimSpace = RegExp('^\\s+|\\s+$', 'g'),
 
     reSimpleNot = RegExp('^((?!:not)' +
       '(' + Tokens.prefixes + '|' + Tokens.identifier +
