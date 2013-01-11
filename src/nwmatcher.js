@@ -996,7 +996,7 @@
             HTML_TABLE['class'] = QUIRKS_MODE ? 1 : 0;
             // replace escaped values and HTML entities
             match[4] = match[4].replace(/(\x22|\x27)/g, '\\$1');
-            match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
+            match[4] = match[4].replace(/\\([0-9a-f]{2,2})/g, '\\x$1');
             test = (XML_DOCUMENT ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
             type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
           } else if (match[2] == '!=' || match[2] == '=') {

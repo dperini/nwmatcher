@@ -373,7 +373,7 @@
           if (match[2] && match[4] && (type = Operators[match[2]])) {
             test = name in INSENSITIVE_MAP;
             match[4] = match[4].replace(/(\x22|\x27)/g, '\\$1');
-            match[4] = match[4].replace(/\\([0-9a-f]{2,2})/, '\\x$1');
+            match[4] = match[4].replace(/\\([0-9a-f]{2,2})/g, '\\x$1');
             type = type.replace(/\%m/g,  match[4].toLowerCase());
             expr = 'n=s.getAttribute(e,"' + name + '").toLowerCase();';
           } else if (!match[2]) {
