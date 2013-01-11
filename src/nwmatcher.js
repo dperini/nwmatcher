@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.3.0
  * Created: 20070722
- * Release: 20121231
+ * Release: 20130110
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -1510,6 +1510,9 @@
 
   /*-------------------------------- STORAGE ---------------------------------*/
 
+  // empty function handler
+  FN = function(x) { return x; },
+
   // compiled match functions returning booleans
   matchContexts = { },
   matchResolvers = { },
@@ -1605,16 +1608,16 @@
   Dom.configure = configure;
 
   // initialize caching for each document
-  Dom.setCache = function() { return; };
+  Dom.setCache = FN;
 
   // load previously collected result set
-  Dom.loadResults = function() { return; };
+  Dom.loadResults = FN;
 
   // save previously collected result set
-  Dom.saveResults = function() { return; };
+  Dom.saveResults = FN;
 
   // handle missing context in selector strings
-  Dom.shortcuts = function(x) { return x; };
+  Dom.shortcuts = FN;
 
   // options enabing specific engine functionality
   Dom.Config = Config;

@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.3.0
  * Created: 20070722
- * Release: 20121203
+ * Release: 20130110
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -615,6 +615,8 @@
       return elements;
     },
 
+  FN = function(x) { return x; },
+
   matchContexts = { },
   matchResolvers = { },
 
@@ -654,16 +656,17 @@
   Dom.configure = configure;
 
   Dom.Config = Config;
+
   Dom.Operators = Operators;
   Dom.Selectors = Selectors;
+
   Dom.Snapshot = Snapshot;
   Dom.Tokens = Tokens;
 
-  Dom.setCache = function() { return; };
-  Dom.loadResults = function() { return; };
-  Dom.saveResults = function() { return; };
-
-  Dom.shortcuts = function(x) { return x; };
+  Dom.setCache = FN;
+  Dom.shortcuts = FN;
+  Dom.loadResults = FN;
+  Dom.saveResults = FN;
 
   Dom.registerOperator =
     function(symbol, resolver) {
