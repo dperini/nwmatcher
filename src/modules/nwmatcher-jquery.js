@@ -86,8 +86,8 @@ NW.Dom.registerSelector(
     case 'reset':
     case 'submit':
     case 'text':
-      // :checkbox, :file, :image, :password, :radio, :reset, :submit, :text
-      source = 'if(e.type&&e.type=="' + match[1] + '"){' + source + '}';
+      // :checkbox, :file, :image, :password, :radio, :reset, :submit, :text ...
+      source = 'if(e.type&&e.getAttribute("type")=="' + match[1] + '"){' + source + '}';
       break;
     case 'button':
     case 'input':
