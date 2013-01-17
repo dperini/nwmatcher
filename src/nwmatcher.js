@@ -45,7 +45,7 @@
 
   // processing context & root element
   doc = global.document,
-  root = doc.documentElement,
+  root = doc.documentElement || doc,
 
   // save utility methods references
   slice = [ ].slice,
