@@ -238,7 +238,7 @@
           typeof doc.compatMode == 'string' ?
           doc.compatMode.indexOf('CSS') < 0 :
           (function() {
-            var style = document.createElement('div').style;
+            var style = doc.createElement('div').style;
             return style && (style.width = 1) && style.width == '1px';
           })();
 
