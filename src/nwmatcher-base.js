@@ -70,7 +70,7 @@
   identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)+',
 
   attrcheck = '(' + quotedvalue + '|' + identifier + ')',
-  attributes = whitespace + '(' + encoding + '+:?' + encoding + '+)' +
+  attributes = whitespace + '(' + encoding + '*:?' + encoding + '+)' +
     whitespace + '(?:' + operators + whitespace + attrcheck + ')?' + whitespace,
 
   attrmatcher = attributes.replace(attrcheck, '([\\x22\\x27]*)((?:\\\\?.)*?)\\3'),
