@@ -185,7 +185,7 @@
   reSplitToken = new RegExp('(' +
     '\\[' + attributes + '\\]|' +
     '\\(' + pseudoclass + '\\)|' +
-    '[^\\x20\\t\\r\\n\\f>+~]|\\\\.)+', 'g'),
+    '\\\\.|[^\\x20\\t\\r\\n\\f>+~])+', 'g'),
 
   // for in excess whitespace removal
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
@@ -1363,9 +1363,11 @@
       if (!OPERA_QSAPI && RE_SIMPLE_SELECTOR.test(selector)) {
         switch (selector.charAt(0)) {
           case '#':
-            if (Config.UNIQUE_ID && (element = _byId(selector.slice(1), from))) {
-              elements = [ element ];
-            } else elements = [ ];
+            if (Config.UNIQUE_ID) {
+              if (element = _byId(selector.slice(1), from)) {
+                elements = [ element ];
+              } else elements = [ ];
+            }
             break;
           case '.':
             elements = _byClass(selector.slice(1), from);

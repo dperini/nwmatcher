@@ -114,7 +114,7 @@
   reSplitToken = RegExp('(' +
     '\\[' + attributes + '\\]|' +
     '\\(' + pseudoclass + '\\)|' +
-    '[^\\x20\\t\\n\\r\\f>+~]|\\\\.)+', 'g'),
+    '\\\\.|[^\\x20\\t\\n\\r\\f>+~])+', 'g'),
 
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
