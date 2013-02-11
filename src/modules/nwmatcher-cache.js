@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Diego Perini
+ * Copyright (C) 2007-2013 Diego Perini
  * All rights reserved.
  *
  * Caching/memoization module for NWMatcher

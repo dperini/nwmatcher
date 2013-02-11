@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2007-2012 Diego Perini
+ * Copyright (C) 2007-2013 Diego Perini
  * All rights reserved.
  *
  * nwmatcher-noqsa.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.3.0
+ * Version: 1.3.1
  * Created: 20070722
- * Release: 20130210
+ * Release: 20130211
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
