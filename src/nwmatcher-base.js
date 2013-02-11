@@ -467,7 +467,7 @@
       if (!(element && element.nodeName > '@')) {
         emit('Invalid element argument');
         return false;
-      } else if (!selector || typeof selector != 'string') {
+      } else if (typeof selector != 'string') {
         emit('Invalid selector argument');
         return false;
       } else if (lastContext !== from) {
@@ -511,9 +511,6 @@
         emit('Not enough arguments');
         return [ ];
       } else if (typeof selector != 'string') {
-        return [ ];
-      } else if (!(/[>+~*\w\u00a1-\uffff]/.test(selector))) {
-        emit('Invalid or illegal selector string');
         return [ ];
       } else if (from && !(/1|9|11/).test(from.nodeType)) {
         emit('Invalid or illegal context element');

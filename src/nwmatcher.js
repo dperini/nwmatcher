@@ -17,7 +17,7 @@
 
 (function(global, factory) {
 
-  if (typeof module === 'object' && typeof exports === 'object') {
+  if (typeof module == 'object' && typeof exports == 'object') {
     // in a Node.js environment, the nwmatcher functions will operate on
     // the passed "browserGlobal" and will be returned in an object
     module.exports = function (browserGlobal) {
@@ -1286,7 +1286,7 @@
       if (!(element && element.nodeName > '@')) {
         emit('Invalid element argument');
         return false;
-      } else if (!selector || typeof selector != 'string') {
+      } else if (typeof selector != 'string') {
         emit('Invalid selector argument');
         return false;
       } else if (from && from.nodeType == 1 && !contains(from, element)) {
@@ -1314,7 +1314,7 @@
         }
       } else parts = lastPartsMatch;
 
-      // compile matcher resolver if necessary
+      // compile matcher resolvers if necessary
       if (!matchResolvers[selector] || matchContexts[selector] !== from) {
         matchResolvers[selector] = compile(isSingleMatch ? [selector] : parts, '', false);
         matchContexts[selector] = from;
@@ -1343,9 +1343,6 @@
         emit('Not enough arguments');
         return [ ];
       } else if (typeof selector != 'string') {
-        return [ ];
-      } else if (!(/[>+~*\w\u00a1-\uffff]/.test(selector))) {
-        emit('Invalid or illegal selector string');
         return [ ];
       } else if (from && !(/1|9|11/).test(from.nodeType)) {
         emit('Invalid or illegal context element');
