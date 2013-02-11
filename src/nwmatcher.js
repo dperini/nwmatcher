@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.3.0
  * Created: 20070722
- * Release: 20130110
+ * Release: 20130210
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
