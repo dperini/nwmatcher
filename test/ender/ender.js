@@ -95,15 +95,15 @@
   var module = { exports: {} }, exports = module.exports;
 
   /*
-   * Copyright (C) 2007-2012 Diego Perini
+   * Copyright (C) 2007-2013 Diego Perini
    * All rights reserved.
    *
    * nwmatcher.js - A fast CSS selector engine and matcher
    *
    * Author: Diego Perini <diego.perini at gmail com>
-   * Version: 1.3.0
+   * Version: 1.3.1
    * Created: 20070722
-   * Release: 20130110
+   * Release: 20130211
    *
    * License:
    *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -113,7 +113,7 @@
   
   (function(global, factory) {
   
-    if (typeof module === 'object' && typeof exports === 'object') {
+    if (typeof module == 'object' && typeof exports == 'object') {
       // in a Node.js environment, the nwmatcher functions will operate on
       // the passed "browserGlobal" and will be returned in an object
       module.exports = function (browserGlobal) {
@@ -135,7 +135,7 @@
   
   })(this, function(global, exports) {
   
-    var version = 'nwmatcher-1.3.0',
+    var version = 'nwmatcher-1.3.1',
   
     Dom = exports,
   
@@ -202,7 +202,7 @@
   
     // build attribute string
     attrcheck = '(' + quotedvalue + '|' + identifier + ')',
-    attributes = whitespace + '(' + encoding + '+:?' + encoding + '+)' +
+    attributes = whitespace + '(' + encoding + '*:?' + encoding + '+)' +
       whitespace + '(?:' + operators + whitespace + attrcheck + ')?' + whitespace,
     attrmatcher = attributes.replace(attrcheck, '([\\x22\\x27]*)((?:\\\\?.)*?)\\3'),
   
@@ -281,7 +281,7 @@
     reSplitToken = new RegExp('(' +
       '\\[' + attributes + '\\]|' +
       '\\(' + pseudoclass + '\\)|' +
-      '[^\\x20\\t\\r\\n\\f>+~]|\\\\.)+', 'g'),
+      '\\\\.|[^\\x20\\t\\r\\n\\f>+~])+', 'g'),
   
     // for in excess whitespace removal
     reWhiteSpace = /[\x20\t\n\r\f]+/g,
@@ -1382,7 +1382,7 @@
         if (!(element && element.nodeName > '@')) {
           emit('Invalid element argument');
           return false;
-        } else if (!selector || typeof selector != 'string') {
+        } else if (typeof selector != 'string') {
           emit('Invalid selector argument');
           return false;
         } else if (from && from.nodeType == 1 && !contains(from, element)) {
@@ -1410,7 +1410,7 @@
           }
         } else parts = lastPartsMatch;
   
-        // compile matcher resolver if necessary
+        // compile matcher resolvers if necessary
         if (!matchResolvers[selector] || matchContexts[selector] !== from) {
           matchResolvers[selector] = compile(isSingleMatch ? [selector] : parts, '', false);
           matchContexts[selector] = from;
@@ -1440,9 +1440,6 @@
           return [ ];
         } else if (typeof selector != 'string') {
           return [ ];
-        } else if (!(/[>+~*\w\u00a1-\uffff]/.test(selector))) {
-          emit('Invalid or illegal selector string');
-          return [ ];
         } else if (from && !(/1|9|11/).test(from.nodeType)) {
           emit('Invalid or illegal context element');
           return [ ];
@@ -1459,9 +1456,11 @@
         if (!OPERA_QSAPI && RE_SIMPLE_SELECTOR.test(selector)) {
           switch (selector.charAt(0)) {
             case '#':
-              if (Config.UNIQUE_ID && (element = _byId(selector.slice(1), from))) {
-                elements = [ element ];
-              } else elements = [ ];
+              if (Config.UNIQUE_ID) {
+                if (element = _byId(selector.slice(1), from)) {
+                  elements = [ element ];
+                } else elements = [ ];
+              }
               break;
             case '.':
               elements = _byClass(selector.slice(1), from);
@@ -1751,7 +1750,7 @@
   
     // init context specific variables
     switchContext(doc, true);
-
+  
   });
 
   provide("nwmatcher", module.exports(this));
