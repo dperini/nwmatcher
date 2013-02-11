@@ -2,15 +2,17 @@
 
 A fast CSS selector engine and matcher.
 
+
 ## Install
 
-In a standard web page:
+To include NWMatcher in a standard web page:
 
-<script type="text/javascript" src="nwmatcher.js"></script>
+    <script type="text/javascript" src="nwmatcher.js"></script>
 
 In nodeJS:
 
 $ npm install nwmatcher.js
+
 
 ## Notes
 
@@ -85,4 +87,5 @@ You can read more about NWMatcher [Features and compliance](https://github.com/d
 *registerSelector( name, rexp, func )*
 
 >register a new selector, the matching RegExp and the appropriate resolver function in the Selectors table
+
 
