@@ -223,12 +223,10 @@
   // see http://yura.thinkweb2.com/cft/
   NATIVE_SLICE_PROTO =
     (function() {
-      var isBuggy = false, id = root.id;
-      root.id = 'length';
+      var isBuggy = false;
       try {
         isBuggy = !!slice.call(doc.childNodes, 0)[0];
       } catch(e) { }
-      root.id = id;
       return isBuggy;
     })(),
 
