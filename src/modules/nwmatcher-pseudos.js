@@ -21,7 +21,7 @@
  * :checked, :disabled, :enabled, :selected
  */
 
-(function() {
+(function(global) {
 
   var LINK_NODES = {
     'a': 1, 'A': 1,
@@ -85,7 +85,7 @@
   NW.Dom.Snapshot['nthOfType'] = nthOfType;
   NW.Dom.Snapshot['nthElement'] = nthElement;
 
-})();
+})(this);
 
 NW.Dom.registerSelector(
   'nwmatcher:spseudos',
@@ -168,15 +168,15 @@ NW.Dom.registerSelector(
 NW.Dom.registerSelector(
   'nwmatcher:dpseudos',
   /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/i,
-  (function() {
+  (function(global) {
 
-    var doc = document,
+    var doc = global.document,
     Config = NW.Dom.Config,
     Tokens = NW.Dom.Tokens,
 
-    reTrimSpace = RegExp('^\\s+|\\s+$', 'g'),
+    reTrimSpace = global.RegExp('^\\s+|\\s+$', 'g'),
 
-    reSimpleNot = RegExp('^((?!:not)' +
+    reSimpleNot = global.RegExp('^((?!:not)' +
       '(' + Tokens.prefixes + '|' + Tokens.identifier +
       '|\\([^()]*\\))+|\\[' + Tokens.attributes + '\\])$');
 
@@ -272,4 +272,4 @@ NW.Dom.registerSelector(
 
     };
 
-  })());
+  })(this));

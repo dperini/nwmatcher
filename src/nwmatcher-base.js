@@ -98,12 +98,12 @@
 
   extendedValidator = standardValidator.replace(pseudoclass, '.*'),
 
-  reValidator = RegExp(standardValidator, 'g'),
+  reValidator = global.RegExp(standardValidator, 'g'),
 
-  reTrimSpaces = RegExp('^' +
+  reTrimSpaces = global.RegExp('^' +
     whitespace + '|' + whitespace + '$', 'g'),
 
-  reSplitGroup = RegExp('(' +
+  reSplitGroup = global.RegExp('(' +
     '[^,\\\\()[\\]]+' +
     '|\\[[^[\\]]*\\]|\\[.*\\]' +
     '|\\([^()]+\\)|\\(.*\\)' +
@@ -111,14 +111,14 @@
     '|\\\\.' +
     ')+', 'g'),
 
-  reSplitToken = RegExp('(' +
+  reSplitToken = global.RegExp('(' +
     '\\[' + attributes + '\\]|' +
     '\\(' + pseudoclass + '\\)|' +
     '\\\\.|[^\\x20\\t\\n\\r\\f>+~])+', 'g'),
 
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
-  reOptimizeSelector = RegExp(identifier + '|^$'),
+  reOptimizeSelector = global.RegExp(identifier + '|^$'),
 
   ATTR_BOOLEAN = {
     checked: 1, disabled: 1, ismap: 1,
@@ -148,17 +148,17 @@
   },
 
   Optimize = {
-    ID: RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
-    TAG: RegExp('^(' + encoding + '+)|' + skipgroup),
-    CLASS: RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
+    ID: global.RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
+    TAG: global.RegExp('^(' + encoding + '+)|' + skipgroup),
+    CLASS: global.RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
   },
 
   Patterns = {
     universal: /^\*(.*)/,
-    id: RegExp('^#(' + encoding + '+)(.*)'),
-    tagName: RegExp('^(' + encoding + '+)(.*)'),
-    className: RegExp('^\\.(' + encoding + '+)(.*)'),
-    attribute: RegExp('^\\[' + attrmatcher + '\\](.*)'),
+    id: global.RegExp('^#(' + encoding + '+)(.*)'),
+    tagName: global.RegExp('^(' + encoding + '+)(.*)'),
+    className: global.RegExp('^\\.(' + encoding + '+)(.*)'),
+    attribute: global.RegExp('^\\[' + attrmatcher + '\\](.*)'),
     children: /^[\x20\t\n\r\f]*\>[\x20\t\n\r\f]*(.*)/,
     adjacent: /^[\x20\t\n\r\f]*\+[\x20\t\n\r\f]*(.*)/,
     relative: /^[\x20\t\n\r\f]*\~[\x20\t\n\r\f]*(.*)/,
@@ -204,7 +204,7 @@
           selectResolvers = { };
         }
       }
-      reValidator = RegExp(Config.SIMPLENOT ?
+      reValidator = global.RegExp(Config.SIMPLENOT ?
         standardValidator : extendedValidator, 'g');
       return true;
     },
@@ -220,7 +220,7 @@
 
   emit =
     function(message) {
-      if (Config.VERBOSITY) { throw Error(message); }
+      if (Config.VERBOSITY) { throw global.Error(message); }
       if (global.console && global.console.log) {
         global.console.log(message);
       }
@@ -331,10 +331,10 @@
       }
 
       if (mode)
-        return Function('c,s,r,d,h,g,f,v',
+        return global.Function('c,s,r,d,h,g,f,v',
           'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
       else
-        return Function('e,s,r,d,h,g,f,v',
+        return global.Function('e,s,r,d,h,g,f,v',
           'var N,n,x=0,k=e;' + source + 'return false;');
     },
 

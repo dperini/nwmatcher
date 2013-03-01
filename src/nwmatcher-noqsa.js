@@ -87,11 +87,11 @@
 
   extendedValidator = standardValidator.replace(pseudoclass, '.*'),
 
-  reValidator = RegExp(standardValidator, 'g'),
+  reValidator = global.RegExp(standardValidator, 'g'),
 
   reTrimSpaces = /^\s*|\s*$/g,
 
-  reSimpleNot = RegExp('^(' +
+  reSimpleNot = global.RegExp('^(' +
     '(?!:not)' +
     '([#.:]?' +
     '|' + identifier +
@@ -101,12 +101,12 @@
 
   reSplitGroup = /([^,\\()[\]]+|\[[^[\]]*\]|\[.*\]|\([^()]+\)|\(.*\)|\{[^{}]+\}|\{.*\}|\\.)+/g,
 
-  reSplitToken = RegExp('(' +
+  reSplitToken = global.RegExp('(' +
     '\\[' + attributes + '\\]|' +
     '\\(' + pseudoclass + '\\)|' +
     '\\\\.|[^\\s>+~])+', 'g'),
 
-  reOptimizeSelector = RegExp(identifier + '|^$'),
+  reOptimizeSelector = global.RegExp(identifier + '|^$'),
 
   QUIRKS_MODE,
   XML_DOCUMENT,
@@ -145,23 +145,23 @@
   },
 
   Optimize = {
-    ID: RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
-    TAG: RegExp('^(' + encoding + '+)|' + skipgroup),
-    CLASS: RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
+    ID: global.RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
+    TAG: global.RegExp('^(' + encoding + '+)|' + skipgroup),
+    CLASS: global.RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
   },
 
   Patterns = {
     spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
     dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/i,
-    attribute: RegExp('^\\[' + attrmatcher + '\\](.*)'),
+    attribute: global.RegExp('^\\[' + attrmatcher + '\\](.*)'),
     children: /^\s*\>\s*(.*)/,
     adjacent: /^\s*\+\s*(.*)/,
     relative: /^\s*\~\s*(.*)/,
     ancestor: /^\s+(.*)/,
     universal: /^\*(.*)/,
-    id: RegExp('^#(' + encoding + '+)(.*)'),
-    tagName: RegExp('^(' + encoding + '+)(.*)'),
-    className: RegExp('^\\.(' + encoding + '+)(.*)')
+    id: global.RegExp('^#(' + encoding + '+)(.*)'),
+    tagName: global.RegExp('^(' + encoding + '+)(.*)'),
+    className: global.RegExp('^\\.(' + encoding + '+)(.*)')
   },
 
   concatCall =
@@ -317,14 +317,14 @@
           selectResolvers = { };
         }
       }
-      reValidator = RegExp(Config.SIMPLENOT ?
+      reValidator = global.RegExp(Config.SIMPLENOT ?
         standardValidator : extendedValidator, 'g');
       return true;
     },
 
   emit =
     function(message) {
-      if (Config.VERBOSITY) { throw Error(message); }
+      if (Config.VERBOSITY) { throw global.Error(message); }
       if (global.console && global.console.log) {
         global.console.log(message);
       }
@@ -370,10 +370,10 @@
       }
 
       if (mode) {
-        return Function('c,s,r,d,h,g,f,v',
+        return global.Function('c,s,r,d,h,g,f,v',
           'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
       } else {
-        return Function('e,s,r,d,h,g,f,v',
+        return global.Function('e,s,r,d,h,g,f,v',
           'var N,n,x=0,k=e;' + source + 'return false;');
       }
     },

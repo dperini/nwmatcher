@@ -48,8 +48,8 @@
   root = doc.documentElement,
 
   // save utility methods references
-  slice = [ ].slice,
-  string = { }.toString,
+  slice = global.Array.prototype.slice,
+  string = global.Object.prototype.toString,
 
   // persist previous parsed data
   isSingleMatch,
@@ -155,15 +155,15 @@
   extendedValidator = standardValidator.replace(pseudoclass, '.*'),
 
   // validator for standard selectors as default
-  reValidator = new RegExp(standardValidator, 'g'),
+  reValidator = new global.RegExp(standardValidator, 'g'),
 
   // whitespace is any combination of these 5 character [\x20\t\n\r\f]
   // http://www.w3.org/TR/css3-selectors/#selector-syntax
-  reTrimSpaces = new RegExp('^' +
+  reTrimSpaces = new global.RegExp('^' +
     whitespace + '|' + whitespace + '$', 'g'),
 
   // only allow simple selectors nested in ':not()' pseudo-classes
-  reSimpleNot = new RegExp('^(' +
+  reSimpleNot = new global.RegExp('^(' +
     '(?!:not)' +
     '(' + prefixes +
     '|' + identifier +
@@ -173,7 +173,7 @@
 
   // split comma groups, exclude commas from
   // quotes '' "" and from brackets () [] {}
-  reSplitGroup = new RegExp('(' +
+  reSplitGroup = new global.RegExp('(' +
     '[^,\\\\()[\\]]+' +
     '|' + skipsquare +
     '|' + skipround +
@@ -182,7 +182,7 @@
     ')+', 'g'),
 
   // split last, right most, selector group token
-  reSplitToken = new RegExp('(' +
+  reSplitToken = new global.RegExp('(' +
     '\\[' + attributes + '\\]|' +
     '\\(' + pseudoclass + '\\)|' +
     '\\\\.|[^\\x20\\t\\r\\n\\f>+~])+', 'g'),
@@ -190,7 +190,7 @@
   // for in excess whitespace removal
   reWhiteSpace = /[\x20\t\n\r\f]+/g,
 
-  reOptimizeSelector = new RegExp(identifier + '|^$'),
+  reOptimizeSelector = new global.RegExp(identifier + '|^$'),
 
   /*----------------------------- FEATURE TESTING ----------------------------*/
 
@@ -200,7 +200,7 @@
     return function(object, method) {
       var m = object && object[method] || false;
       return m && typeof m != 'string' &&
-        s == (m + '').replace(new RegExp(method, 'g'), '');
+        s == (m + '').replace(new global.RegExp(method, 'g'), '');
     };
   })(),
 
@@ -238,7 +238,7 @@
   // detect buggy gEBID
   BUGGY_GEBID = NATIVE_GEBID ?
     (function() {
-      var isBuggy = true, x = 'x' + String(+new Date),
+      var isBuggy = true, x = 'x' + global.String(+new global.Date),
         a = doc.createElementNS ? 'a' : '<a name="' + x + '">';
       (a = doc.createElement(a)).name = x;
       root.insertBefore(a, root.firstChild);
@@ -369,17 +369,17 @@
       }
 
       return pattern.length ?
-        new RegExp(pattern.join('|')) :
+        new global.RegExp(pattern.join('|')) :
         { 'test': function() { return false; } };
 
     })() :
     true,
 
   // matches class selectors
-  RE_CLASS = new RegExp('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + identifier + ')'),
+  RE_CLASS = new global.RegExp('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + identifier + ')'),
 
   // matches simple id, tag & class selectors
-  RE_SIMPLE_SELECTOR = new RegExp(
+  RE_SIMPLE_SELECTOR = new global.RegExp(
     !(BUGGY_GEBTN && BUGGY_GEBCN) ? !OPERA ?
       '^(?:\\*|[.#]?-?[_a-zA-Z]{1}' + encoding + '*)$' :
       '^(?:\\*|#-?[_a-zA-Z]{1}' + encoding + '*)$' :
@@ -464,9 +464,9 @@
 
   // optimization expressions
   Optimize = {
-    ID: new RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
-    TAG: new RegExp('^(' + encoding + '+)|' + skipgroup),
-    CLASS: new RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
+    ID: new global.RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
+    TAG: new global.RegExp('^(' + encoding + '+)|' + skipgroup),
+    CLASS: new global.RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
   },
 
   // precompiled Regular Expressions
@@ -476,7 +476,7 @@
     // uistates + dynamic + negation pseudo-classes
     dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/i,
     // element attribute matcher
-    attribute: new RegExp('^\\[' + attrmatcher + '\\](.*)'),
+    attribute: new global.RegExp('^\\[' + attrmatcher + '\\](.*)'),
     // E > F
     children: /^[\x20\t\n\r\f]*\>[\x20\t\n\r\f]*(.*)/,
     // E + F
@@ -488,11 +488,11 @@
     // all
     universal: /^\*(.*)/,
     // id
-    id: new RegExp('^#(' + encoding + '+)(.*)'),
+    id: new global.RegExp('^#(' + encoding + '+)(.*)'),
     // tag
-    tagName: new RegExp('^(' + encoding + '+)(.*)'),
+    tagName: new global.RegExp('^(' + encoding + '+)(.*)'),
     // class
-    className: new RegExp('^\\.(' + encoding + '+)(.*)')
+    className: new global.RegExp('^\\.(' + encoding + '+)(.*)')
   },
 
   /*------------------------------ UTIL METHODS ------------------------------*/
@@ -822,7 +822,7 @@
           Config[i] = !!option[i] && NATIVE_QSAPI;
         }
       }
-      reValidator = new RegExp(Config.SIMPLENOT ?
+      reValidator = new global.RegExp(Config.SIMPLENOT ?
         standardValidator : extendedValidator, 'g');
       return true;
     },
@@ -830,7 +830,7 @@
   // control user notifications
   emit =
     function(message) {
-      if (Config.VERBOSITY) { throw new Error(message); }
+      if (Config.VERBOSITY) { throw new global.Error(message); }
       if (global.console && global.console.log) {
         global.console.log(message);
       }
@@ -898,11 +898,11 @@
 
       if (mode) {
         // for select method
-        return new Function('c,s,r,d,h,g,f,v',
+        return new global.Function('c,s,r,d,h,g,f,v',
           'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
       } else {
         // for match method
-        return new Function('e,s,r,d,h,g,f,v',
+        return new global.Function('e,s,r,d,h,g,f,v',
           'var N,n,x=0,k=e;' + source + 'return false;');
       }
     },

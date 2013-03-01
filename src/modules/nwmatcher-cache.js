@@ -71,7 +71,7 @@
         } else {
           // pause caching while we are getting
           // hammered by dom mutations (jdalton)
-          now = new Date;
+          now = new global.Date;
           if ((now - lastCalled) < minCacheRest) {
             isPaused = isExpired = true;
             setTimeout(function() { isPaused = false; }, minCacheRest);
