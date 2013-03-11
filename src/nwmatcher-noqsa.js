@@ -387,7 +387,7 @@
   compileSelector =
     function(selector, source, mode) {
 
-      var k = 0, expr, match, name, result, status, test, type;
+      var a, b, n, k = 0, expr, match, name, result, status, test, type;
 
       while (selector) {
 
