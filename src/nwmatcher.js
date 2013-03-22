@@ -315,10 +315,10 @@
   // detect Opera browser
   OPERA = /opera/i.test(string.call(global.opera)),
 
-  // skip simpe selector optimizations for Opera >= 11
+  // skip simple selector optimizations for Opera >= 11
   OPERA_QSAPI = OPERA && parseFloat(opera.version()) >= 11,
 
-  // check Seletor API implementations
+  // check Selector API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
       var pattern = [ ], div = doc.createElement('div'), element,
@@ -331,7 +331,7 @@
         return result;
       };
 
-      // ^= $= *= operators bugs whith empty values (Opera 10 / IE8)
+      // ^= $= *= operators bugs with empty values (Opera 10 / IE8)
       element = doc.createElement('p');
       element.setAttribute('class', '');
       expect('[class^=""]', div, element, 1) &&
