@@ -1,8 +1,9 @@
 bin/
 build/
+dist/
+lib/
 test/
-test/ender/.gitignore
 .gitattributes
 .gitignore
+.npmignore
 Makefile
-node_modules/
