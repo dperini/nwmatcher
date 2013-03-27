@@ -1564,9 +1564,6 @@
   // code referenced by extensions
   Dom.ACCEPT_NODE = ACCEPT_NODE;
 
-  // log resolvers errors/warnings
-  Dom.emit = emit;
-
   // retrieve element by id attr
   Dom.byId = byId;
 
@@ -1617,6 +1614,9 @@
   // handle missing context in selector strings
   Dom.shortcuts = FN;
 
+  // log resolvers errors/warnings
+  Dom.emit = emit;
+
   // options enabing specific engine functionality
   Dom.Config = Config;
 
@@ -1633,6 +1633,9 @@
 
   // export string patterns
   Dom.Tokens = Tokens;
+
+  // export version string
+  Dom.Version = version;
 
   // add or overwrite user defined operators
   Dom.registerOperator =

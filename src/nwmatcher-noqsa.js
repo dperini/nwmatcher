@@ -31,7 +31,9 @@
 
 })(this, function(global, exports) {
 
-  var Dom = exports,
+  var version = 'nwmatcher-1.3.2beta',
+
+  Dom = exports,
 
   doc = global.document,
   root = doc.documentElement,
@@ -822,6 +824,8 @@
 
   Dom.Operators = Operators;
   Dom.Selectors = Selectors;
+
+  Dom.Version = version;
 
   Dom.registerOperator =
     function(symbol, resolver) {

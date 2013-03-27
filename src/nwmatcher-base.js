@@ -643,8 +643,6 @@
 
   Dom.ACCEPT_NODE = ACCEPT_NODE;
 
-  Dom.emit = emit;
-
   Dom.byId = byId;
   Dom.match = match;
   Dom.first = first;
@@ -652,18 +650,20 @@
   Dom.compile = compile;
   Dom.configure = configure;
 
-  Dom.Config = Config;
-
-  Dom.Operators = Operators;
-  Dom.Selectors = Selectors;
-
-  Dom.Snapshot = Snapshot;
-  Dom.Tokens = Tokens;
-
   Dom.setCache = FN;
   Dom.shortcuts = FN;
   Dom.loadResults = FN;
   Dom.saveResults = FN;
+
+  Dom.emit = emit;
+  Dom.Config = Config;
+  Dom.Snapshot = Snapshot;
+
+  Dom.Operators = Operators;
+  Dom.Selectors = Selectors;
+
+  Dom.Tokens = Tokens;
+  Dom.Version = version;
 
   Dom.registerOperator =
     function(symbol, resolver) {
