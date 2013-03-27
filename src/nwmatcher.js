@@ -1360,9 +1360,7 @@
         switch (selector.charAt(0)) {
           case '#':
             if (Config.UNIQUE_ID) {
-              if (element = _byId(selector.slice(1), from)) {
-                elements = [ element ];
-              } else elements = [ ];
+              elements = (element = _byId(selector.slice(1), from)) ? [ element ] : [ ];
             }
             break;
           case '.':
