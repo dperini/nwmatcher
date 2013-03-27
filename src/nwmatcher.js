@@ -1298,7 +1298,7 @@
 
       selector = selector.replace(reTrimSpaces, '');
 
-      Config.SHORTCUTS && (selector = NW.Dom.shortcuts(selector, element, from));
+      Config.SHORTCUTS && (selector = Dom.shortcuts(selector, element, from));
 
       if (lastMatcher != selector) {
         // process valid selector strings
@@ -1391,7 +1391,7 @@
 
       selector = selector.replace(reTrimSpaces, '');
 
-      Config.SHORTCUTS && (selector = NW.Dom.shortcuts(selector, from));
+      Config.SHORTCUTS && (selector = Dom.shortcuts(selector, from));
 
       if ((changed = lastSelector != selector)) {
         // process valid selector strings
