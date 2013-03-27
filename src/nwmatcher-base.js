@@ -390,9 +390,9 @@
           if (match[4]) {
             type = INSENSITIVE_MAP[match[1].toLowerCase()];
             match[4] =
-              (type ? match[4].toLowerCase() : match[4])
-              .replace(/\\([0-9a-f]{2,2})/g, '\\x$1')
-              .replace(/(\x22|\x27)/g, '\\$1');
+              (type ? match[4].toLowerCase() : match[4]).
+                replace(/\\([0-9a-f]{2,2})/g, '\\x$1').
+                replace(/(\x22|\x27)/g, '\\$1');
           }
           if (match[2] && match[4] && (test = Operators[match[2]])) {
             test = test.replace(/\%m/g, match[4]);
