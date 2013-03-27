@@ -380,10 +380,11 @@
 
   // matches simple id, tag & class selectors
   RE_SIMPLE_SELECTOR = new global.RegExp(
-    !(BUGGY_GEBTN && BUGGY_GEBCN) ? !OPERA ?
-      '^(?:\\*|[.#]?-?[_a-zA-Z]{1}' + encoding + '*)$' :
+    BUGGY_GEBTN && BUGGY_GEBCN || OPERA ?
+      '^#?-?[_a-zA-Z]{1}' + encoding + '*$' : BUGGY_GEBTN ?
+      '^[.#]?-?[_a-zA-Z]{1}' + encoding + '*$' : BUGGY_GEBCN ?
       '^(?:\\*|#-?[_a-zA-Z]{1}' + encoding + '*)$' :
-      '^#?-?[_a-zA-Z]{1}' + encoding + '*$'),
+      '^(?:\\*|[.#]?-?[_a-zA-Z]{1}' + encoding + '*)$'),
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
