@@ -21,6 +21,18 @@
     // in a Node.js environment, the nwmatcher functions will operate on
     // the passed "browserGlobal" and will be returned in an object
     module.exports = function (browserGlobal) {
+      // passed global does not contain
+      // references to native objects
+      browserGlobal.Function = Function;
+      browserGlobal.Boolean = Boolean;
+      browserGlobal.Number = Number;
+      browserGlobal.RegExp = RegExp;
+      browserGlobal.String = String;
+      browserGlobal.Object = Object;
+      browserGlobal.Array = Array;
+      browserGlobal.Error = Error;
+      browserGlobal.Date = Date;
+      browserGlobal.Math = Math;
       var exports = browserGlobal.Object();
       factory(browserGlobal, exports);
       return exports;
