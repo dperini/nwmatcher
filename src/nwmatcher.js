@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.3.2beta
  * Created: 20070722
- * Release: 20130322
+ * Release: 20130718
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -21,20 +21,16 @@
     // in a Node.js environment, the nwmatcher functions will operate on
     // the passed "browserGlobal" and will be returned in an object
     module.exports = function (browserGlobal) {
-      var exports = { };
+      var exports = browserGlobal.Object();
       factory(browserGlobal, exports);
       return exports;
     };
   } else {
     // in a browser environment, the nwmatcher functions will operate on
     // the "global" loading them and be attached to "global.NW.Dom"
-    if (!global.NW) {
-      global.NW = { };
-    }
-    if (!global.NW.Dom) {
-      global.NW.Dom = { };
-    }
-    factory(global, global.NW.Dom);
+    factory(global,
+      (global.NW || (global.NW = global.Object())) &&
+      (global.NW.Dom || (global.NW.Dom = global.Object())));
   }
 
 })(this, function(global, exports) {
@@ -316,12 +312,12 @@
   OPERA = /opera/i.test(string.call(global.opera)),
 
   // skip simple selector optimizations for Opera >= 11
-  OPERA_QSAPI = OPERA && parseFloat(opera.version()) >= 11,
+  OPERA_QSAPI = OPERA && global.parseFloat(global.opera.version()) >= 11,
 
   // check Selector API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
-      var pattern = [ ], div = doc.createElement('div'), element,
+      var pattern = new global.Array(), div = doc.createElement('div'), element,
 
       expect = function(selector, context, element, n) {
         var result = false;
@@ -388,30 +384,30 @@
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
-  LINK_NODES = { 'a': 1, 'A': 1, 'area': 1, 'AREA': 1, 'link': 1, 'LINK': 1 },
+  LINK_NODES = new global.Object({ 'a': 1, 'A': 1, 'area': 1, 'AREA': 1, 'link': 1, 'LINK': 1 }),
 
   // boolean attributes should return attribute name instead of true/false
-  ATTR_BOOLEAN = {
+  ATTR_BOOLEAN = new global.Object({
     'checked': 1, 'disabled': 1, 'ismap': 1,
     'multiple': 1, 'readonly': 1, 'selected': 1
-  },
+  }),
 
   // dynamic attributes that needs to be checked against original HTML value
-  ATTR_DEFAULT = {
+  ATTR_DEFAULT = new global.Object({
     'value': 'defaultValue',
     'checked': 'defaultChecked',
     'selected': 'defaultSelected'
-  },
+  }),
 
   // attributes referencing URI data values need special treatment in IE
-  ATTR_URIDATA = {
+  ATTR_URIDATA = new global.Object({
     'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
     'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2
-  },
+  }),
 
   // HTML 5 draft specifications
   // http://www.whatwg.org/specs/web-apps/current-work/#selectors
-  HTML_TABLE = {
+  HTML_TABLE = new global.Object({
     // class attribute must be treated case-insensitive in HTML quirks mode
     // initialized by default to Standard Mode (case-sensitive),
     // set dynamically by the attribute resolver
@@ -424,22 +420,22 @@
     'noresize': 1, 'noshade': 1, 'nowrap': 1, 'readonly': 1, 'rel': 1, 'rev': 1,
     'rules': 1, 'scope': 1, 'scrolling': 1, 'selected': 1, 'shape': 1, 'target': 1,
     'text': 1, 'type': 1, 'valign': 1, 'valuetype': 1, 'vlink': 1
-  },
+  }),
 
   // the following attributes must be treated case-insensitive in XHTML mode
   // Niels Leenheer http://rakaz.nl/item/css_selector_bugs_case_sensitivity
-  XHTML_TABLE = {
+  XHTML_TABLE = new global.Object({
     'accept': 1, 'accept-charset': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'codetype': 1, 'color': 1,
     'enctype': 1, 'face': 1, 'hreflang': 1, 'http-equiv': 1,
     'lang': 1, 'language': 1, 'link': 1, 'media': 1, 'rel': 1,
     'rev': 1, 'target': 1, 'text': 1, 'type': 1, 'vlink': 1
-  },
+  }),
 
   /*-------------------------- REGULAR EXPRESSIONS ---------------------------*/
 
   // placeholder to add functionalities
-  Selectors = {
+  Selectors = new global.Object({
     // as a simple example this will check
     // for chars not in standard ascii table
     //
@@ -451,27 +447,27 @@
     // 'mySelectorCallback' will be invoked
     // only after passing all other standard
     // checks and only if none of them worked
-  },
+  }),
 
   // attribute operators
-  Operators = {
+  Operators = new global.Object({
      '=': "n=='%m'",
     '^=': "n.indexOf('%m')==0",
     '*=': "n.indexOf('%m')>-1",
     '|=': "(n+'-').indexOf('%m-')==0",
     '~=': "(' '+n+' ').indexOf(' %m ')>-1",
     '$=': "n.substr(n.length-'%m'.length)=='%m'"
-  },
+  }),
 
   // optimization expressions
-  Optimize = {
+  Optimize = new global.Object({
     ID: new global.RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
     TAG: new global.RegExp('^(' + encoding + '+)|' + skipgroup),
     CLASS: new global.RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
-  },
+  }),
 
   // precompiled Regular Expressions
-  Patterns = {
+  Patterns = new global.Object({
     // structural pseudo-classes and child selectors
     spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
     // uistates + dynamic + negation pseudo-classes
@@ -494,7 +490,7 @@
     tagName: new global.RegExp('^(' + encoding + '+)(.*)'),
     // class
     className: new global.RegExp('^\\.(' + encoding + '+)(.*)')
-  },
+  }),
 
   /*------------------------------ UTIL METHODS ------------------------------*/
 
@@ -502,8 +498,8 @@
   concatList =
     function(data, elements) {
       var i = -1, element;
-      if (!data.length && Array.slice)
-        return Array.slice(elements);
+      if (!data.length && global.Array.slice)
+        return global.Array.slice(elements);
       while ((element = elements[++i]))
         data[data.length] = element;
       return data;
@@ -621,7 +617,7 @@
   // @return array
   byTagRaw =
     function(tag, from) {
-      var any = tag == '*', element = from, elements = [ ], next = element.firstChild;
+      var any = tag == '*', element = from, elements = new global.Array(), next = element.firstChild;
       any || (tag = tag.toUpperCase());
       while ((element = next)) {
         if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
@@ -643,7 +639,7 @@
         slice.call(from.getElementsByTagName(tag), 0);
     } :
     function(tag, from) {
-      var i = -1, j = i, data = [ ],
+      var i = -1, j = i, data = new global.Array(),
         element, elements = from.getElementsByTagName(tag);
       if (tag == '*') {
         while ((element = elements[++i])) {
@@ -678,7 +674,7 @@
   // @return array
   byClassRaw =
     function(name, from) {
-      var i = -1, j = i, data = [ ], element, elements = _byTag('*', from), n;
+      var i = -1, j = i, data = new global.Array(), element, elements = _byTag('*', from), n;
       name = ' ' + (QUIRKS_MODE ? name.toLowerCase() : name).replace(/\\([^\\]{1})/g, '$1') + ' ';
       while ((element = elements[++i])) {
         n = XML_DOCUMENT ? element.getAttribute('class') : element.className;
@@ -814,10 +810,10 @@
       for (var i in option) {
         Config[i] = !!option[i];
         if (i == 'SIMPLENOT') {
-          matchContexts = { };
-          matchResolvers = { };
-          selectContexts = { };
-          selectResolvers = { };
+          matchContexts = new global.Object();
+          matchResolvers = new global.Object();
+          selectContexts = new global.Object();
+          selectResolvers = new global.Object();
           Config['USE_QSAPI'] = false;
         } else if (i == 'USE_QSAPI') {
           Config[i] = !!option[i] && NATIVE_QSAPI;
@@ -837,7 +833,7 @@
       }
     },
 
-  Config = {
+  Config = new global.Object({
 
     // used to enable/disable caching of result sets
     CACHING: false,
@@ -864,7 +860,7 @@
     // controls the engine error/warning notifications
     VERBOSITY: true
 
-  },
+  }),
 
   /*---------------------------- COMPILER METHODS ----------------------------*/
 
@@ -886,7 +882,7 @@
         source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
       } else {
         // for each selector in the group
-        var i = -1, seen = { }, token;
+        var i = -1, seen = new global.Object(), token;
         while ((token = parts[++i])) {
           token = token.replace(reTrimSpaces, '');
           // avoid repeating the same token
@@ -1079,8 +1075,8 @@
                   b = 1;
                 } else {
                   // assumes correct "an+b" format, "b" before "a" to keep "n" values
-                  b = ((n = match[2].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
-                  a = ((n = match[2].match(/(-?\d*)n/i)) ? parseInt(n[1], 10) : 0);
+                  b = ((n = match[2].match(/(-?\d+)$/)) ? global.parseInt(n[1], 10) : 0);
+                  a = ((n = match[2].match(/(-?\d*)n/i)) ? global.parseInt(n[1], 10) : 0);
                   if (n && n[1] == '-') a = -1;
                 }
 
@@ -1209,7 +1205,7 @@
             case 'focus':
               if (XML_DOCUMENT) break;
               source = NATIVE_FOCUS ?
-                'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href||!isNaN(e.tabIndex))){' + source + '}' :
+                'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href||typeof e.tabIndex=="number")){' + source + '}' :
                 'if(e===d.activeElement&&(e.type||e.href)){' + source + '}';
               break;
 
@@ -1319,7 +1315,7 @@
         matchContexts[selector] = from;
       }
 
-      return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback, { });
+      return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback, new global.Object());
     },
 
   // select only the first element
@@ -1428,8 +1424,8 @@
           if ((element = _byId(token, from))) {
             if (match(element, selector)) {
               callback && callback(element);
-              elements = [ element ];
-            } else elements = [ ];
+              elements = new global.Array(element);
+            } else elements = new global.Array();
           }
         }
 
@@ -1438,13 +1434,13 @@
           if ((element = _byId(token, doc))) {
             if ('#' + token == selector) {
               callback && callback(element);
-              elements = [ element ];
+              elements = new global.Array(element);
             } else if (/[>+~]/.test(selector)) {
               from = element.parentNode;
             } else {
               from = element;
             }
-          } else elements = [ ];
+          } else elements = new global.Array();
         }
 
         if (elements) {
@@ -1468,7 +1464,7 @@
 
         else if ((parts = selector.match(Optimize.CLASS)) && (token = parts[1])) {
           if ((elements = _byClass(token, from)).length === 0) { return [ ]; }
-          for (i = 0, els = [ ]; elements.length > i; ++i) {
+          for (i = 0, els = new global.Array(); elements.length > i; ++i) {
             els = concatList(els, elements[i].getElementsByTagName('*'));
           }
           elements = els;
@@ -1497,7 +1493,7 @@
         selectContexts[selector] = from;
       }
 
-      elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback, { });
+      elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback, new global.Object());
 
       Config.CACHING && Dom.saveResults(original, from, doc, elements);
 
@@ -1510,15 +1506,15 @@
   FN = function(x) { return x; },
 
   // compiled match functions returning booleans
-  matchContexts = { },
-  matchResolvers = { },
+  matchContexts = new global.Object(),
+  matchResolvers = new global.Object(),
 
   // compiled select functions returning collections
-  selectContexts = { },
-  selectResolvers = { },
+  selectContexts = new global.Object(),
+  selectResolvers = new global.Object(),
 
   // used to pass methods to compiled functions
-  Snapshot = {
+  Snapshot = new global.Object({
 
     // element indexing methods
     nthElement: nthElement,
@@ -1542,9 +1538,9 @@
     // selection/matching
     select: select,
     match: match
-  },
+  }),
 
-  Tokens = {
+  Tokens = new global.Object({
     prefixes: prefixes,
     encoding: encoding,
     operators: operators,
@@ -1555,7 +1551,7 @@
     pseudoclass: pseudoclass,
     pseudoparms: pseudoparms,
     quotedvalue: quotedvalue
-  };
+  });
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
@@ -1644,10 +1640,10 @@
   // add selector patterns for user defined callbacks
   Dom.registerSelector =
     function(name, rexp, func) {
-      Selectors[name] || (Selectors[name] = {
+      Selectors[name] || (Selectors[name] = new global.Object({
         Expression: rexp,
         Callback: func
-      });
+      }));
     };
 
   /*---------------------------------- INIT ----------------------------------*/

@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.3.2beta
  * Created: 20070722
- * Release: 20130322
+ * Release: 20130718
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -17,20 +17,16 @@
 
 (function(global, factory) {
 
-  if (typeof module === 'object' && typeof exports === 'object') {
+  if (typeof module == 'object' && typeof exports == 'object') {
     module.exports = function (browserGlobal) {
-      var exports = { };
+      var exports = browserGlobal.Object();
       factory(browserGlobal, exports);
       return exports;
     };
   } else {
-    if (!global.NW) {
-      global.NW = { };
-    }
-    if (!global.NW.Dom) {
-      global.NW.Dom = { };
-    }
-    factory(global, global.NW.Dom);
+    factory(global,
+      (global.NW || (global.NW = global.Object())) &&
+      (global.NW.Dom || (global.NW.Dom = global.Object())));
   }
 
 })(this, function(global, exports) {
@@ -42,7 +38,7 @@
   doc = global.document,
   root = doc.documentElement,
 
-  slice = [ ].slice,
+  slice = global.Array.slice,
 
   isSingleMatch,
   isSingleSelect,
@@ -120,40 +116,40 @@
 
   reOptimizeSelector = global.RegExp(identifier + '|^$'),
 
-  ATTR_BOOLEAN = {
+  ATTR_BOOLEAN = global.Object({
     checked: 1, disabled: 1, ismap: 1,
     multiple: 1, readonly: 1, selected: 1
-  },
+  }),
 
-  ATTR_DEFAULT = {
+  ATTR_DEFAULT = global.Object({
     value: 'defaultValue',
     checked: 'defaultChecked',
     selected: 'defaultSelected'
-  },
+  }),
 
-  ATTR_URIDATA = {
+  ATTR_URIDATA = global.Object({
     action: 2, cite: 2, codebase: 2, data: 2, href: 2,
     longdesc: 2, lowsrc: 2, src: 2, usemap: 2
-  },
+  }),
 
-  Selectors = { },
+  Selectors = global.Object(),
 
-  Operators = {
+  Operators = global.Object({
      '=': "n=='%m'",
     '^=': "n.indexOf('%m')==0",
     '*=': "n.indexOf('%m')>-1",
     '|=': "(n+'-').indexOf('%m-')==0",
     '~=': "(' '+n+' ').indexOf(' %m ')>-1",
     '$=': "n.substr(n.length-'%m'.length)=='%m'"
-  },
+  }),
 
-  Optimize = {
+  Optimize = global.Object({
     ID: global.RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
     TAG: global.RegExp('^(' + encoding + '+)|' + skipgroup),
     CLASS: global.RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
-  },
+  }),
 
-  Patterns = {
+  Patterns = global.Object({
     universal: /^\*(.*)/,
     id: global.RegExp('^#(' + encoding + '+)(.*)'),
     tagName: global.RegExp('^(' + encoding + '+)(.*)'),
@@ -163,7 +159,7 @@
     adjacent: /^[\x20\t\n\r\f]*\+[\x20\t\n\r\f]*(.*)/,
     relative: /^[\x20\t\n\r\f]*\~[\x20\t\n\r\f]*(.*)/,
     ancestor: /^[\x20\t\n\r\f]+(.*)/
-  },
+  }),
 
   QUIRKS_MODE,
   XML_DOCUMENT,
@@ -173,23 +169,23 @@
 
   IE_LT_9 = typeof doc.addEventListener != 'function',
 
-  INSENSITIVE_MAP = {
+  INSENSITIVE_MAP = global.Object({
     'href': 1, 'lang': 1, 'src': 1, 'style': 1, 'title': 1,
     'type': 1, 'xmlns': 1, 'xml:lang': 1, 'xml:space': 1
-  },
+  }),
 
   TO_UPPER_CASE = IE_LT_9 ? '.toUpperCase()' : '',
 
   ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break main;else continue main;',
   REJECT_NODE = IE_LT_9 ? 'if(e.nodeName<"A")continue;' : '',
 
-  Config = {
+  Config = global.Object({
     CACHING: false,
     SIMPLENOT: true,
     UNIQUE_ID: true,
     USE_HTML5: true,
     VERBOSITY: true
-  },
+  }),
 
   configure =
     function(option) {
@@ -198,10 +194,10 @@
       for (var i in option) {
         Config[i] = !!option[i];
         if (i == 'SIMPLENOT') {
-          matchContexts = { };
-          matchResolvers = { };
-          selectContexts = { };
-          selectResolvers = { };
+          matchContexts = global.Object();
+          matchResolvers = global.Object();
+          selectContexts = global.Object();
+          selectResolvers = global.Object();
         }
       }
       reValidator = global.RegExp(Config.SIMPLENOT ?
@@ -321,7 +317,7 @@
       if (parts.length == 1) {
         source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
       } else {
-        var i = -1, seen = { }, token;
+        var i = -1, seen = global.Object(), token;
         while ((token = parts[++i])) {
           token = token.replace(reTrimSpaces, '');
           if (!seen[token] && (seen[token] = true)) {
@@ -555,8 +551,8 @@
           if ((element = _byId(token, from))) {
             if (match(element, selector)) {
               callback && callback(element);
-              elements = [ element ];
-            } else elements = [ ];
+              elements = global.Array(element);
+            } else elements = global.Array();
           }
         }
 
@@ -564,13 +560,13 @@
           if ((element = _byId(token, doc))) {
             if ('#' + token == selector) {
               callback && callback(element);
-              elements = [ element ];
+              elements = global.Array(element);
             } else if (/[>+~]/.test(selector)) {
               from = element.parentNode;
             } else {
               from = element;
             }
-          } else elements = [ ];
+          } else elements = global.Array();
         }
 
         if (elements) {
@@ -614,21 +610,21 @@
 
   FN = function(x) { return x; },
 
-  matchContexts = { },
-  matchResolvers = { },
+  matchContexts = global.Object(),
+  matchResolvers = global.Object(),
 
-  selectContexts = { },
-  selectResolvers = { },
+  selectContexts = global.Object(),
+  selectResolvers = global.Object(),
 
-  Snapshot = {
+  Snapshot = global.Object({
     byId: _byId,
     match: match,
     select: select,
     getAttribute: getAttribute,
     hasAttribute: hasAttribute
-  };
+  });
 
-  Tokens = {
+  Tokens = global.Object({
     prefixes: prefixes,
     encoding: encoding,
     operators: operators,
@@ -639,7 +635,7 @@
     pseudoclass: pseudoclass,
     pseudoparms: pseudoparms,
     quotedvalue: quotedvalue
-  };
+  });
 
   Dom.ACCEPT_NODE = ACCEPT_NODE;
 
@@ -672,10 +668,10 @@
 
   Dom.registerSelector =
     function(name, rexp, func) {
-      Selectors[name] || (Selectors[name] = {
+      Selectors[name] || (Selectors[name] = global.Object({
         Expression: rexp,
         Callback: func
-      });
+      }));
     };
 
   switchContext(doc, true);

@@ -7,7 +7,7 @@
  * Author: Diego Perini <diego.perini at gmail com>
  * Version: 1.3.2beta
  * Created: 20070722
- * Release: 20130322
+ * Release: 20130718
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -19,14 +19,14 @@
 
   if (typeof module == 'object' && typeof exports == 'object') {
     module.exports = function (browserGlobal) {
-      var exports = { };
+      var exports = browserGlobal.Object();
       factory(browserGlobal, exports);
       return exports;
     };
   } else {
     factory(global,
-      (global.NW || (global.NW = { })) &&
-      (global.NW.Dom || (global.NW.Dom = { })));
+      (global.NW || (global.NW = global.Object())) &&
+      (global.NW.Dom || (global.NW.Dom = global.Object())));
   }
 
 })(this, function(global, exports) {
@@ -116,43 +116,43 @@
   GEBTN = 'getElementsByTagName' in doc,
   GEBCN = 'getElementsByClassName' in doc,
 
-  LINK_NODES = { a: 1, A: 1, area: 1, AREA: 1, link: 1, LINK: 1 },
+  LINK_NODES = global.Object({ a: 1, A: 1, area: 1, AREA: 1, link: 1, LINK: 1 }),
 
-  ATTR_BOOLEAN = {
+  ATTR_BOOLEAN = global.Object({
     checked: 1, disabled: 1, ismap: 1,
     multiple: 1, readonly: 1, selected: 1
-  },
+  }),
 
-  ATTR_DEFAULT = {
+  ATTR_DEFAULT = global.Object({
     value: 'defaultValue',
     checked: 'defaultChecked',
     selected: 'defaultSelected'
-  },
+  }),
 
-  ATTR_URIDATA = {
+  ATTR_URIDATA = global.Object({
     action: 2, cite: 2, codebase: 2, data: 2, href: 2,
     longdesc: 2, lowsrc: 2, src: 2, usemap: 2
-  },
+  }),
 
-  Selectors = {
-  },
+  Selectors = global.Object({
+  }),
 
-  Operators = {
+  Operators = global.Object({
      '=': "n=='%m'",
     '^=': "n.indexOf('%m')==0",
     '*=': "n.indexOf('%m')>-1",
     '|=': "(n+'-').indexOf('%m-')==0",
     '~=': "(' '+n+' ').indexOf(' %m ')>-1",
     '$=': "n.substr(n.length-'%m'.length)=='%m'"
-  },
+  }),
 
-  Optimize = {
+  Optimize = global.Object({
     ID: global.RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
     TAG: global.RegExp('^(' + encoding + '+)|' + skipgroup),
     CLASS: global.RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
-  },
+  }),
 
-  Patterns = {
+  Patterns = global.Object({
     spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
     dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/i,
     attribute: global.RegExp('^\\[' + attrmatcher + '\\](.*)'),
@@ -164,7 +164,7 @@
     id: global.RegExp('^#(' + encoding + '+)(.*)'),
     tagName: global.RegExp('^(' + encoding + '+)(.*)'),
     className: global.RegExp('^\\.(' + encoding + '+)(.*)')
-  },
+  }),
 
   concatCall =
     function(data, elements, callback) {
@@ -313,10 +313,10 @@
       for (var i in option) {
         Config[i] = !!option[i];
         if (i == 'SIMPLENOT') {
-          matchContexts = { };
-          matchResolvers = { };
-          selectContexts = { };
-          selectResolvers = { };
+          matchContexts = global.Object();
+          matchResolvers = global.Object();
+          selectContexts = global.Object();
+          selectResolvers = global.Object();
         }
       }
       reValidator = global.RegExp(Config.SIMPLENOT ?
@@ -332,20 +332,20 @@
       }
     },
 
-  Config = {
+  Config = global.Object({
     CACHING: false,
     SIMPLENOT: true,
     UNIQUE_ID: true,
     USE_HTML5: true,
     VERBOSITY: true
-  },
+  }),
 
   IE_LT_9 = typeof doc.addEventListener != 'function',
 
-  INSENSITIVE_MAP = {
+  INSENSITIVE_MAP = global.Object({
     href: 1, lang: 1, src: 1, style: 1, title: 1,
     type: 1, xmlns: 1, 'xml:lang': 1, 'xml:space': 1
-  },
+  }),
 
   TO_UPPER_CASE = IE_LT_9 ? '.toUpperCase()' : '',
 
@@ -362,7 +362,7 @@
       if (parts.length == 1) {
         source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
       } else {
-        var i = -1, seen = { }, token;
+        var i = -1, seen = global.Object(), token;
         while ((token = parts[++i])) {
           token = token.replace(reTrimSpaces, '');
           if (!seen[token] && (seen[token] = true)) {
@@ -489,8 +489,8 @@
                   a = 2;
                   b = 1;
                 } else {
-                  b = ((n = match[2].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
-                  a = ((n = match[2].match(/(-?\d*)n/i)) ? parseInt(n[1], 10) : 0);
+                  b = ((n = match[2].match(/(-?\d+)$/)) ? global.parseInt(n[1], 10) : 0);
+                  a = ((n = match[2].match(/(-?\d*)n/i)) ? global.parseInt(n[1], 10) : 0);
                   if (n && n[1] == '-') a = -1;
                 }
                 test = a > 1 ?
@@ -580,7 +580,7 @@
               break;
             case 'focus':
               source = 'hasFocus' in doc ?
-                'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href||!isNaN(e.tabIndex))){' + source + '}' :
+                'if(e===d.activeElement&&d.hasFocus()&&(e.type||e.href||typeof e.tabIndex=="number")){' + source + '}' :
                 'if(e===d.activeElement&&(e.type||e.href)){' + source + '}';
               break;
             case 'selected':
@@ -723,8 +723,8 @@
           if ((element = _byId(token, from))) {
             if (match(element, selector)) {
               callback && callback(element);
-              elements = [ element ];
-            } else elements = [ ];
+              elements = global.Array(element);
+            } else elements = global.Array();
           }
         }
 
@@ -732,13 +732,13 @@
           if ((element = _byId(token, doc))) {
             if ('#' + token == selector) {
               callback && callback(element);
-              elements = [ element ];
+              elements = global.Array(element);
             } else if (/[>+~]/.test(selector)) {
               from = element.parentNode;
             } else {
               from = element;
             }
-          } else elements = [ ];
+          } else elements = global.Array();
         }
 
         if (elements) {
@@ -782,13 +782,13 @@
 
   FN = function(x) { return x; },
 
-  matchContexts = { },
-  matchResolvers = { },
+  matchContexts = global.Object(),
+  matchResolvers = global.Object(),
 
-  selectContexts = { },
-  selectResolvers = { },
+  selectContexts = global.Object(),
+  selectResolvers = global.Object(),
 
-  Snapshot = {
+  Snapshot = global.Object({
     byId: _byId,
     match: match,
     select: select,
@@ -799,7 +799,7 @@
     nthElement: nthElement,
     getAttribute: getAttribute,
     hasAttribute: hasAttribute
-  };
+  });
 
   Dom.ACCEPT_NODE = ACCEPT_NODE;
 
@@ -834,10 +834,10 @@
 
   Dom.registerSelector =
     function(name, rexp, func) {
-      Selectors[name] || (Selectors[name] = {
+      Selectors[name] || (Selectors[name] = global.Object({
         Expression: rexp,
         Callback: func
-      });
+      }));
     };
 
   switchContext(doc, true);
