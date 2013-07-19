@@ -35,10 +35,12 @@
       factory(browserGlobal, exports);
       return exports;
     };
+    module.factory = factory; 
   } else {
     factory(global,
       (global.NW || (global.NW = global.Object())) &&
       (global.NW.Dom || (global.NW.Dom = global.Object())));
+    global.NW.Dom.factory = factory;
   }
 
 })(this, function(global, exports) {
