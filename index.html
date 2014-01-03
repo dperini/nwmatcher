@@ -53,9 +53,13 @@
     </div>
 
     <h2>Authors</h2>
-<p>Diego Perini (diego.perini@gmail.com)<br/>Samuel Lebeau (samuel.lebeau@gmail.com)<br/><br/>      </p>
+<p>Diego Perini (diego.perini@gmail.com)
+<br/>Samuel Lebeau (samuel.lebeau@gmail.com)
+<br/>
+<br/>      </p>
 <h2>Contact</h2>
-<p>Diego Perini (diego.perini@gmail.com)<br/>      </p>
+<p>Diego Perini (diego.perini@gmail.com)
+<br/>      </p>
 
 
     <h2>Download</h2>
@@ -69,6 +73,133 @@
       <pre>$ git clone git://github.com/dperini/nwmatcher</pre>
     </p>
       
+    <h2>Installation</h2>
+
+<p>To include NWMatcher in a standard web page:</p>
+
+<div class="highlight highlight-html"><pre><span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/javascript"</span> <span class="na">src=</span><span class="s">"nwmatcher.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+</pre></div>
+
+<p>To use it with Node.js:</p>
+
+<pre><code>$ npm install nwmatcher.js
+</code></pre>
+
+<p>NWMatcher currently supports browsers (as a global, <code>NW.Dom</code>) and headless environments (as a CommonJS module).</p>
+
+<h2>Supported Selectors</h2>
+
+<p>Here is a list of all the CSS2/CSS3 <a href="https://github.com/dperini/nwmatcher/wiki/CSS-supported-selectors">Supported selectors</a>.</p>
+
+<h2>Features and Compliance</h2>
+
+<p>You can read more about NWMatcher <a href="https://github.com/dperini/nwmatcher/wiki/Features-and-compliance">features and compliance</a> on the wiki.</p>
+
+<h2>API</h2>
+
+<h3>DOM Selection</h3>
+
+<h4>
+<code>first( selector, context )</code>
+</h4>
+
+<p>Returns a reference to the first element matching <code>selector</code>, starting at <code>context</code>.</p>
+
+<h4>
+<code>match( element, selector, context )</code>
+</h4>
+
+<p>Returns <code>true</code> if <code>element</code> matches <code>selector</code>, starting at <code>context</code>; returns <code>false</code> otherwise.</p>
+
+<h4>
+<code>select( selector, context, callback )</code>
+</h4>
+
+<p>Returns an array of all the elements matching <code>selector</code>, starting at <code>context</code>. If <code>callback</code> is provided, it is invoked for each matching element.</p>
+
+<h3>DOM Helpers</h3>
+
+<h4>
+<code>byId( id, from )</code>
+</h4>
+
+<p>Returns a reference to the first element with ID <code>id</code>, optionally filtered to descendants of the element <code>from</code>.</p>
+
+<h4>
+<code>byTag( tag, from )</code>
+</h4>
+
+<p>Returns an array of elements having the specified tag name <code>tag</code>, optionally filtered to descendants of the element <code>from</code>.</p>
+
+<h4>
+<code>byClass( class, from )</code>
+</h4>
+
+<p>Returns an array of elements having the specified class name <code>class</code>, optionally filtered to descendants of the element <code>from</code>.</p>
+
+<h4>
+<code>byName( name, from )</code>
+</h4>
+
+<p>Returns an array of elements having the specified value <code>name</code> for their name attribute, optionally filtered to descendants of the element <code>from</code>.</p>
+
+<h4>
+<code>getAttribute( element, attribute )</code>
+</h4>
+
+<p>Return the value read from the attribute of <code>element</code> with name <code>attribute</code>, as a string.</p>
+
+<h4>
+<code>hasAttribute( element, attribute )</code>
+</h4>
+
+<p>Returns true <code>element</code> has an attribute with name <code>attribute</code> set; returns <code>false</code> otherwise.</p>
+
+<h3>
+Engine Configuration</h3>
+
+<h4>
+<code>configure( options )</code>
+</h4>
+
+<p>The following options exist and can be set to <code>true</code> or <code>false</code>:</p>
+
+<ul>
+<li>
+<code>CACHING</code>: enable caching of results</li>
+<li>
+<code>SHORTCUTS</code>: allow accepting mangled selectors</li>
+<li>
+<code>SIMPLENOT</code>: disallow nested complex <code>:not()</code> selectors</li>
+<li>
+<code>UNIQUE_ID</code>: disallow multiple elements with same ID</li>
+<li>
+<code>USE_QSAPI</code>: enable native <code>querySelectorAll</code> if available</li>
+<li>
+<code>USE_HTML5</code>: enable special HTML5 rules, related to the relationship between <code>:checked</code> and <code>:selected</code>
+</li>
+<li>
+<code>VERBOSITY</code>: choose between throwing errors or just console warnings</li>
+</ul><p>Example:</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">NW</span><span class="p">.</span><span class="nx">Dom</span><span class="p">.</span><span class="nx">configure</span><span class="p">(</span> <span class="p">{</span> <span class="nx">USE_QSAPI</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> <span class="nx">VERBOSITY</span><span class="o">:</span> <span class="kc">false</span> <span class="p">}</span> <span class="p">);</span>
+</pre></div>
+
+<h4>
+<code>registerOperator( symbol, resolver )</code>
+</h4>
+
+<p>Registers a new symbol and its matching resolver in the operators table. Example:</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">NW</span><span class="p">.</span><span class="nx">Dom</span><span class="p">.</span><span class="nx">registerOperator</span><span class="p">(</span> <span class="s1">'!='</span><span class="p">,</span> <span class="s1">'n!="%m"'</span> <span class="p">);</span>
+</pre></div>
+
+<h4>
+<code>registerSelector( name, rexp, func )</code>
+</h4>
+
+<p>Registers a new selector, with the matching regular expression and the appropriate resolver function, in the selectors table.</p>
+
     <div class="footer">
       get the source code on GitHub : <a href="http://github.com/dperini/nwmatcher">dperini/nwmatcher</a>
     </div>
