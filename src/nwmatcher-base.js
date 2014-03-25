@@ -294,6 +294,24 @@
       return _byId(id, from);
     },
 
+  // elements by tag (raw)
+  // @return array
+  byTagRaw =
+    function(tag, from) {
+      var any = tag == '*', element = from, elements = new global.Array(), next = element.firstChild;
+      any || (tag = tag.toUpperCase());
+      while ((element = next)) {
+        if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
+          elements[elements.length] = element;
+        }
+        if ((next = element.firstChild || element.nextSibling)) continue;
+        while (!next && (element = element.parentNode) && element !== from) {
+          next = element.nextSibling;
+        }
+      }
+      return elements;
+    },
+
   getAttribute =
     function(node, attribute) {
       attribute = attribute.toLowerCase();
@@ -550,7 +568,7 @@
 
       if (from.nodeType == 11) {
 
-        elements = from.childNodes;
+        elements = byTagRaw('*', from);
 
       } else if (isSingleSelect) {
 

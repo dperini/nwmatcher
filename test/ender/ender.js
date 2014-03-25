@@ -1506,7 +1506,7 @@
         // commas separators are treated sequentially to maintain order
         if (from.nodeType == 11) {
   
-          elements = from.childNodes;
+          elements = byTagRaw('*', from);
   
         } else if (!XML_DOCUMENT && isSingleSelect) {
   
