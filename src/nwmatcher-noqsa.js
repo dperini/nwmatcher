@@ -246,11 +246,9 @@
       return _byId(id, from);
     },
     
-  // elements by tag (raw)
-  // @return array
   byTagRaw =
     function(tag, from) {
-      var any = tag == '*', element = from, elements = new global.Array(), next = element.firstChild;
+      var any = tag == '*', element = from, elements = global.Array(), next = element.firstChild;
       any || (tag = tag.toUpperCase());
       while ((element = next)) {
         if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
