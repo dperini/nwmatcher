@@ -21,6 +21,8 @@
     module.exports = function (browserGlobal) {
       // passed global does not contain
       // references to native objects
+      browserGlobal.console = console;
+      browserGlobal.parseInt = parseInt;
       browserGlobal.Function = Function;
       browserGlobal.Boolean = Boolean;
       browserGlobal.Number = Number;
