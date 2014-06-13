@@ -244,7 +244,7 @@
 
   // supports the new traversal API
   NATIVE_TRAVERSAL_API =
-    'nextElementSibling' in root && 'previousElementSibling' in root,
+    root && 'nextElementSibling' in root && 'previousElementSibling' in root,
 
   // BUGGY_XXXXX true if method is feature tested and has known bugs
   // detect buggy gEBID
@@ -721,10 +721,10 @@
 
   // check element is descendant of container
   // @return boolean
-  contains = 'compareDocumentPosition' in root ?
+  contains = root && 'compareDocumentPosition' in root ?
     function(container, element) {
       return (container.compareDocumentPosition(element) & 16) == 16;
-    } : 'contains' in root ?
+    } : root && 'contains' in root ?
     function(container, element) {
       return container !== element && container.contains(element);
     } :

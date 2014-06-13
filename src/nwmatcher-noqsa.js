@@ -264,10 +264,10 @@
       return elements;
     },
 
-  contains = 'compareDocumentPosition' in root ?
+  contains = root && 'compareDocumentPosition' in root ?
     function(container, element) {
       return (container.compareDocumentPosition(element) & 16) == 16;
-    } : 'contains' in root ?
+    } : root && 'contains' in root ?
     function(container, element) {
       return element.nodeType == 1 && container.contains(element);
     } :
@@ -292,7 +292,7 @@
           ((node = node.getAttributeNode(attribute)) && node.value) || '');
     },
 
-  hasAttribute = root.hasAttribute ?
+  hasAttribute = root && root.hasAttribute ?
     function(node, attribute) {
       return node.hasAttribute(attribute);
     } :
