@@ -37,7 +37,7 @@
       factory(browserGlobal, exports);
       return exports;
     };
-    module.factory = factory; 
+    module.factory = factory;
   } else {
     factory(global,
       (global.NW || (global.NW = global.Object())) &&

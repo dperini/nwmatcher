@@ -39,7 +39,7 @@
       factory(browserGlobal, exports);
       return exports;
     };
-    module.factory = factory; 
+    module.factory = factory;
   } else {
     // in a browser environment, the nwmatcher functions will operate on
     // the "global" loading them and be attached to "global.NW.Dom"
