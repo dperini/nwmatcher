@@ -79,7 +79,7 @@
 
   // accepted prefix identifiers
   // (id, class & pseudo-class)
-  prefixes = '[#.:]?',
+  prefixes = '[#.:]',
 
   // accepted attribute operators
   operators = '([~*^$|!]?={1})',
@@ -127,7 +127,7 @@
     // an+b parameters or quoted string
     pseudoparms + '|' + quotedvalue + '|' +
     // id, class, pseudo-class selector
-    prefixes + '|' + encoding + '+|' +
+    prefixes + '?|' + encoding + '+|' +
     // nested HTML attribute selector
     '\\[' + attributes + '\\]|' +
     // nested pseudo-class selector
@@ -147,8 +147,10 @@
     // open match group
     '(' +
     //universal selector
-    '\\*' +
-    // id/class/tag/pseudo-class identifier
+    '\\*(?![|])' +
+    //tag identifier with or without namespace
+    '|(?:(?:(?:(?:' + identifier + ')+|[*])?[|])?' + identifier + ')' +
+    // id/class/pseudo-class identifier
     '|(?:' + prefixes + identifier + ')' +
     // combinator selector
     '|' + combinators +
@@ -177,7 +179,7 @@
   // only allow simple selectors nested in ':not()' pseudo-classes
   reSimpleNot = new global.RegExp('^(' +
     '(?!:not)' +
-    '(' + prefixes +
+    '(' + prefixes + '?' +
     '|' + identifier +
     '|\\([^()]*\\))+' +
     '|\\[' + attributes + '\\]' +
@@ -499,11 +501,11 @@
     // E F
     ancestor: /^[\x20\t\n\r\f]+(.*)/,
     // all
-    universal: /^\*(.*)/,
+    universal: /^\*(?![|])(.*)/,
     // id
     id: new global.RegExp('^#(' + encoding + '+)(.*)'),
     // tag
-    tagName: new global.RegExp('^(' + encoding + '+)(.*)'),
+    tagName: new global.RegExp('^((?:(?:(?:' + encoding + ')+|[*])?[|])?' + encoding + '+)(.*)'),
     // class
     className: new global.RegExp('^\\.(' + encoding + '+)(.*)')
   }),
@@ -963,10 +965,34 @@
         else if ((match = selector.match(Patterns.tagName))) {
           // both tagName and nodeName properties may be upper/lower case
           // depending on their creation NAMESPACE in createElementNS()
-          source = 'if(e.nodeName' + (XML_DOCUMENT ?
-            '=="' + match[1] + '"' : '.toUpperCase()' +
-            '=="' + match[1].toUpperCase() + '"') +
-            '){' + source + '}';
+          if(match[1].substr(0, 2) === "*|" || match[1].indexOf('|') < 0) {
+            // Tag may have any namespace
+            
+            // Drop universal namespace selector if it was used
+            if(match[1].substr(0, 2) === "*|") {
+              match[1] = match[1].substr(2);
+            }
+            
+            source = 'if(e.localName' + (XML_DOCUMENT ?
+              '=="' + match[1] + '"' : TO_UPPER_CASE +
+              '=="' + match[1].toUpperCase() + '"') +
+              '){' + source + '}';
+          } else {
+            // Tag must have the correct namespace
+            
+            // Drop empty namespace selector
+            if(match[1].substr(0, 1) === '|') {
+              match[1] = match[1].substr(1);
+            }
+            
+            // Replace CSS namespace seperator with DOM namespace seperator
+            match[1] = match[1].replace('|', ':');
+            
+            source = 'if(e.nodeName' + (XML_DOCUMENT ?
+              '=="' + match[1] + '"' : TO_UPPER_CASE +
+              '=="' + match[1].toUpperCase() + '"') +
+              '){' + source + '}';
+           }
         }
 
         // *** Class selector
