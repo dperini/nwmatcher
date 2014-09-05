@@ -654,11 +654,11 @@
   _byTag = !BUGGY_GEBTN && NATIVE_SLICE_PROTO ?
     function(tag, from) {
       return XML_DOCUMENT || from.nodeType == 11 ? byTagRaw(tag, from) :
-        slice.call(from.getElementsByTagName(tag), 0);
+        slice.call(from.getElementsByTagNameNS("*", tag), 0);
     } :
     function(tag, from) {
       var i = -1, j = i, data = new global.Array(),
-        element, elements = from.getElementsByTagName(tag);
+        element, elements = from.getElementsByTagNameNS("*", tag);
       if (tag == '*') {
         while ((element = elements[++i])) {
           if (element.nodeName > '@')
