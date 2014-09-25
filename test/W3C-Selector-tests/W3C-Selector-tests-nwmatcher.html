@@ -488,16 +488,11 @@
 
 		function jqTests(type, root, select) {
 
-			function query(q, resolver){
-				try {
-					return $(q, root);
-				} catch(e) {
-					if (/syntax|error/i.test(e.name))
-						throw e;
-				}
+			function query(q){
+				return $(q, root);
 			}
 
-			function t( name, q, ids, restrict, ids2 ) {
+			function t( name, q, ids, restrict, expectError ) {
 				var pass = true;
 
 				if ( restrict === false && root != document )
@@ -513,7 +508,7 @@
 					var results = query(q);
 					pass = hasPassed( results, ids );
 				} catch(e) {
-				  	pass = /syntax|error/i.test(e.name);
+					pass = expectError && /syntax|error/i.test(e.name);
 				}
 	
 				assert( pass, type + ": " + name + " (" + nq + ")" +
@@ -583,13 +578,13 @@
 			var lin = query("#lengthtest input");
 			assert( lin && lin.length, type + ': &lt;input name="length"&gt; cannot be found under IE' );
 
-			t( "Broken Selector", "[" );
-			t( "Broken Selector", "(" );
-			t( "Broken Selector", "{" );
-			t( "Broken Selector", "<" );
-			t( "Broken Selector", "()" );
-			t( "Broken Selector", "<>" );
-			t( "Broken Selector", "{}" );
+			t( "Broken Selector", "[", undefined, undefined, true );
+			t( "Broken Selector", "(", undefined, undefined, true );
+			t( "Broken Selector", "{", undefined, undefined, true );
+			t( "Broken Selector", "<", undefined, undefined, true );
+			t( "Broken Selector", "()", undefined, undefined, true );
+			t( "Broken Selector", "<>", undefined, undefined, true );
+			t( "Broken Selector", "{}", undefined, undefined, true );
 
 			t( "ID Selector", "#body", ["body"], false );
 			t( "ID Selector w/ Element", "body#body", ["body"], false );
