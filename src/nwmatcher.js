@@ -94,7 +94,7 @@
   pseudoparms = '(?:[-+]?\\d*n)?[-+]?\\d*',
 
   // CSS quoted string values
-  quotedvalue = '"[^"]*"' + "|'[^']*'",
+  quotedvalue = '"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"' + "|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*'",
 
   // skip round brackets groups
   skipround = '\\([^()]+\\)|\\(.*\\)',
@@ -472,7 +472,8 @@
     '*=': "n.indexOf('%m')>-1",
     '|=': "(n+'-').indexOf('%m-')==0",
     '~=': "(' '+n+' ').indexOf(' %m ')>-1",
-    '$=': "n.substr(n.length-'%m'.length)=='%m'"
+    '$=': "n.substr(n.length-'%m'.length)=='%m'",
+    '!=': "n!=='%m'" // extension
   }),
 
   // optimization expressions
@@ -584,6 +585,51 @@
       }
     },
 
+  // convert a CSS string or identifier containing escape sequence to a
+  // javascript string with javascript escape sequences
+  convertEscapes =
+    function(str) {
+      return str.replace(/\\([0-9a-fA-Z]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
+        var codePoint;
+        var highSurrogate;
+        var lowSurrogate;
+
+        if (p2) {
+          // unescaped " or '
+          return '\\' + p2;
+        }
+
+        if (/^[a-fA-F0-9]/.test(p1)) {
+          // \1f23
+          codePoint = parseInt(p1, 16);
+
+          if (codePoint < 0 || codePoint > 0x10FFFF) {
+            return '\\uFFFD'; // the replacement character
+          }
+
+          // javascript strings are in UTF-16
+          if (codePoint <= 0xFFFF) { // Basic
+            return '\\u' + ('000' + codePoint.toString(16)).substr(-4);
+          }
+
+          // Supplementary
+          codePoint -= 0x10000;
+          highSurrogate = (codePoint >> 10) + 0xD800;
+          lowSurrogate = (codePoint % 0x400) + 0xDC00;
+
+          return '\\u' + ('000' + highSurrogate.toString(16)).substr(-4) +
+                 '\\u' + ('000' + lowSurrogate.toString(16)).substr(-4);
+        }
+
+        if (/^[\\\x22\x27]/.test(p1)) {
+          // \' \"
+          return substring;
+        }
+
+        // \g \h \. \# etc
+        return p1;
+      });
+    },
   /*------------------------------ DOM METHODS -------------------------------*/
 
   // element by id (raw)
@@ -1004,14 +1050,9 @@
           if (match[2] && match[4] && (type = Operators[match[2]])) {
             // case treatment depends on document
             HTML_TABLE['class'] = QUIRKS_MODE ? 1 : 0;
-            // replace escaped values and HTML entities
-            match[4] = match[4].replace(/(\x22|\x27)/g, '\\$1');
-            match[4] = match[4].replace(/\\([0-9a-f]{2,2})/g, '\\x$1');
+            match[4] = convertEscapes(match[4]);
             test = (XML_DOCUMENT ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
             type = type.replace(/\%m/g, test ? match[4].toLowerCase() : match[4]);
-          } else if (match[2] == '!=' || match[2] == '=') {
-            match[4] = match[4].replace(/(\x22|\x27)/g, '\\$1');
-            type = 'n' + match[2] + '="' + match[4] + '"';
           }
 
           // build expression for has/getAttribute
