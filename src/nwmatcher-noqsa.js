@@ -216,7 +216,7 @@
   // javascript string with javascript escape sequences
   convertEscapes =
     function(str) {
-      return str.replace(/\\([0-9a-fA-Z]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
+      return str.replace(/\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
         var codePoint;
         var highSurrogate;
         var lowSurrogate;
