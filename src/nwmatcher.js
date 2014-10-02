@@ -584,21 +584,17 @@
       }
     },
 
-  // 0xA -> "0x000A"
-  numberAsFourDigitHex =
-    function(num) {
-      var str = '000' + num.toString(16);
-      return str.substr(str.length - 4);
-    };
-
   // convert a CSS string or identifier containing escape sequence to a
   // javascript string with javascript escape sequences
   convertEscapes =
     function(str) {
       return str.replace(/\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
         var codePoint;
+        var hex;
         var highSurrogate;
         var lowSurrogate;
+        var highHex;
+        var lowHex;
 
         if (p2) {
           // unescaped " or '
@@ -615,16 +611,19 @@
 
           // javascript strings are in UTF-16
           if (codePoint <= 0xFFFF) { // Basic
-            return '\\u' + numberAsFourDigitHex(codePoint);
+            hex = '000' + codePoint.toString(16);
+            return '\\u' + hex.substr(hex.length - 4);
           }
 
           // Supplementary
           codePoint -= 0x10000;
           highSurrogate = (codePoint >> 10) + 0xD800;
           lowSurrogate = (codePoint % 0x400) + 0xDC00;
+          highHex = '000' + highSurrogate.toString(16);
+          lowHex = '000' + lowSurrogate.toString(16);
 
-          return '\\u' + numberAsFourDigitHex(highSurrogate) +
-                 '\\u' + numberAsFourDigitHex(lowSurrogate);
+          return '\\u' + highHex.substr(highHex.length - 4) +
+                 '\\u' + lowHex.substr(lowHex.length - 4);
         }
 
         if (/^[\\\x22\x27]/.test(p1)) {
