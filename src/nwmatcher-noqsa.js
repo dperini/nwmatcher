@@ -71,7 +71,7 @@
   combinators = '[\\s]|[>+~][^>+~]',
   pseudoparms = '(?:[-+]?\\d*n)?[-+]?\\d*',
 
-  quotedvalue = '"[^"]*"' + "|'[^']*'",
+  quotedvalue = '"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"' + "|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*'",
   skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
 
   encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)',
@@ -209,6 +209,45 @@
 
         Config.CACHING && Dom.setCache(true, doc);
       }
+    },
+
+  convertEscapes =
+    function(str) {
+      return str.replace(/\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
+        var codePoint, highHex, highSurrogate, lowHex, lowSurrogate;
+
+        if (p2) {
+          return '\\' + p2;
+        }
+
+        if (/^[0-9a-fA-F]/.test(p1)) {
+          codePoint = parseInt(p1, 16);
+
+          if (codePoint < 0 || codePoint > 0x10ffff) {
+            return '\\ufffd';
+          }
+
+          if (codePoint <= 0xffff) {
+            lowHex = '000' + codePoint.toString(16);
+            return '\\u' + lowHex.substr(lowHex.length - 4);
+          }
+
+          codePoint -= 0x10000;
+          highSurrogate = (codePoint >> 10) + 0xd800;
+          lowSurrogate = (codePoint % 0x400) + 0xdc00;
+          highHex = '000' + highSurrogate.toString(16);
+          lowHex = '000' + lowSurrogate.toString(16);
+
+          return '\\u' + highHex.substr(highHex.length - 4) +
+            '\\u' + lowHex.substr(lowHex.length - 4);
+        }
+
+        if (/^[\\\x22\x27]/.test(p1)) {
+          return substring;
+        }
+
+        return p1;
+      });
     },
 
   byIdRaw =
@@ -461,17 +500,12 @@
             return '';
           }
           test = 'false';
-          if (match[4]) {
-            type = INSENSITIVE_MAP[match[1].toLowerCase()];
-            match[4] =
-              (type ? match[4].toLowerCase() : match[4]).
-                replace(/\\([0-9a-f]{2,2})/g, '\\x$1').
-                replace(/(\x22|\x27)/g, '\\$1');
-          }
           if (match[2] && match[4] && (test = Operators[match[2]])) {
-            test = test.replace(/\%m/g, match[4]);
+            match[4] = convertEscapes(match[4]);
+            type = INSENSITIVE_MAP[match[1].toLowerCase()];
+            test = test.replace(/\%m/g, type ? match[4].toLowerCase() : match[4]);
           } else if (match[2] == '!=' || match[2] == '=') {
-            test = 'n' + match[2] + '="' + match[4] + '"';
+            test = 'n' + match[2] + '=""';
           }
           expr = 'n=s.' + (match[2] ? 'get' : 'has') + 'Attribute(e,"' + match[1] + '")' + (type ? '.toLowerCase();' : ';');
           source = expr + 'if(' + (match[2] ? test : 'n') + '){' + source + '}';
