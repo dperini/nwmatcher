@@ -159,8 +159,7 @@
     '*=': "n.indexOf('%m')>-1",
     '|=': "(n+'-').indexOf('%m-')==0",
     '~=': "(' '+n+' ').indexOf(' %m ')>-1",
-    '$=': "n.substr(n.length-'%m'.length)=='%m'",
-    '!=': "n!=='%m'" // extension
+    '$=': "n.substr(n.length-'%m'.length)=='%m'"
   }),
 
   Optimize = global.Object({
