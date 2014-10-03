@@ -208,28 +208,28 @@
 
   // detect native methods
   isNative = (function() {
-    var s = (doc.appendChild + '').replace(/appendChild/g, '');
-    return function(object, method) {
-      var m = object && object[method] || false;
-      return m && typeof m != 'string' &&
-        s == (m + '').replace(new global.RegExp(method, 'g'), '');
-    };
+        var re = / \w+\(/,
+        native = String(Object.prototype.toString).replace(re, ' (');
+        return function(method) {
+          return method && typeof method != 'string' &&
+            native == String(method).replace(re, ' (');
+        };
   })(),
 
   // NATIVE_XXXXX true if method exist and is callable
   // detect if DOM methods are native in browsers
-  NATIVE_FOCUS = isNative(doc, 'hasFocus'),
-  NATIVE_QSAPI = isNative(doc, 'querySelector'),
-  NATIVE_GEBID = isNative(doc, 'getElementById'),
-  NATIVE_GEBTN = isNative(root, 'getElementsByTagName'),
-  NATIVE_GEBCN = isNative(root, 'getElementsByClassName'),
+  NATIVE_FOCUS = isNative(doc.hasFocus),
+  NATIVE_QSAPI = isNative(doc.querySelector),
+  NATIVE_GEBID = isNative(doc.getElementById),
+  NATIVE_GEBTN = isNative(root.getElementsByTagName),
+  NATIVE_GEBCN = isNative(root.getElementsByClassName),
 
   // detect native getAttribute/hasAttribute methods,
   // frameworks extend these to elements, but it seems
   // this does not work for XML namespaced attributes,
   // used to check both getAttribute/hasAttribute in IE
-  NATIVE_GET_ATTRIBUTE = isNative(root, 'getAttribute'),
-  NATIVE_HAS_ATTRIBUTE = isNative(root, 'hasAttribute'),
+  NATIVE_GET_ATTRIBUTE = isNative(root.getAttribute),
+  NATIVE_HAS_ATTRIBUTE = isNative(root.hasAttribute),
 
   // check if slice() can convert nodelist to array
   // see http://yura.thinkweb2.com/cft/
