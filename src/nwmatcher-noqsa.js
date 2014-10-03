@@ -37,7 +37,7 @@
       factory(browserGlobal, exports);
       return exports;
     };
-    module.factory = factory; 
+    module.factory = factory;
   } else {
     factory(global,
       (global.NW || (global.NW = global.Object())) &&
@@ -698,7 +698,7 @@
 
       var parts;
 
-      if (!(element && element.nodeName > '@')) {
+      if (!(element && element.nodeType == 1)) {
         emit('Invalid element argument');
         return false;
       } else if (typeof selector != 'string') {

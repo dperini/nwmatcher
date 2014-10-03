@@ -39,7 +39,7 @@
       factory(browserGlobal, exports);
       return exports;
     };
-    module.factory = factory; 
+    module.factory = factory;
   } else {
     // in a browser environment, the nwmatcher functions will operate on
     // the "global" loading them and be attached to "global.NW.Dom"
@@ -1339,7 +1339,7 @@
 
       var parts;
 
-      if (!(element && element.nodeName > '@')) {
+      if (!(element && element.nodeType == 1)) {
         emit('Invalid element argument');
         return false;
       } else if (typeof selector != 'string') {
