@@ -507,7 +507,7 @@
           } else if (match[2] == '!=' || match[2] == '=') {
             test = 'n' + match[2] + '=""';
           }
-          expr = 'n=s.' + (match[2] ? 'get' : 'has') + 'Attribute(e,"' + match[1] + '")' + (type ? '.toLowerCase();' : ';');
+          expr = 'n=s.' + (match[2] ? 'get' : 'has') + 'Attribute(e,"' + match[1] + '")' + (type && match[2] ? '.toLowerCase();' : ';');
           source = expr + 'if(' + (match[2] ? test : 'n') + '){' + source + '}';
         }
 

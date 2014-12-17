@@ -1062,7 +1062,7 @@
           // build expression for has/getAttribute
           expr = 'n=s.' + (match[2] ? 'get' : 'has') +
             'Attribute(e,"' + match[1] + '")' +
-            (type ? '.toLowerCase();' : ';');
+            (type && match[2] ? '.toLowerCase();' : ';');
 
           source = expr + 'if(' + (match[2] ? test : 'n') + '){' + source + '}';
         }
