@@ -209,10 +209,10 @@
   // detect native methods
   isNative = (function() {
         var re = / \w+\(/,
-        native = String(Object.prototype.toString).replace(re, ' (');
+        isnative = String(Object.prototype.toString).replace(re, ' (');
         return function(method) {
           return method && typeof method != 'string' &&
-            native == String(method).replace(re, ' (');
+            isnative == String(method).replace(re, ' (');
         };
   })(),
 
