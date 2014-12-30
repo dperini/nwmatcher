@@ -333,9 +333,9 @@
   // check Selector API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
-      var pattern = new global.Array(), div = doc.createElement('div'), element,
+      var pattern = new global.Array(), context, element,
 
-      expect = function(selector, context, element, n) {
+      expect = function(selector, element, n) {
         var result = false;
         context.appendChild(element);
         try { result = context.querySelectorAll(selector).length == n; } catch(e) { }
@@ -343,10 +343,30 @@
         return result;
       };
 
+      // certain bugs can only be detected in standard documents
+      // to avoid writing a live loading document create a fake one
+      if (doc.implementation && doc.implementation.createDocument) {
+        // use a shadow document body as context
+        context = doc.implementation.createDocument('', '', null).
+          appendChild(doc.createElement('html')).
+          appendChild(doc.createElement('head')).parentNode.
+          appendChild(doc.createElement('body'));
+      } else {
+        // use an unattached div node as context
+        context = doc.createElement('div');
+      }
+
+      // fix for Safari 8.x and other engines that
+      // fail querying filtered sibling combinators
+      element = doc.createElement('div');
+      element.innerHTML = '<p id="a"></p><br>';
+      expect('p#a+*', element, 0) &&
+        pattern.push('\\w+#\\w+.*[+~]');
+
       // ^= $= *= operators bugs with empty values (Opera 10 / IE8)
       element = doc.createElement('p');
       element.setAttribute('class', '');
-      expect('[class^=""]', div, element, 1) &&
+      expect('[class^=""]', element, 1) &&
         pattern.push('[*^$]=[\\x20\\t\\n\\r\\f]*(?:""|' + "'')");
 
       // :checked bug with option elements (Firefox 3.6.x)
@@ -354,7 +374,7 @@
       // HTML5 rules says selected options also match
       element = doc.createElement('option');
       element.setAttribute('selected', 'selected');
-      expect(':checked', div, element, 0) &&
+      expect(':checked', element, 0) &&
         pattern.push(':checked');
 
       // :enabled :disabled bugs with hidden fields (Firefox 3.5)
@@ -363,13 +383,13 @@
       // not supported by IE8 Query Selector
       element = doc.createElement('input');
       element.setAttribute('type', 'hidden');
-      expect(':enabled', div, element, 0) &&
+      expect(':enabled', element, 0) &&
         pattern.push(':enabled', ':disabled');
 
       // :link bugs with hyperlinks matching (Firefox/Safari)
       element = doc.createElement('link');
       element.setAttribute('href', 'x');
-      expect(':link', div, element, 1) ||
+      expect(':link', element, 1) ||
         pattern.push(':link');
 
       // avoid attribute selectors for IE QSA
