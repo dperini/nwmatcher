@@ -899,7 +899,7 @@
           matchResolvers = new global.Object();
           selectContexts = new global.Object();
           selectResolvers = new global.Object();
-          Config['USE_QSAPI'] = false;
+          if (!Config[i]) { Config['USE_QSAPI'] = false; }
         } else if (i == 'USE_QSAPI') {
           Config[i] = !!option[i] && NATIVE_QSAPI;
         }
