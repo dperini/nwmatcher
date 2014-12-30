@@ -232,10 +232,7 @@ NW.Dom.registerSelector(
           break;
 
         case 'target':
-          n = doc.location ? doc.location.hash : '';
-          if (n) {
-            source = 'if(e.id=="' + n.slice(1) + '"){' + source + '}';
-          }
+          source = 'if(e.id==d.location.hash.slice(1)){' + source + '}';
           break;
 
         case 'link':
