@@ -627,8 +627,7 @@
                 '{' + source + 'break;}}while((e=e.parentNode)&&e!==g);';
               break;
             case 'target':
-                source = 'if(e.id==d.location.hash.slice(1)){' + source + '}';
-              }
+              source = 'if(e.id==d.location.hash.slice(1)){' + source + '}';
               break;
             case 'link':
               source = 'if(s.isLink(e)&&!e.visited){' + source + '}';
