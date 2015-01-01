@@ -116,9 +116,9 @@ sink('CSS 2 identification', function (test, ok) {
   // this regex must be kept in sync with the one in src/qwery.js for the test to make sense
   var css2 = /^(([\w\-]*[#\.]?[\w\-]+|\*)?(\[[\w\-]+([\~\|]?=['"][ \w\-\/\?\&\=\:\.\(\)\!,@#%<>\{\}\$\*\^]+["'])?\])?(\:(link|visited|active|hover))?([\s>+~\.,]|(?:$)))+$/
     , css2Selectors = [
-          '*',
-        , 'DIV',
-        , 'e1 e2',
+          '*'
+        , 'DIV'
+        , 'e1 e2'
         , 'parent>child'
         , 'parent+child'
         , 'parent~child' // CSS3 but IE8 supports ~

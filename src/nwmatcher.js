@@ -208,12 +208,12 @@
 
   // detect native methods
   isNative = (function() {
-        var re = / \w+\(/,
-        isnative = String(Object.prototype.toString).replace(re, ' (');
-        return function(method) {
-          return method && typeof method != 'string' &&
-            isnative == String(method).replace(re, ' (');
-        };
+    var re = / \w+\(/,
+    isnative = String(Object.prototype.toString).replace(re, ' (');
+    return function(method) {
+      return method && typeof method != 'string' &&
+        isnative == String(method).replace(re, ' (');
+    };
   })(),
 
   // NATIVE_XXXXX true if method exist and is callable
