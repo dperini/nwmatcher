@@ -95,15 +95,15 @@
   var module = { exports: {} }, exports = module.exports;
 
   /*
-   * Copyright (C) 2007-2014 Diego Perini
+   * Copyright (C) 2007-2015 Diego Perini
    * All rights reserved.
    *
    * nwmatcher.js - A fast CSS selector engine and matcher
    *
    * Author: Diego Perini <diego.perini at gmail com>
-   * Version: 1.3.3
+   * Version: 1.3.4
    * Created: 20070722
-   * Release: 20140330
+   * Release: 20150101
    *
    * License:
    *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -147,7 +147,7 @@
   
   })(this, function(global, exports) {
   
-    var version = 'nwmatcher-1.3.3',
+    var version = 'nwmatcher-1.3.4',
   
     Dom = exports,
   
