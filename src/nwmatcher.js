@@ -1167,11 +1167,8 @@
                   (/last/i.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
                   'n>=' + b + '&&(n-(' + b + '))%' + a + '==0' : a < -1 ?
                   (/last/i.test(match[1])) ? '(n-(' + b + '))%' + a + '==0' :
-                  'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a=== 0 ?
-                  'n==' + b :
-                  (/last/i.test(match[1])) ?
-                    a == -1 ? 'n>=' + b : 'n<=' + b :
-                    a == -1 ? 'n<=' + b : 'n>=' + b;
+                  'n<=' + b + '&&(n-(' + b + '))%' + a + '==0' : a === 0 ?
+                  'n==' + b : a == -1 ? 'n<=' + b : 'n>=' + b;
 
                 // 4 cases: 1 (nth) x 4 (child, of-type, last-child, last-of-type)
                 source =
