@@ -1,0 +1,35 @@
+{
+  "name": "nwmatcher",
+  "version": "1.3.3",
+  "homepage": "https://github.com/dperini/nwmatcher",
+  "authors": [
+    "Diego Perini <diego.perini@gmail.com>"
+  ],
+  "description": "A fast CSS selector engine and matcher.",
+  "main": "src/nwmatcher.js",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "javascript",
+    "nwmatcher",
+    "selector",
+    "matcher",
+    "library"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+	"*.md",
+    "bin",
+    "lib",
+    "test",
+    "dist",
+    "build",
+    "Makefile",
+    ".gitignore",
+    ".npmignore",
+    "package.json",
+    ".gitattributes",
+  ]
+}
