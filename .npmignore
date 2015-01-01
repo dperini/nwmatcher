@@ -1,9 +1,10 @@
 bin/
-build/
-dist/
 lib/
 test/
+dist/
+build/
+Makefile
+bower.json
 .gitattributes
 .gitignore
 .npmignore
-Makefile
