@@ -30,6 +30,7 @@
     ".gitignore",
     ".npmignore",
     "package.json",
-    ".gitattributes",
+    ".gitattributes"
   ]
 }
+
