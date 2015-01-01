@@ -205,7 +205,7 @@
 
   configure =
     function(option) {
-      if (typeof option == 'string') { return Config[option]; }
+      if (typeof option == 'string') { return Config[option] || Config; }
       if (typeof option != 'object') { return false; }
       for (var i in option) {
         Config[i] = !!option[i];
