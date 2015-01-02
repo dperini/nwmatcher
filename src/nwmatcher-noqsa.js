@@ -94,8 +94,9 @@
   standardValidator =
     '(?=\\s*[^>+~(){}<>])' +
     '(' +
-    '\\*' +
-    '|(?:[#.:]?' + identifier + ')' +
+    '\\*(?![|])' +
+    '|(?:(?:(?:(?:' + identifier + ')+|[*])?[|])?' + identifier + ')' +
+    '|(?:[#.:]' + identifier + ')' +
     '|' + combinators +
     '|\\[' + attributes + '\\]' +
     '|\\(' + pseudoclass + '\\)' +
@@ -176,9 +177,9 @@
     adjacent: /^\s*\+\s*(.*)/,
     relative: /^\s*\~\s*(.*)/,
     ancestor: /^\s+(.*)/,
-    universal: /^\*(.*)/,
+    universal: /^\*(?![|])(.*)/,
     id: global.RegExp('^#(' + encoding + '+)(.*)'),
-    tagName: global.RegExp('^(' + encoding + '+)(.*)'),
+    tagName: global.RegExp('^((?:(?:(?:' + encoding + ')+|[*])?[|])?' + encoding + '+)(.*)'),
     className: global.RegExp('^\\.(' + encoding + '+)(.*)')
   }),
 
@@ -479,10 +480,34 @@
         }
 
         else if ((match = selector.match(Patterns.tagName))) {
-          source = 'if(e.nodeName' + (XML_DOCUMENT ?
-            '=="' + match[1] + '"' : TO_UPPER_CASE +
-            '=="' + match[1].toUpperCase() + '"') +
-            '){' + source + '}';
+          if(match[1].substr(0, 2) === "*|" || match[1].indexOf('|') < 0) {
+            // Tag may have any namespace
+            
+            // Drop universal namespace selector if it was used
+            if(match[1].substr(0, 2) === "*|") {
+              match[1] = match[1].substr(2);
+            }
+            
+            source = 'if(e.localName' + (XML_DOCUMENT ?
+              '=="' + match[1] + '"' : TO_UPPER_CASE +
+              '=="' + match[1].toUpperCase() + '"') +
+              '){' + source + '}';
+          } else {
+            // Tag must have the correct namespace
+            
+            // Drop empty namespace selector
+            if(match[1].substr(0, 1) === '|') {
+              match[1] = match[1].substr(1);
+            }
+            
+            // Replace CSS namespace seperator with DOM namespace seperator
+            match[1] = match[1].replace('|', ':');
+            
+            source = 'if(e.nodeName' + (XML_DOCUMENT ?
+              '=="' + match[1] + '"' : TO_UPPER_CASE +
+              '=="' + match[1].toUpperCase() + '"') +
+              '){' + source + '}';
+           }
         }
 
         else if ((match = selector.match(Patterns.className))) {
@@ -816,14 +841,13 @@
             selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token,
               reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1)) ? '' : '*');
         }
-
       }
 
       if (!elements) {
         if (IE_LT_9) {
           elements = /^(?:applet|object)$/i.test(from.nodeName) ? from.childNodes : from.all;
         } else {
-          elements = from.getElementsByTagName('*');
+          elements = from.getElementsByTagNameNS('*', '*');
         }
       }
 
