@@ -356,13 +356,13 @@
       attribute = attribute.toLowerCase();
       if (typeof node[attribute] == 'object') {
         return node.attributes[attribute] &&
-          node.attributes[attribute].value || '';
+          node.attributes[attribute].value;
       }
       return (
-        attribute == 'type' ? node.getAttribute(attribute) || '' :
-        ATTR_URIDATA[attribute] ? node.getAttribute(attribute, 2) || '' :
+        attribute == 'type' ? node.getAttribute(attribute) :
+        ATTR_URIDATA[attribute] ? node.getAttribute(attribute, 2) :
         ATTR_BOOLEAN[attribute] ? node.getAttribute(attribute) ? attribute : 'false' :
-          ((node = node.getAttributeNode(attribute)) && node.value) || '');
+          (node = node.getAttributeNode(attribute)) && node.value);
     },
 
   hasAttribute = root.hasAttribute ?
@@ -370,12 +370,9 @@
         return node.hasAttribute(attribute);
     } :
     function(node, attribute) {
-      attribute = attribute.toLowerCase();
-      if (ATTR_DEFAULT[attribute]) {
-        return !!node[ATTR_DEFAULT[attribute]];
-      }
-      node = node.getAttributeNode(attribute);
-      return !!(node && node.specified);
+      var obj = node.getAttributeNode(attribute = attribute.toLowerCase());
+      return ATTR_DEFAULT[attribute] && attribute != 'value' ?
+        node[ATTR_DEFAULT[attribute]] : obj && obj.specified;
     },
 
   compile =
@@ -461,8 +458,10 @@
           } else if (match[2] == '!=' || match[2] == '=') {
             test = 'n' + match[2] + '=""';
           }
-          expr = 'n=s.' + (match[2] ? 'get' : 'has') + 'Attribute(e,"' + match[1] + '")' + (type && match[2] ? '.toLowerCase();' : ';');
-          source = expr + 'if(' + (match[2] ? test : 'n') + '){' + source + '}';
+          source = 'if(n=s.hasAttribute(e,"' + match[1] + '")){' +
+            (match[2] ? 'n=s.getAttribute(e,"' + match[1] + '")' : '') +
+            (type && match[2] ? '.toLowerCase();' : ';') +
+            'if(' + (match[2] ? test : 'n') + '){' + source + '}}';
         }
 
         else if ((match = selector.match(Patterns.adjacent))) {
