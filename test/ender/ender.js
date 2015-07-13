@@ -101,9 +101,9 @@
    * nwmatcher.js - A fast CSS selector engine and matcher
    *
    * Author: Diego Perini <diego.perini at gmail com>
-   * Version: 1.3.4
+   * Version: 1.3.5
    * Created: 20070722
-   * Release: 20150101
+   * Release: 20150710
    *
    * License:
    *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -147,7 +147,7 @@
   
   })(this, function(global, exports) {
   
-    var version = 'nwmatcher-1.3.4',
+    var version = 'nwmatcher-1.3.5',
   
     Dom = exports,
   
@@ -904,22 +904,22 @@
     // @return string
     getAttribute = !BUGGY_GET_ATTRIBUTE ?
       function(node, attribute) {
-        return node.getAttribute(attribute) || '';
+        return node.getAttribute(attribute);
       } :
       function(node, attribute) {
         attribute = attribute.toLowerCase();
         if (typeof node[attribute] == 'object') {
           return node.attributes[attribute] &&
-            node.attributes[attribute].value || '';
+            node.attributes[attribute].value;
         }
         return (
           // 'type' can only be read by using native getAttribute
-          attribute == 'type' ? node.getAttribute(attribute) || '' :
+          attribute == 'type' ? node.getAttribute(attribute) :
           // specific URI data attributes (parameter 2 to fix IE bug)
-          ATTR_URIDATA[attribute] ? node.getAttribute(attribute, 2) || '' :
+          ATTR_URIDATA[attribute] ? node.getAttribute(attribute, 2) :
           // boolean attributes should return name instead of true/false
           ATTR_BOOLEAN[attribute] ? node.getAttribute(attribute) ? attribute : 'false' :
-            ((node = node.getAttributeNode(attribute)) && node.value) || '');
+            (node = node.getAttributeNode(attribute)) && node.value);
       },
   
     // attribute presence
@@ -931,13 +931,10 @@
           node.hasAttribute(attribute);
       } :
       function(node, attribute) {
-        attribute = attribute.toLowerCase();
-        if (ATTR_DEFAULT[attribute]) {
-          return !!node[ATTR_DEFAULT[attribute]];
-        }
-        // read the attribute node
-        node = node.getAttributeNode(attribute);
-        return !!(node && node.specified);
+        // read the node attribute object
+        var obj = node.getAttributeNode(attribute = attribute.toLowerCase());
+        return ATTR_DEFAULT[attribute] && attribute != 'value' ?
+          node[ATTR_DEFAULT[attribute]] : obj && obj.specified;
       },
   
     // check node emptyness
@@ -1175,12 +1172,11 @@
               test = 'n' + match[2] + '=""';
             }
   
-            // build expression for has/getAttribute
-            expr = 'n=s.' + (match[2] ? 'get' : 'has') +
-              'Attribute(e,"' + match[1] + '")' +
-              (type && match[2] ? '.toLowerCase();' : ';');
+            source = 'if(n=s.hasAttribute(e,"' + match[1] + '")){' +
+              (match[2] ? 'n=s.getAttribute(e,"' + match[1] + '")' : '') +
+              (type && match[2] ? '.toLowerCase();' : ';') +
+              'if(' + (match[2] ? test : 'n') + '){' + source + '}}';
   
-            source = expr + 'if(' + (match[2] ? test : 'n') + '){' + source + '}';
           }
   
           // *** Adjacent sibling combinator
