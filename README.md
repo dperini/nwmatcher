@@ -14,7 +14,7 @@ To include NWMatcher in a standard web page:
 To use it with Node.js:
 
 ```
-$ npm install nwmatcher.js
+$ npm install nwmatcher
 ```
 
 NWMatcher currently supports browsers (as a global, `NW.Dom`) and headless environments (as a CommonJS module).
