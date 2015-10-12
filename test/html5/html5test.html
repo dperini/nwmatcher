@@ -38,6 +38,8 @@ Located at <mark id="NUM">116</mark> Messina Avenue, London NW6 4LD
   </ul>
 </section>
 
+<h2 id="h2">H2</h2>
+
 <hr>
 
 <script type="text/javascript">
@@ -57,7 +59,9 @@ window.onload = function() {
     'abbr:nth-last-of-type(1)': 'UK',
     'abbr:nth-last-of-type(2)': 'IBA',
     'section li:first-of-type': 'first',
-    'section li:last-of-type': 'last'
+    'section li:last-of-type': 'last',
+    'body > h2': 'h2',
+    'body>h2': 'h2'
   };
 
   log('--- TEST USING NW.Dom.select ---');
