@@ -88,7 +88,7 @@
   whitespace = '[\\x20\\t\\n\\r\\f]*',
 
   // 4 combinators F E, F>E, F+E, F~E
-  combinators = '[\\x20]|[>+~][^>+~]',
+  combinators = '[\\x20]|[>+~](?=[^>+~])',
 
   // an+b format params for pseudo-classes
   pseudoparms = '(?:[-+]?\\d*n)?[-+]?\\d*',
