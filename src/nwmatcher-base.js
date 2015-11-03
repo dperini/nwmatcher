@@ -110,7 +110,7 @@
 
   extendedValidator = standardValidator.replace(pseudoclass, '.*'),
 
-  reValidator = global.RegExp(standardValidator, 'g'),
+  reValidator = global.RegExp(standardValidator),
 
   reTrimSpaces = global.RegExp('^' +
     whitespace + '|' + whitespace + '$', 'g'),
@@ -217,7 +217,7 @@
         }
       }
       reValidator = global.RegExp(Config.SIMPLENOT ?
-        standardValidator : extendedValidator, 'g');
+        standardValidator : extendedValidator);
       return true;
     },
 

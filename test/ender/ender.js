@@ -263,7 +263,7 @@
     extendedValidator = standardValidator.replace(pseudoclass, '.*'),
   
     // validator for standard selectors as default
-    reValidator = new global.RegExp(standardValidator, 'g'),
+    reValidator = new global.RegExp(standardValidator),
   
     // whitespace is any combination of these 5 character [\x20\t\n\r\f]
     // http://www.w3.org/TR/css3-selectors/#selector-syntax
@@ -998,7 +998,7 @@
           }
         }
         reValidator = new global.RegExp(Config.SIMPLENOT ?
-          standardValidator : extendedValidator, 'g');
+          standardValidator : extendedValidator);
         return true;
       },
   
