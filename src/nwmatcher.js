@@ -111,10 +111,10 @@
   // NOTE: Safari 2.0.x crashes with escaped (\\)
   // Unicode ranges in regular expressions so we
   // use a negated character range class instead
-  encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)',
+  encoding = '(?:\\\\\\d{1,5} |[-\\w]|[^\\x00-\\xa0]|\\\\.)',
 
   // CSS identifier syntax
-  identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)+',
+  identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+|\\\\\\d{1,5} )+',
 
   // build attribute string
   attrcheck = '(' + quotedvalue + '|' + identifier + ')',
@@ -197,6 +197,7 @@
   reSplitToken = new global.RegExp('(' +
     '\\[' + attributes + '\\]|' +
     '\\(' + pseudoclass + '\\)|' +
+    prefixes + identifier + '|' +
     '\\\\.|[^\\x20\\t\\r\\n\\f>+~])+', 'g'),
 
   // for in excess whitespace removal
@@ -653,6 +654,35 @@
       });
     },
 
+  // convert a CSS string or identifier containing escape sequence to a
+  // javascript string with the characters
+  unescapeIdentifier =
+    function(str) {
+      return str.replace(/\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
+        var codePoint, highHex, highSurrogate, lowHex, lowSurrogate;
+
+        if (p2) {
+          // unescaped " or '
+          return p2;
+        }
+
+        if (/^[0-9a-fA-F]/.test(p1)) {
+          // \1f23
+          codePoint = parseInt(p1, 16);
+          return String.fromCharCode(codePoint);
+        }
+
+        if (/^[\\\x22\x27]/.test(p1)) {
+          // \' \"
+          return substring;
+        }
+
+        // \g \h \. \# etc
+        return p1;
+      });
+    },
+
+
   /*------------------------------ DOM METHODS -------------------------------*/
 
   // element by id (raw)
@@ -672,13 +702,13 @@
   // @return reference or null
   _byId = !BUGGY_GEBID ?
     function(id, from) {
-      id = id.replace(/\\([^\\]{1})/g, '$1');
+      id = unescapeIdentifier(id);
       return from.getElementById && from.getElementById(id) ||
         byIdRaw(id, from.getElementsByTagName('*'));
     } :
     function(id, from) {
       var element = null;
-      id = id.replace(/\\([^\\]{1})/g, '$1');
+      id = unescapeIdentifier(id);
       if (XML_DOCUMENT || from.nodeType != 9) {
         return byIdRaw(id, from.getElementsByTagName('*'));
       }
@@ -760,7 +790,7 @@
   byClassRaw =
     function(name, from) {
       var i = -1, j = i, data = new global.Array(), element, elements = _byTag('*', from), n;
-      name = ' ' + (QUIRKS_MODE ? name.toLowerCase() : name).replace(/\\([^\\]{1})/g, '$1') + ' ';
+      name = ' ' + unescapeIdentifier(QUIRKS_MODE ? name.toLowerCase() : name) + ' ';
       while ((element = elements[++i])) {
         n = XML_DOCUMENT ? element.getAttribute('class') : element.className;
         if (n && n.length && (' ' + (QUIRKS_MODE ? n.toLowerCase() : n).
@@ -776,7 +806,7 @@
   _byClass =
     function(name, from) {
       return (BUGGY_GEBCN || BUGGY_QUIRKS_GEBCN || XML_DOCUMENT || !from.getElementsByClassName) ?
-        byClassRaw(name, from) : slice.call(from.getElementsByClassName(name.replace(/\\([^\\]{1})/g, '$1')), 0);
+        byClassRaw(name, from) : slice.call(from.getElementsByClassName(unescapeIdentifier(name)), 0);
     },
 
   // publicly exposed byClass
@@ -1020,7 +1050,7 @@
           source = 'if(' + (XML_DOCUMENT ?
             's.getAttribute(e,"id")' :
             '(e.submit?s.getAttribute(e,"id"):e.id)') +
-            '=="' + match[1] + '"' +
+            '=="' + convertEscapes(match[1]) + '"' +
             '){' + source + '}';
         }
 
@@ -1045,7 +1075,7 @@
             's.getAttribute(e,"class")' : 'e.className') +
             ')&&n.length&&(" "+' + (QUIRKS_MODE ? 'n.toLowerCase()' : 'n') +
             '.replace(' + reWhiteSpace + '," ")+" ").indexOf(" ' +
-            (QUIRKS_MODE ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
+            convertEscapes(QUIRKS_MODE ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
             '){' + source + '}';
         }
 
