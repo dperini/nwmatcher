@@ -70,7 +70,7 @@
   prefixes = '[#.:]?',
 
   operators = '([~*^$|!]?={1})',
-  combinators = '[\\s]|[>+~](?=[^>+~])',
+  combinators = '\\s*[>+~]\\s*(?=[^>~\\d])|\\s+',
   pseudoparms = '(?:[-+]?\\d*n)?[-+]?\\d*',
 
   quotedvalue = '"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"' + "|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*'",
@@ -108,6 +108,8 @@
   extendedValidator = standardValidator.replace(pseudoclass, '.*'),
 
   reValidator = global.RegExp(standardValidator),
+
+  combinatorRe = global.RegExp(combinators, 'g'),
 
   reTrimSpaces = /^\s*|\s*$/g,
 
@@ -173,7 +175,7 @@
 
   Patterns = global.Object({
     spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
-    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/i,
+    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
     attribute: global.RegExp('^\\[' + attrmatcher + '\\](.*)'),
     children: /^\s*\>\s*(.*)/,
     adjacent: /^\s*\+\s*(.*)/,
@@ -798,7 +800,7 @@
       } else if (isSingleSelect) {
 
         if (changed) {
-          parts = selector.match(reSplitToken);
+          parts = selector.split(combinatorRe);
           token = parts[parts.length - 1];
           lastSlice = token.split(':not')[0];
           lastPosition = selector.length - token.length;
