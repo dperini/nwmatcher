@@ -597,6 +597,9 @@
 			t( "Descendant escaped ID", "div #test\\.foo\\[5\\]bar", ["test.foo[5]bar"] );
 			t( "Child escaped ID", "form > #foo\\:bar", ["foo:bar"] );
 			t( "Child escaped ID", "form > #test\\.foo\\[5\\]bar", ["test.foo[5]bar"] );
+
+			t( "ID selector with escaped number", "#\\31 23", ["123"] );
+			t( "Descendant ID selector with escaped number", "div #\\31 23", ["123"] );
 	
 			t( "ID Selector, child ID present", "#form > #radio1", ["radio1"] ); // bug #267
 			t( "ID Selector, not an ancestor ID", "#form #first", [] );
@@ -1250,6 +1253,7 @@
 			<span id="utf8class2" class="台北"></span>
 			<span id="foo:bar" class="foo:bar"></span>
 			<span id="test.foo[5]bar" class="test.foo[5]bar"></span>
+			<span id="123"></span>
 			
 			<foo_bar id="foobar">test element</foo_bar>
 

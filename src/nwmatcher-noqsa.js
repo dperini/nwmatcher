@@ -67,15 +67,17 @@
   lastPartsMatch,
   lastPartsSelect,
 
+  prefixes = '[#.:]?',
+
   operators = '([~*^$|!]?={1})',
-  combinators = '[\\s]|[>+~](?=[^>+~])',
+  combinators = '\\s*[>+~]\\s*(?=[^>~\\d])|\\s+',
   pseudoparms = '(?:[-+]?\\d*n)?[-+]?\\d*',
 
   quotedvalue = '"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"' + "|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*'",
   skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
 
-  encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)',
-  identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)+',
+  encoding = '(?:\\\\\\d{1,5} |[-\\w]|[^\\x00-\\xa0]|\\\\.)',
+  identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+|\\\\\\d{1,5} )+',
 
   attrcheck = '(' + quotedvalue + '|' + identifier + ')',
   attributes = '\\s*(' + encoding + '*:?' + encoding + '+)\\s*(?:' + operators + '\\s*' + attrcheck + ')?\\s*',
@@ -107,6 +109,8 @@
 
   reValidator = global.RegExp(standardValidator),
 
+  combinatorRe = global.RegExp(combinators, 'g'),
+
   reTrimSpaces = /^\s*|\s*$/g,
 
   reSimpleNot = global.RegExp('^(' +
@@ -122,6 +126,7 @@
   reSplitToken = global.RegExp('(' +
     '\\[' + attributes + '\\]|' +
     '\\(' + pseudoclass + '\\)|' +
+    prefixes + identifier + '|' +
     '\\\\.|[^\\s>+~])+', 'g'),
 
   reOptimizeSelector = global.RegExp(identifier + '|^$'),
@@ -170,7 +175,7 @@
 
   Patterns = global.Object({
     spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
-    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/i,
+    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
     attribute: global.RegExp('^\\[' + attrmatcher + '\\](.*)'),
     children: /^\s*\>\s*(.*)/,
     adjacent: /^\s*\+\s*(.*)/,
@@ -250,6 +255,29 @@
       });
     },
 
+  unescapeIdentifier =
+    function(str) {
+      return str.replace(/\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
+        var codePoint, highHex, highSurrogate, lowHex, lowSurrogate;
+
+        if (p2) {
+          return p2;
+        }
+
+        if (/^[0-9a-fA-F]/.test(p1)) {
+          codePoint = parseInt(p1, 16);
+          return String.fromCharCode(codePoint);
+        }
+
+        if (/^[\\\x22\x27]/.test(p1)) {
+          return substring;
+        }
+
+        return p1;
+      });
+    },
+
+
   byIdRaw =
     function(id, elements) {
       var i = -1, element = null;
@@ -263,13 +291,13 @@
 
   _byId = !('fileSize' in doc) ?
     function(id, from) {
-      id = id.replace(/\\([^\\]{1})/g, '$1');
+      id = unescapeIdentifier(id);
       return from.getElementById && from.getElementById(id) ||
         byIdRaw(id, from.getElementsByTagName('*'));
     } :
     function(id, from) {
       var element = null;
-      id = id.replace(/\\([^\\]{1})/g, '$1');
+      id = unescapeIdentifier(id);
       if (XML_DOCUMENT || from.nodeType != 9) {
         return byIdRaw(id, from.getElementsByTagName('*'));
       }
@@ -471,7 +499,7 @@
           source = 'if(' + (XML_DOCUMENT ?
             's.getAttribute(e,"id")' :
             '(e.submit?s.getAttribute(e,"id"):e.id)') +
-            '=="' + match[1] + '"' +
+            '=="' + convertEscapes(match[1]) + '"' +
             '){' + source + '}';
         }
 
@@ -487,7 +515,7 @@
             'e.getAttribute("class")' : 'e.className') +
             ')&&n.length&&(" "+' + (QUIRKS_MODE ? 'n.toLowerCase()' : 'n') +
             '.replace(/\\s+/g," ")+" ").indexOf(" ' +
-            (QUIRKS_MODE ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
+            convertEscapes(QUIRKS_MODE ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
             '){' + source + '}';
         }
 
@@ -772,7 +800,7 @@
       } else if (isSingleSelect) {
 
         if (changed) {
-          parts = selector.match(reSplitToken);
+          parts = selector.split(combinatorRe);
           token = parts[parts.length - 1];
           lastSlice = token.split(':not')[0];
           lastPosition = selector.length - token.length;
@@ -811,7 +839,7 @@
         }
 
         else if (!XML_DOCUMENT && GEBCN && (parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-          if ((elements = from.getElementsByClassName(token.replace(/\\([^\\]{1})/g, '$1'))).length === 0) { return [ ]; }
+          if ((elements = from.getElementsByClassName(unescapeIdentifier(token))).length === 0) { return [ ]; }
             selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token,
               reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1)) ? '' : '*');
         }
