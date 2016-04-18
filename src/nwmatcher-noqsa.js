@@ -122,6 +122,7 @@
   reSplitToken = global.RegExp('(' +
     '\\[' + attributes + '\\]|' +
     '\\(' + pseudoclass + '\\)|' +
+    '\\:(?:link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\\((?:[-\\w]{2,})\\)|not\\(\\s*(?::nth(?:-last)?(?:-child|-of-type)\\(\\s*(?:even|odd|(?:[-+]{0,1}\\d*n\\s*)?[-+]{0,1}\\s*\\d*)\\s*\\)|[^()]*)\\s*\\))?|' +
     '\\\\.|[^\\s>+~])+', 'g'),
 
   reOptimizeSelector = global.RegExp(identifier + '|^$'),
@@ -170,7 +171,7 @@
 
   Patterns = global.Object({
     spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
-    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/i,
+    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
     attribute: global.RegExp('^\\[' + attrmatcher + '\\](.*)'),
     children: /^\s*\>\s*(.*)/,
     adjacent: /^\s*\+\s*(.*)/,
