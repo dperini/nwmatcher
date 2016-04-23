@@ -411,8 +411,9 @@
   IE_LT_9 = typeof doc.addEventListener != 'function',
 
   INSENSITIVE_MAP = global.Object({
-    href: 1, lang: 1, src: 1, style: 1, title: 1,
-    type: 1, xmlns: 1, 'xml:lang': 1, 'xml:space': 1
+    'class': 1,
+    'href': 1, 'lang': 1, 'src': 1, 'style': 1, 'title': 1,
+    'type': 1, 'xmlns': 1, 'xml:lang': 1, 'xml:space': 1
   }),
 
   TO_UPPER_CASE = IE_LT_9 ? '.toUpperCase()' : '',
