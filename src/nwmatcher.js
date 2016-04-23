@@ -507,7 +507,7 @@
     // structural pseudo-classes and child selectors
     spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
     // uistates + dynamic + negation pseudo-classes
-    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(([^()]*|.*)\))?(.*)/i,
+    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
     // element attribute matcher
     attribute: new global.RegExp('^\\[' + attrmatcher + '\\](.*)'),
     // E > F
@@ -1484,7 +1484,8 @@
           token = parts[parts.length - 1];
 
           // only last slice before :not rules
-          lastSlice = token.split(':not')[0];
+          lastSlice = token.split(':not');
+          lastSlice = lastSlice[lastSlice.length - 1];
 
           // position where token was found
           lastPosition = selector.length - token.length;

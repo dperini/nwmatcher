@@ -608,7 +608,8 @@
         if (changed) {
           parts = selector.match(reSplitToken);
           token = parts[parts.length - 1];
-          lastSlice = token.split(':not')[0];
+          lastSlice = token.split(':not');
+          lastSlice = lastSlice[lastSlice.length - 1];
           lastPosition = selector.length - token.length;
         }
 
