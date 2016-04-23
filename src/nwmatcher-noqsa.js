@@ -589,7 +589,7 @@
             case 'not':
               expr = match[3].replace(reTrimSpaces, '');
               if (Config.SIMPLENOT && !reSimpleNot.test(expr)) {
-                emit('Negation pseudo-class only accepts simple selectors "' + match.join('') + '"');
+                emit('Negation pseudo-class only accepts simple selectors "' + selector + '"');
                 return '';
               } else {
                 if ('compatMode' in doc) {

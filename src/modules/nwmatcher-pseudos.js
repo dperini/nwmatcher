@@ -190,7 +190,7 @@ NW.Dom.registerSelector(
         case 'not':
           expr = match[3].replace(reTrimSpace, '');
           if (Config.SIMPLENOT && !reSimpleNot.test(expr)) {
-            NW.Dom.emit('Negation pseudo-class only accepts simple selectors "' + match.join('') + '"');
+            NW.Dom.emit('Negation pseudo-class only accepts simple selectors "' + selector + '"');
           } else {
             if ('compatMode' in doc) {
               source = 'if(!' + NW.Dom.compile(expr, '', false) + '(e,s,r,d,h,g)){' + source + '}';
