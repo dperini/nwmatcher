@@ -411,7 +411,7 @@
   IE_LT_9 = typeof doc.addEventListener != 'function',
 
   INSENSITIVE_MAP = global.Object({
-    'class': 1,
+    'class': 0,
     'href': 1, 'lang': 1, 'src': 1, 'style': 1, 'title': 1,
     'type': 1, 'xmlns': 1, 'xml:lang': 1, 'xml:space': 1
   }),
@@ -500,6 +500,7 @@
           test = 'false';
           if (match[2] && match[4] && (test = Operators[match[2]])) {
             match[4] = convertEscapes(match[4]);
+            INSENSITIVE_MAP['class'] = QUIRKS_MODE ? 1 : 0;
             type = INSENSITIVE_MAP[match[1].toLowerCase()];
             test = test.replace(/\%m/g, type ? match[4].toLowerCase() : match[4]);
           } else if (match[2] == '!=' || match[2] == '=') {

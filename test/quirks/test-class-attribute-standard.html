@@ -12,26 +12,27 @@
 <style type="text/css">
 .pass { color: #0c0; }
 .fail { color: #c00; }
+span { color: #00c; font-family: Courier New; }
 </style>
 </head>
 <body>
 
 <h1>NWMatcher: test class attribute in Standard Mode</h1>
 
-<p>Using NWMatcher select method</p>
+<p>Using NWMatcher select method looking for "[class~=foobar]" selector</p>
 
 <div id="dom">
-	<div id="d1" class="foobar">Lower case classname</div>
-	<div id="d2" class="fooBar">Mixed case classname</div>
-	<div id="d3" class="FOOBAR">Upper case classname</div>
+	<div id="d1" class="foobar">Lower case classname <span>foobar</span></div>
+	<div id="d2" class="fooBar">Mixed case classname <span>fooBar</span></div>
+	<div id="d3" class="FOOBAR">Upper case classname <span>FOOBAR</span></div>
 </div>
 
-<p>Using querySelectorAll method</p>
+<p>Using querySelectorAll method looking for "[class~=foobar]" selector</p>
 
 <div id="qsa">
-	<div id="q1" class="foobar">Lower case classname</div>
-	<div id="q2" class="fooBar">Mixed case classname</div>
-	<div id="q3" class="FOOBAR">Upper case classname</div>
+	<div id="q1" class="foobar">Lower case classname <span>foobar</span></div>
+	<div id="q2" class="fooBar">Mixed case classname <span>fooBar</span></div>
+	<div id="q3" class="FOOBAR">Upper case classname <span>FOOBAR</span></div>
 </div>
 
 <hr>
@@ -51,7 +52,7 @@ window.onload = function() {
   temp = NW.Dom.select('#dom [class~=foobar]');
   real = Array.prototype.slice.call(outer.getElementsByClassName('foobar'), 0);
 
-  log('--- TESTED USING nwmatcher NW.Dom.select --- ' + temp.length + ' elements found');
+  log('--- TESTED USING nwmatcher NW.Dom.select("#dom [class~=foobar]") --- ' + temp.length + ' elements found - 3 class names');
 
   for (i = 0, l = items.length; l > i; ++i) {
     if (real[i] === temp[i]) {
@@ -67,9 +68,8 @@ window.onload = function() {
   items = outer.getElementsByTagName('div');
   temp = document.querySelectorAll('#qsa [class~=foobar]');
   real = Array.prototype.slice.call(outer.getElementsByClassName('foobar'), 0);
-  
 
-  log('--- TESTED USING document.querySelectorAll --- ' + temp.length + ' elements found');
+  log('--- TESTED USING document.querySelectorAll("#qsa [class~=foobar]") --- ' + temp.length + ' elements found - 3 class names');
 
   for (i = 0, l = items.length; l > i; ++i) {
     if (real[i] === temp[i]) {
@@ -80,7 +80,6 @@ window.onload = function() {
       items[i].innerHTML += ' - FAILED';
     }
   }
-
 
 };
 

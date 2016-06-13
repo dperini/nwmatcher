@@ -11,26 +11,27 @@
 <style type="text/css">
 .pass { color: #0c0; }
 .fail { color: #c00; }
+span { color: #00c; font-family: Courier New; }
 </style>
 </head>
 <body>
 
 <h1>NWMatcher: test class attribute in Quirks Mode</h1>
 
-<p>Using NWMatcher select method</p>
+<p>Using NWMatcher select method looking for "[class~=foobar]" selector</p>
 
 <div id="dom">
-	<div id="d1" class="foobar">Lower case classname</div>
-	<div id="d2" class="fooBar">Mixed case classname</div>
-	<div id="d3" class="FOOBAR">Upper case classname</div>
+	<div id="d1" class="foobar">Lower case classname <span>foobar</span></div>
+	<div id="d2" class="fooBar">Mixed case classname <span>fooBar</span></div>
+	<div id="d3" class="FOOBAR">Upper case classname <span>FOOBAR</span></div>
 </div>
 
-<p>Using querySelectorAll method</p>
+<p>Using querySelectorAll method looking for "[class~=foobar]" selector</p>
 
 <div id="qsa">
-	<div id="q1" class="foobar">Lower case classname</div>
-	<div id="q2" class="fooBar">Mixed case classname</div>
-	<div id="q3" class="FOOBAR">Upper case classname</div>
+	<div id="q1" class="foobar">Lower case classname <span>foobar</span></div>
+	<div id="q2" class="fooBar">Mixed case classname <span>fooBar</span></div>
+	<div id="q3" class="FOOBAR">Upper case classname <span>FOOBAR</span></div>
 </div>
 
 <hr>
@@ -46,37 +47,38 @@ window.onload = function() {
   var i, l, outer, real, temp;
 
   outer = document.getElementById('dom');
+  items = outer.getElementsByTagName('div');
   temp = NW.Dom.select('#dom [class~=foobar]');
   real = Array.prototype.slice.call(outer.getElementsByClassName('foobar'), 0);
 
-  log('--- TESTED USING nwmatcher NW.Dom.select --- ' + temp.length + ' elements found');
+  log('--- TESTED USING nwmatcher NW.Dom.select("#dom [class~=foobar]") --- ' + temp.length + ' elements found - 3 class names');
 
-  for (i = 0, l = real.length; l > i; ++i) {
-    if (real[i] === temp[i]/* && real[i].className.toLowerCase().indexOf('foobar') > -1 */) {
-      real[i].className += ' pass';
-      real[i].innerHTML += ' - PASSED';
+  for (i = 0, l = items.length; l > i; ++i) {
+    if (real[i] === temp[i]) {
+      items[i].className += ' pass';
+      items[i].innerHTML += ' - PASSED';
     } else {
-      real[i].className += ' fail';
-      real[i].innerHTML += ' - FAILED';
+      items[i].className += ' fail';
+      items[i].innerHTML += ' - FAILED';
     }
   }
 
   outer = document.getElementById('qsa');
+  items = outer.getElementsByTagName('div');
   temp = document.querySelectorAll('#qsa [class~=foobar]');
   real = Array.prototype.slice.call(outer.getElementsByClassName('foobar'), 0);
 
-  log('--- TESTED USING document.querySelectorAll --- ' + temp.length + ' elements found');
+  log('--- TESTED USING document.querySelectorAll("#qsa [class~=foobar]") --- ' + temp.length + ' elements found - 3 class names');
 
-  for (i = 0, l = real.length; l > i; ++i) {
-    if (real[i] === temp[i]/* && real[i].className.toLowerCase().indexOf('foobar') > -1 */) {
-      real[i].className += ' pass';
-      real[i].innerHTML += ' - PASSED';
+  for (i = 0, l = items.length; l > i; ++i) {
+    if (real[i] === temp[i]) {
+      items[i].className += ' pass';
+      items[i].innerHTML += ' - PASSED';
     } else {
-      real[i].className += ' fail';
-      real[i].innerHTML += ' - FAILED';
+      items[i].className += ' fail';
+      items[i].innerHTML += ' - FAILED';
     }
   }
-
 
 };
 
