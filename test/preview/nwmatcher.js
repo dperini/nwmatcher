@@ -117,15 +117,15 @@
   identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)+',
 
   attrcheck, attributes, attrmatcher, pseudoclass,
-  
-  standardValidator, extendedValidator,
-  
+
+  standardValidator, extendedValidator, reValidator,
+
   reSimpleNot, reOptimizeSelector,
 
   reClass, reSimpleSelector,
 
-  Optimize, Patterns,
-  
+  Optimize, Patterns, Tokens,
+
   // placeholder for extensions
   extensions = '.+',
 
@@ -224,6 +224,19 @@
     Patterns.tagName = new global.RegExp('^(' + encoding + '+)(.*)');
     Patterns.className = new global.RegExp('^\\.(' + encoding + '+)(.*)');
     Patterns.attribute = new global.RegExp('^\\[' + attrmatcher + '\\](.*)'),
+
+    Tokens = new global.Object({
+      prefixes: prefixes,
+      encoding: encoding,
+      operators: operators,
+      whitespace: whitespace,
+      identifier: identifier,
+      attributes: attributes,
+      combinators: combinators,
+      pseudoclass: pseudoclass,
+      pseudoparms: pseudoparms,
+      quotedvalue: quotedvalue
+    });
 
     // validator for complex selectors in ':not()' pseudo-classes
     extendedValidator = standardValidator.replace(pseudoclass, '.*');
@@ -1663,19 +1676,6 @@
     // selection/matching
     select: select,
     match: match
-  }),
-
-  Tokens = new global.Object({
-    prefixes: prefixes,
-    encoding: encoding,
-    operators: operators,
-    whitespace: whitespace,
-    identifier: identifier,
-    attributes: attributes,
-    combinators: combinators,
-    pseudoclass: pseudoclass,
-    pseudoparms: pseudoparms,
-    quotedvalue: quotedvalue
   });
 
   /*------------------------------- PUBLIC API -------------------------------*/
