@@ -683,19 +683,20 @@
       return str.replace(/\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
         var codePoint;
 
+        // unescaped " or '
         if (p2) {
-          // unescaped " or '
           return p2;
         }
 
+        // \1f23
         if (/^[0-9a-fA-F]/.test(p1)) {
-          // \1f23
           codePoint = parseInt(p1, 16);
-          return String.fromCharCode(codePoint);
+          return codePoint > 0xffff && codePoint < 0x110000 && String.fromCodePoint ?
+            String.fromCodePoint(codePoint) : String.fromCharCode(codePoint);
         }
 
+        // \' \"
         if (/^[\\\x22\x27]/.test(p1)) {
-          // \' \"
           return substring;
         }
 
@@ -703,7 +704,6 @@
         return p1;
       });
     },
-
 
   /*------------------------------ DOM METHODS -------------------------------*/
 
