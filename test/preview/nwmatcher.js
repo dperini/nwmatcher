@@ -206,10 +206,10 @@
 
     reSimpleSelector = new global.RegExp(
       BUGGY_GEBTN && BUGGY_GEBCN || OPERA ?
-        '^#?-?[_a-zA-Z]{1}' + encoding + '*$' : BUGGY_GEBTN ?
-        '^[.#]?-?[_a-zA-Z]{1}' + encoding + '*$' : BUGGY_GEBCN ?
-        '^(?:\\*|#-?[_a-zA-Z]{1}' + encoding + '*)$' :
-        '^(?:\\*|[.#]?-?[_a-zA-Z]{1}' + encoding + '*)$');
+        '^#?' + identifier + '$' : BUGGY_GEBTN ?
+        '^[.#]?' + identifier + '$' : BUGGY_GEBCN ?
+        '^(?:\\*|#' + identifier + ')$' :
+        '^(?:\\*|[.#]?' + identifier + ')$');
 
     // matches class selectors
     reClass = new global.RegExp('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + identifier + ')');
@@ -941,8 +941,8 @@
           Config[i] = !!option[i] && NATIVE_QSAPI;
         } else if (i == 'ESCAPED') {
           if (Config[i]) {
-            encoding = '(?:\\\\\\d{1,5} |[-\\w]|[^\\x00-\\xa0]|\\\\.)';
-            identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+|\\\\\\d{1,5} )+';
+            encoding = '(?:\\\\[0-9a-fA-F]{1,6}\x20?|[-\\w]|[^\\x00-\\xa0]|\\\\.)';
+            identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+|\\\\[0-9a-fA-F]{1,6}\x20?)+';
           } else {
             encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)';
             identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)+';
