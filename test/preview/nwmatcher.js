@@ -627,9 +627,73 @@
       }
     },
 
+  // convert single codepoint to UTF-16 encoding
+  codePointToUTF16 = 
+    function(codePoint) {
+      // out of range, use replacement character
+      if (codePoint < 0 || codePoint > 0x10ffff) {
+        return '\\ufffd';
+      }
+      // javascript strings are UTF-16 encoded
+      if (codePoint < 0x10000) {
+        var lowHex = '000' + codePoint.toString(16);
+        return '\\u' + lowHex.substr(lowHex.length - 4);
+      }
+      // supplementary high + low surrogates
+      return '\\u' + (((codePoint - 0x10000) >> 0x0a) + 0xd800).toString(16) +
+             '\\u' + (((codePoint - 0x10000) % 0x400) + 0xdc00).toString(16);
+    },
+
+  // convert single codepoint to string
+  stringFromCodePoint = String.fromCodePoint ||
+    function (codePoint) {
+      if (codePoint < 0x10000) {
+        return String.fromCharCode(codePoint);
+      }
+      return String.fromCharCode(
+        ((codePoint - 0x10000) >> 0x0a) + 0xd800,
+        ((codePoint - 0x10000) % 0x400) + 0xdc00);
+    },
+
+  reEscapedChars = /\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g;
+
+  convertEscapes =
+    function(str) {
+      return /\\/.test(str) ?
+        str.replace(reEscapedChars,
+          function(substring, p1, p2) {
+            // unescaped " or '
+            return p2 ? '\\' + p2 :
+              // javascript strings are UTF-16 encoded
+              /^[0-9a-fA-F]/.test(p1) ? codePointToUTF16(parseInt(p1, 16)) :
+              // \' \"
+              /^[\\\x22\x27]/.test(p1) ? substring :
+              // \g \h \. \# etc
+              p1;
+          }
+        ) : str;
+    },
+
+  unescapeIdentifier =
+    function(str) {
+      return /\\/.test(str) ?
+        str.replace(reEscapedChars,
+          function(substring, p1, p2) {
+            // unescaped " or '
+            return p2 ? p2 :
+              // javascript strings are UTF-16 encoded
+              /^[0-9a-fA-F]/.test(p1) ? stringFromCodePoint(parseInt(p1, 16)) :
+              // \' \"
+              /^[\\\x22\x27]/.test(p1) ? substring :
+              // \g \h \. \# etc
+              p1;
+          }
+        ) : str;
+    },
+
   // convert a CSS string or identifier containing escape sequence to a
   // javascript string with javascript escape sequences
-  convertEscapes =
+  convertEscapes2 =
     function(str) {
       return str.replace(/\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
         var codePoint, highHex, highSurrogate, lowHex, lowSurrogate;
@@ -678,7 +742,7 @@
 
   // convert a CSS string or identifier containing escape sequence to a
   // javascript string with the characters
-  unescapeIdentifier =
+  unescapeIdentifier2 =
     function(str) {
       return str.replace(/\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
         var codePoint;
@@ -1679,6 +1743,15 @@
   });
 
   /*------------------------------- PUBLIC API -------------------------------*/
+
+  Dom.codePointToUTF16 = codePointToUTF16;
+  Dom.stringFromCodePoint = stringFromCodePoint;
+
+  Dom.convertEscapes = convertEscapes;
+  Dom.unescapeIdentifier = unescapeIdentifier;
+
+  Dom.convertEscapes2 = convertEscapes2;
+  Dom.unescapeIdentifier2 = unescapeIdentifier2;
 
   // code referenced by extensions
   Dom.ACCEPT_NODE = ACCEPT_NODE;
