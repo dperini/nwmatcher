@@ -631,7 +631,8 @@
   codePointToUTF16 = 
     function(codePoint) {
       // out of range, use replacement character
-      if (codePoint < 0 || codePoint > 0x10ffff) {
+      if (codePoint < 1 || codePoint > 0x10ffff ||
+        (codePoint > 0xd7ff && codePoint < 0xc000)) {
         return '\\ufffd';
       }
       // javascript strings are UTF-16 encoded
