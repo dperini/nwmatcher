@@ -20,7 +20,7 @@
   if (typeof module == 'object' && typeof exports == 'object') {
     // in a Node.js environment, the nwmatcher functions will operate on
     // the passed "browserGlobal" and will be returned in an object
-    module.exports = function (browserGlobal) {
+    module.exports = function(browserGlobal) {
       // passed global does not contain
       // references to native objects
       browserGlobal.console = console;
@@ -628,7 +628,7 @@
     },
 
   // convert single codepoint to UTF-16 encoding
-  codePointToUTF16 = 
+  codePointToUTF16 =
     function(codePoint) {
       // out of range, use replacement character
       if (codePoint < 1 || codePoint > 0x10ffff ||
@@ -647,7 +647,12 @@
 
   // convert single codepoint to string
   stringFromCodePoint = String.fromCodePoint ||
-    function (codePoint) {
+    function(codePoint) {
+      // out of range, use replacement character
+      if (codePoint < 0 || codePoint > 0x10ffff ||
+        (codePoint > 0xd7ff && codePoint < 0xc000)) {
+        return String.fromCharCode(0xfffd);
+      }
       if (codePoint < 0x10000) {
         return String.fromCharCode(codePoint);
       }
@@ -658,6 +663,8 @@
 
   reEscapedChars = /\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g;
 
+  // convert escape sequence in a CSS string or identifier
+  // to javascript string with javascript escape sequences
   convertEscapes =
     function(str) {
       return /\\/.test(str) ?
@@ -675,6 +682,8 @@
         ) : str;
     },
 
+  // convert escape sequence in a CSS string or identifier
+  // to javascript string with characters representations
   unescapeIdentifier =
     function(str) {
       return /\\/.test(str) ?
