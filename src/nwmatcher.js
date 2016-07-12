@@ -659,13 +659,13 @@
   // @return reference or null
   byIdRaw =
     function(id, elements) {
-      var i = -1, element = null;
+      var i = -1, element;
       while ((element = elements[++i])) {
         if (element.getAttribute('id') == id) {
           break;
         }
       }
-      return element;
+      return element || null;
     },
 
   // element by id
