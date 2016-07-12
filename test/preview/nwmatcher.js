@@ -646,7 +646,7 @@
     },
 
   // convert single codepoint to string
-  stringFromCodePoint = String.fromCodePoint ||
+  stringFromCodePoint =
     function(codePoint) {
       // out of range, use replacement character
       if (codePoint < 0 || codePoint > 0x10ffff ||
@@ -656,9 +656,11 @@
       if (codePoint < 0x10000) {
         return String.fromCharCode(codePoint);
       }
-      return String.fromCharCode(
-        ((codePoint - 0x10000) >> 0x0a) + 0xd800,
-        ((codePoint - 0x10000) % 0x400) + 0xdc00);
+      return String.fromCodePoint ?
+	String.fromCodePoint(codePoint) :
+        String.fromCharCode(
+          ((codePoint - 0x10000) >> 0x0a) + 0xd800,
+          ((codePoint - 0x10000) % 0x400) + 0xdc00);
     },
 
   reEscapedChars = /\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g;
