@@ -300,14 +300,14 @@
 
   byIdRaw =
     function(id, elements) {
-      var i = 0, element = null;
+      var i = 0, element;
       while ((element = elements[i])) {
         if (element.getAttribute('id') == id) {
           break;
         }
         ++i;
       }
-      return element;
+      return element || null;
     },
 
   _byId = !('fileSize' in doc) ?
