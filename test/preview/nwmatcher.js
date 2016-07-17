@@ -632,7 +632,7 @@
     function(codePoint) {
       // out of range, use replacement character
       if (codePoint < 1 || codePoint > 0x10ffff ||
-        (codePoint > 0xd7ff && codePoint < 0xc000)) {
+        (codePoint > 0xd7ff && codePoint < 0xe000)) {
         return '\\ufffd';
       }
       // javascript strings are UTF-16 encoded
@@ -649,15 +649,15 @@
   stringFromCodePoint =
     function(codePoint) {
       // out of range, use replacement character
-      if (codePoint < 0 || codePoint > 0x10ffff ||
-        (codePoint > 0xd7ff && codePoint < 0xc000)) {
-        return String.fromCharCode(0xfffd);
+      if (codePoint < 1 || codePoint > 0x10ffff ||
+        (codePoint > 0xd7ff && codePoint < 0xe000)) {
+        return '\ufffd';
       }
       if (codePoint < 0x10000) {
         return String.fromCharCode(codePoint);
       }
       return String.fromCodePoint ?
-	String.fromCodePoint(codePoint) :
+        String.fromCodePoint(codePoint) :
         String.fromCharCode(
           ((codePoint - 0x10000) >> 0x0a) + 0xd800,
           ((codePoint - 0x10000) % 0x400) + 0xdc00);
