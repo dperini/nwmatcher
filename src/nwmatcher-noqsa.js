@@ -18,7 +18,7 @@
 (function(global, factory) {
 
   if (typeof module == 'object' && typeof exports == 'object') {
-    module.exports = function (browserGlobal) {
+    module.exports = function(browserGlobal) {
       // passed global does not contain
       // references to native objects
       browserGlobal.console = console;
@@ -67,70 +67,58 @@
   lastPartsMatch,
   lastPartsSelect,
 
+  prefixes = '[#.:]?',
   operators = '([~*^$|!]?={1})',
-  combinators = '[\\s]|[>+~](?=[^>+~])',
+  whitespace = '[\\x20\\t\\n\\r\\f]',
+  combinators = '\\x20|[>+~](?=[^>+~])',
   pseudoparms = '(?:[-+]?\\d*n)?[-+]?\\d*',
+  skip_groups = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
+
+  any_esc_chr = '\\\\.',
+  alphalodash = '[_a-zA-Z]',
+  non_asc_chr = '[^\\x00-\\x9f]',
+  escaped_chr = '\\\\[^\\n\\r\\f0-9a-fA-F]',
+  unicode_chr = '\\\\[0-9a-fA-F]{1,6}(?:\\r\\n|' + whitespace + ')?',
 
   quotedvalue = '"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"' + "|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*'",
-  skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
-
-  encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)',
-  identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)+',
-
-  attrcheck = '(' + quotedvalue + '|' + identifier + ')',
-  attributes = '\\s*(' + encoding + '*:?' + encoding + '+)\\s*(?:' + operators + '\\s*' + attrcheck + ')?\\s*',
-
-  attrmatcher = attributes.replace(attrcheck, '([\\x22\\x27]*)((?:\\\\?.)*?)\\3'),
-
-  pseudoclass = '((?:' +
-    pseudoparms + '|' + quotedvalue + '|' +
-    '[#.:]?|' + encoding + '+|' +
-    '\\[' + attributes + '\\]|' +
-    '\\(.+\\)|\\s*|' +
-    ',)+)',
-
-  extensions = '.+',
-
-  standardValidator =
-    '(?=\\s*[^>+~(){}<>])' +
-    '(' +
-    '\\*' +
-    '|(?:[#.:]?' + identifier + ')' +
-    '|' + combinators +
-    '|\\[' + attributes + '\\]' +
-    '|\\(' + pseudoclass + '\\)' +
-    '|\\{' + extensions + '\\}' +
-    '|(?:,|\\s*)' +
-    ')+',
-
-  extendedValidator = standardValidator.replace(pseudoclass, '.*'),
-
-  reValidator = global.RegExp(standardValidator),
-
-  reTrimSpaces = /^\s*|\s*$/g,
-
-  reSimpleNot = global.RegExp('^(' +
-    '(?!:not)' +
-    '([#.:]?' +
-    '|' + identifier +
-    '|\\([^()]*\\))+' +
-    '|\\[' + attributes + '\\]' +
-    ')$'),
 
   reSplitGroup = /([^,\\()[\]]+|\[[^[\]]*\]|\[.*\]|\([^()]+\)|\(.*\)|\{[^{}]+\}|\{.*\}|\\.)+/g,
 
-  reSplitToken = global.RegExp('(' +
-    '\\[' + attributes + '\\]|' +
-    '\\(' + pseudoclass + '\\)|' +
-    '\\\\.|[^\\s>+~])+', 'g'),
+  reTrimSpaces = global.RegExp('^' + whitespace + '+|' + whitespace + '+$', 'g'),
 
-  reOptimizeSelector = global.RegExp(identifier + '|^$'),
+  reEscapedChars = /\\([0-9a-fA-F]{1,6}[\x20\t\n\r\f]?|.)|([\x22\x27])/g,
+
+  standardValidator, extendedValidator, reValidator,
+
+  attrcheck, attributes, attrmatcher, pseudoclass,
+
+  reOptimizeSelector, reSimpleNot, reSplitToken,
+
+  Optimize, identifier, extensions = '.+',
+
+  Patterns = global.Object({
+    spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
+    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
+    children: global.RegExp('^' + whitespace + '*\\>' + whitespace + '*(.*)'),
+    adjacent: global.RegExp('^' + whitespace + '*\\+' + whitespace + '*(.*)'),
+    relative: global.RegExp('^' + whitespace + '*\\~' + whitespace + '*(.*)'),
+    ancestor: global.RegExp('^' + whitespace + '+(.*)'),
+    universal: global.RegExp('^\\*(.*)')
+  }),
+
+  Tokens = global.Object({
+    prefixes: prefixes,
+    identifier: identifier,
+    attributes: attributes
+  }),
 
   QUIRKS_MODE,
   XML_DOCUMENT,
 
   GEBTN = 'getElementsByTagName' in doc,
   GEBCN = 'getElementsByClassName' in doc,
+
+  IE_LT_9 = typeof doc.addEventListener != 'function',
 
   LINK_NODES = global.Object({ a: 1, A: 1, area: 1, AREA: 1, link: 1, LINK: 1 }),
 
@@ -150,8 +138,13 @@
     longdesc: 2, lowsrc: 2, src: 2, usemap: 2
   }),
 
-  Selectors = global.Object({
+  INSENSITIVE_MAP = global.Object({
+    'class': 0,
+    'href': 1, 'lang': 1, 'src': 1, 'style': 1, 'title': 1,
+    'type': 1, 'xmlns': 1, 'xml:lang': 1, 'xml:space': 1
   }),
+
+  Selectors = global.Object(),
 
   Operators = global.Object({
      '=': "n=='%m'",
@@ -160,26 +153,6 @@
     '|=': "(n+'-').indexOf('%m-')==0",
     '~=': "(' '+n+' ').indexOf(' %m ')>-1",
     '$=': "n.substr(n.length-'%m'.length)=='%m'"
-  }),
-
-  Optimize = global.Object({
-    ID: global.RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
-    TAG: global.RegExp('^(' + encoding + '+)|' + skipgroup),
-    CLASS: global.RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
-  }),
-
-  Patterns = global.Object({
-    spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
-    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
-    attribute: global.RegExp('^\\[' + attrmatcher + '\\](.*)'),
-    children: /^\s*\>\s*(.*)/,
-    adjacent: /^\s*\+\s*(.*)/,
-    relative: /^\s*\~\s*(.*)/,
-    ancestor: /^\s+(.*)/,
-    universal: /^\*(.*)/,
-    id: global.RegExp('^#(' + encoding + '+)(.*)'),
-    tagName: global.RegExp('^(' + encoding + '+)(.*)'),
-    className: global.RegExp('^\\.(' + encoding + '+)(.*)')
   }),
 
   concatCall =
@@ -211,43 +184,58 @@
       }
     },
 
+  codePointToUTF16 =
+    function(codePoint) {
+      if (codePoint < 1 || codePoint > 0x10ffff ||
+        (codePoint > 0xd7ff && codePoint < 0xe000)) {
+        return '\\ufffd';
+      }
+      if (codePoint < 0x10000) {
+        var lowHex = '000' + codePoint.toString(16);
+        return '\\u' + lowHex.substr(lowHex.length - 4);
+      }
+      return '\\u' + (((codePoint - 0x10000) >> 0x0a) + 0xd800).toString(16) +
+             '\\u' + (((codePoint - 0x10000) % 0x400) + 0xdc00).toString(16);
+    },
+
+  stringFromCodePoint =
+    function(codePoint) {
+      if (codePoint < 1 || codePoint > 0x10ffff ||
+        (codePoint > 0xd7ff && codePoint < 0xe000)) {
+        return '\ufffd';
+      }
+      if (codePoint < 0x10000) {
+        return String.fromCharCode(codePoint);
+      }
+      return String.fromCodePoint ?
+        String.fromCodePoint(codePoint) :
+        String.fromCharCode(
+          ((codePoint - 0x10000) >> 0x0a) + 0xd800,
+          ((codePoint - 0x10000) % 0x400) + 0xdc00);
+    },
+
   convertEscapes =
     function(str) {
-      return str.replace(/\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
-        var codePoint, highHex, highSurrogate, lowHex, lowSurrogate;
-
-        if (p2) {
-          return '\\' + p2;
-        }
-
-        if (/^[0-9a-fA-F]/.test(p1)) {
-          codePoint = parseInt(p1, 16);
-
-          if (codePoint < 0 || codePoint > 0x10ffff) {
-            return '\\ufffd';
+      return str.replace(reEscapedChars,
+          function(substring, p1, p2) {
+            return p2 ? '\\' + p2 :
+              /^[0-9a-fA-F]/.test(p1) ? codePointToUTF16(parseInt(p1, 16)) :
+              /^[\\\x22\x27]/.test(p1) ? substring :
+              p1;
           }
+        );
+    },
 
-          if (codePoint <= 0xffff) {
-            lowHex = '000' + codePoint.toString(16);
-            return '\\u' + lowHex.substr(lowHex.length - 4);
+  unescapeIdentifier =
+    function(str) {
+      return str.replace(reEscapedChars,
+          function(substring, p1, p2) {
+            return p2 ? p2 :
+              /^[0-9a-fA-F]/.test(p1) ? stringFromCodePoint(parseInt(p1, 16)) :
+              /^[\\\x22\x27]/.test(p1) ? substring :
+              p1;
           }
-
-          codePoint -= 0x10000;
-          highSurrogate = (codePoint >> 10) + 0xd800;
-          lowSurrogate = (codePoint % 0x400) + 0xdc00;
-          highHex = '000' + highSurrogate.toString(16);
-          lowHex = '000' + lowSurrogate.toString(16);
-
-          return '\\u' + highHex.substr(highHex.length - 4) +
-            '\\u' + lowHex.substr(lowHex.length - 4);
-        }
-
-        if (/^[\\\x22\x27]/.test(p1)) {
-          return substring;
-        }
-
-        return p1;
-      });
+        );
     },
 
   byIdRaw =
@@ -263,13 +251,13 @@
 
   _byId = !('fileSize' in doc) ?
     function(id, from) {
-      id = id.replace(/\\([^\\]{1})/g, '$1');
+      id = (/\\/).test(id) ? unescapeIdentifier(id) : id;
       return from.getElementById && from.getElementById(id) ||
         byIdRaw(id, from.getElementsByTagName('*'));
     } :
     function(id, from) {
       var element = null;
-      id = id.replace(/\\([^\\]{1})/g, '$1');
+      id = (/\\/).test(id) ? unescapeIdentifier(id) : id;
       if (XML_DOCUMENT || from.nodeType != 9) {
         return byIdRaw(id, from.getElementsByTagName('*'));
       }
@@ -308,10 +296,10 @@
       return (container.compareDocumentPosition(element) & 16) == 16;
     } : 'contains' in root ?
     function(container, element) {
-      return element.nodeType == 1 && container.contains(element);
+      return container !== element && container.contains(element);
     } :
     function(container, element) {
-      while ((element = element.parentNode) && element.nodeType == 1) {
+      while ((element = element.parentNode)) {
         if (element === container) return true;
       }
       return false;
@@ -341,11 +329,6 @@
         node[ATTR_DEFAULT[attribute]] : obj && obj.specified;
     },
 
-  isLink =
-    function(element) {
-      return element.getAttribute('href') && LINK_NODES[element.nodeName];
-    },
-
   isEmpty =
     function(node) {
       node = node.firstChild;
@@ -354,6 +337,11 @@
         node = node.nextSibling;
       }
       return true;
+    },
+
+  isLink =
+    function(element) {
+      return hasAttribute(element,'href') && LINK_NODES[element.nodeName];
     },
 
   nthElement =
@@ -376,8 +364,8 @@
 
   configure =
     function(option) {
-      if (typeof option == 'string') { return Config[option] || Config; }
-      if (typeof option != 'object') { return false; }
+      if (typeof option == 'string') { return !!Config[option]; }
+      if (typeof option != 'object') { return Config; }
       for (var i in option) {
         Config[i] = !!option[i];
         if (i == 'SIMPLENOT') {
@@ -387,6 +375,7 @@
           selectResolvers = global.Object();
         }
       }
+      setIdentifierSyntax();
       reValidator = global.RegExp(Config.SIMPLENOT ?
         standardValidator : extendedValidator);
       return true;
@@ -402,24 +391,97 @@
 
   Config = global.Object({
     CACHING: false,
+    ESCAPECHR: true,
+    NON_ASCII: true,
+    SELECTOR3: true,
+    UNICODE16: true,
+    SHORTCUTS: false,
     SIMPLENOT: true,
     UNIQUE_ID: true,
     USE_HTML5: true,
     VERBOSITY: true
   }),
 
-  IE_LT_9 = typeof doc.addEventListener != 'function',
+  initialize =
+    function(doc) {
+      setIdentifierSyntax();
+      switchContext(doc, true);
+    },
 
-  INSENSITIVE_MAP = global.Object({
-    'class': 0,
-    'href': 1, 'lang': 1, 'src': 1, 'style': 1, 'title': 1,
-    'type': 1, 'xmlns': 1, 'xml:lang': 1, 'xml:space': 1
-  }),
+  setIdentifierSyntax =
+    function() {
 
-  TO_UPPER_CASE = IE_LT_9 ? '.toUpperCase()' : '',
+      var syntax = '', start = Config['SELECTOR3'] ? '-{2}|' : '';
+
+      Config['NON_ASCII'] && (syntax += '|' + non_asc_chr);
+      Config['UNICODE16'] && (syntax += '|' + unicode_chr);
+      Config['ESCAPECHR'] && (syntax += '|' + escaped_chr);
+
+      syntax += (Config['UNICODE16'] || Config['ESCAPECHR']) ? '' : '|' + any_esc_chr;
+
+      identifier = '-?(?:' + start + alphalodash + syntax + ')(?:-|[0-9]|' + alphalodash + syntax + ')*';
+
+      attrcheck = '(' + quotedvalue + '|' + identifier + ')';
+      attributes = whitespace + '*(' + identifier + ':?' + identifier + ')' +
+        whitespace + '*(?:' + operators + whitespace + '*' + attrcheck + ')?' + whitespace + '*';
+      attrmatcher = attributes.replace(attrcheck, '([\\x22\\x27]*)((?:\\\\?.)*?)\\3');
+
+      pseudoclass = '((?:' +
+        pseudoparms + '|' + quotedvalue + '|' +
+        prefixes + identifier + '|' +
+        '\\[' + attributes + '\\]|' +
+        '\\(.+\\)|' + whitespace + '*|' +
+        ',)+)';
+
+      standardValidator =
+        '(?=[\\x20\\t\\n\\r\\f]*[^>+~(){}<>])' +
+        '(' +
+        '\\*' +
+        '|(?:' + prefixes + identifier + ')' +
+        '|' + combinators +
+        '|\\[' + attributes + '\\]' +
+        '|\\(' + pseudoclass + '\\)' +
+        '|\\{' + extensions + '\\}' +
+        '|(?:,|' + whitespace + '*)' +
+        ')+';
+
+      reSimpleNot = global.RegExp('^(' +
+        '(?!:not)' +
+        '(' + prefixes + identifier +
+        '|\\([^()]*\\))+' +
+        '|\\[' + attributes + '\\]' +
+        ')$');
+
+      reSplitToken = global.RegExp('(' +
+        prefixes + identifier + '|' +
+        '\\[' + attributes + '\\]|' +
+        '\\(' + pseudoclass + '\\)|' +
+        '\\\\.|[^\\x20\\t\\n\\r\\f>+~])+', 'g');
+
+      reOptimizeSelector = global.RegExp(identifier + '|^$');
+
+      Optimize = global.Object({
+        ID: global.RegExp('^\\*?#(' + identifier + ')|' + skip_groups),
+        TAG: global.RegExp('^(' + identifier + ')|' + skip_groups),
+        CLASS: global.RegExp('^\\.(' + identifier + '$)|' + skip_groups)
+      });
+
+      Patterns.id = global.RegExp('^#(' + identifier + ')(.*)');
+      Patterns.tagName = global.RegExp('^(' + identifier + ')(.*)');
+      Patterns.className = global.RegExp('^\\.(' + identifier + ')(.*)');
+      Patterns.attribute = global.RegExp('^\\[' + attrmatcher + '\\](.*)');
+
+      Tokens.identifier = identifier;
+      Tokens.attributes = attributes;
+
+      extendedValidator = standardValidator.replace(pseudoclass, '.*');
+
+      reValidator = global.RegExp(standardValidator);
+    },
 
   ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break main;else continue main;',
   REJECT_NODE = IE_LT_9 ? 'if(e.nodeName<"A")continue;' : '',
+  TO_UPPER_CASE = IE_LT_9 ? '.toUpperCase()' : '',
 
   compile =
     function(selector, source, mode) {
@@ -458,7 +520,7 @@
   compileSelector =
     function(selector, source, mode) {
 
-      var a, b, n, k = 0, expr, match, name, result, status, test, type;
+      var a, b, n, k = 0, expr, match, result, status, test, type;
 
       while (selector) {
 
@@ -469,6 +531,7 @@
         }
 
         else if ((match = selector.match(Patterns.id))) {
+          match[1] = (/\\/).test(match[1]) ? convertEscapes(match[1]) : match[1];
           source = 'if(' + (XML_DOCUMENT ?
             's.getAttribute(e,"id")' :
             '(e.submit?s.getAttribute(e,"id"):e.id)') +
@@ -484,11 +547,12 @@
         }
 
         else if ((match = selector.match(Patterns.className))) {
+          match[1] = (/\\/).test(match[1]) ? convertEscapes(match[1]) : match[1];
+          match[1] = QUIRKS_MODE ? match[1].toLowerCase() : match[1];
           source = 'if((n=' + (XML_DOCUMENT ?
             'e.getAttribute("class")' : 'e.className') +
             ')&&n.length&&(" "+' + (QUIRKS_MODE ? 'n.toLowerCase()' : 'n') +
-            '.replace(/\\s+/g," ")+" ").indexOf(" ' +
-            (QUIRKS_MODE ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
+            '.replace(/' + whitespace + '+/g," ")+" ").indexOf(" ' + match[1] + ' ")>-1' +
             '){' + source + '}';
         }
 
@@ -499,7 +563,7 @@
           }
           test = 'false';
           if (match[2] && match[4] && (test = Operators[match[2]])) {
-            match[4] = convertEscapes(match[4]);
+            match[4] = (/\\/).test(match[4]) ? convertEscapes(match[4]) : match[4];
             INSENSITIVE_MAP['class'] = QUIRKS_MODE ? 1 : 0;
             type = INSENSITIVE_MAP[match[1].toLowerCase()];
             test = test.replace(/\%m/g, type ? match[4].toLowerCase() : match[4]);
@@ -703,7 +767,9 @@
         switchContext(from || (from = element.ownerDocument));
       }
 
-      selector = selector.replace(reTrimSpaces, '');
+      selector = selector.
+        replace(reTrimSpaces, '').
+        replace(/\x00|\\$/g, '\ufffd');
 
       Config.SHORTCUTS && (selector = Dom.shortcuts(selector, element, from));
 
@@ -752,7 +818,9 @@
         return callback ? concatCall([ ], elements, callback) : elements;
       }
 
-      selector = selector.replace(reTrimSpaces, '');
+      selector = selector.
+        replace(reTrimSpaces, '').
+        replace(/\x00|\\$/g, '\ufffd');
 
       Config.SHORTCUTS && (selector = Dom.shortcuts(selector, from));
 
@@ -886,6 +954,7 @@
   Dom.Operators = Operators;
   Dom.Selectors = Selectors;
 
+  Dom.Tokens = Tokens;
   Dom.Version = version;
 
   Dom.registerOperator =
@@ -901,6 +970,5 @@
       }));
     };
 
-  switchContext(doc, true);
-
+  initialize(doc);
 });

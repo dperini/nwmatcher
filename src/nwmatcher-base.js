@@ -18,7 +18,7 @@
 (function(global, factory) {
 
   if (typeof module == 'object' && typeof exports == 'object') {
-    module.exports = function (browserGlobal) {
+    module.exports = function(browserGlobal) {
       // passed global does not contain
       // references to native objects
       browserGlobal.console = console;
@@ -54,8 +54,6 @@
   doc = global.document,
   root = doc.documentElement,
 
-  slice = global.Array.slice,
-
   isSingleMatch,
   isSingleSelect,
 
@@ -71,66 +69,56 @@
 
   prefixes = '[#.:]?',
   operators = '([~*^$|!]?={1})',
-  whitespace = '[\\x20\\t\\n\\r\\f]*',
-  combinators = '[\\x20]|[>+~](?=[^>+~])',
+  whitespace = '[\\x20\\t\\n\\r\\f]',
+  combinators = '\\x20|[>+~](?=[^>+~])',
   pseudoparms = '(?:[-+]?\\d*n)?[-+]?\\d*',
+  skip_groups = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
+
+  any_esc_chr = '\\\\.',
+  alphalodash = '[_a-zA-Z]',
+  non_asc_chr = '[^\\x00-\\x9f]',
+  escaped_chr = '\\\\[^\\n\\r\\f0-9a-fA-F]',
+  unicode_chr = '\\\\[0-9a-fA-F]{1,6}(?:\\r\\n|' + whitespace + ')?',
 
   quotedvalue = '"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"' + "|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*'",
-  skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
 
-  encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)',
-  identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)+',
+  reSplitGroup = /([^,\\()[\]]+|\[[^[\]]*\]|\[.*\]|\([^()]+\)|\(.*\)|\{[^{}]+\}|\{.*\}|\\.)+/g,
 
-  attrcheck = '(' + quotedvalue + '|' + identifier + ')',
-  attributes = whitespace + '(' + encoding + '*:?' + encoding + '+)' +
-    whitespace + '(?:' + operators + whitespace + attrcheck + ')?' + whitespace,
+  reTrimSpaces = global.RegExp('^' + whitespace + '+|' + whitespace + '+$', 'g'),
 
-  attrmatcher = attributes.replace(attrcheck, '([\\x22\\x27]*)((?:\\\\?.)*?)\\3'),
+  reEscapedChars = /\\([0-9a-fA-F]{1,6}[\x20\t\n\r\f]?|.)|([\x22\x27])/g,
 
-  pseudoclass = '((?:' +
-    pseudoparms + '|' + quotedvalue + '|' +
-    prefixes + '|' + encoding + '+|' +
-    '\\[' + attributes + '\\]|' +
-    '\\(.+\\)|' + whitespace + '|' +
-    ',)+)',
+  standardValidator, extendedValidator, reValidator,
 
-  extensions = '.+',
+  attrcheck, attributes, attrmatcher, pseudoclass,
 
-  standardValidator =
-    '(?=[\\x20\\t\\n\\r\\f]*[^>+~(){}<>])' +
-    '(' +
-    '\\*' +
-    '|(?:' + prefixes + identifier + ')' +
-    '|' + combinators +
-    '|\\[' + attributes + '\\]' +
-    '|\\(' + pseudoclass + '\\)' +
-    '|\\{' + extensions + '\\}' +
-    '|(?:,|' + whitespace + ')' +
-    ')+',
+  reOptimizeSelector, reSimpleNot, reSplitToken,
 
-  extendedValidator = standardValidator.replace(pseudoclass, '.*'),
+  Optimize, identifier, extensions = '.+',
 
-  reValidator = global.RegExp(standardValidator),
+  Patterns = global.Object({
+    children: global.RegExp('^' + whitespace + '*\\>' + whitespace + '*(.*)'),
+    adjacent: global.RegExp('^' + whitespace + '*\\+' + whitespace + '*(.*)'),
+    relative: global.RegExp('^' + whitespace + '*\\~' + whitespace + '*(.*)'),
+    ancestor: global.RegExp('^' + whitespace + '+(.*)'),
+    universal: global.RegExp('^\\*(.*)')
+  }),
 
-  reTrimSpaces = global.RegExp('^' +
-    whitespace + '|' + whitespace + '$', 'g'),
+  Tokens = global.Object({
+    prefixes: prefixes,
+    identifier: identifier,
+    attributes: attributes
+  }),
 
-  reSplitGroup = global.RegExp('(' +
-    '[^,\\\\()[\\]]+' +
-    '|\\[[^[\\]]*\\]|\\[.*\\]' +
-    '|\\([^()]+\\)|\\(.*\\)' +
-    '|\\{[^{}]+\\}|\\{.*\\}' +
-    '|\\\\.' +
-    ')+', 'g'),
+  QUIRKS_MODE,
+  XML_DOCUMENT,
 
-  reSplitToken = global.RegExp('(' +
-    '\\[' + attributes + '\\]|' +
-    '\\(' + pseudoclass + '\\)|' +
-    '\\\\.|[^\\x20\\t\\n\\r\\f>+~])+', 'g'),
+  GEBTN = 'getElementsByTagName' in doc,
+  GEBCN = 'getElementsByClassName' in doc,
 
-  reWhiteSpace = /[\x20\t\n\r\f]+/g,
+  IE_LT_9 = typeof doc.addEventListener != 'function',
 
-  reOptimizeSelector = global.RegExp(identifier + '|^$'),
+  LINK_NODES = global.Object({ a: 1, A: 1, area: 1, AREA: 1, link: 1, LINK: 1 }),
 
   ATTR_BOOLEAN = global.Object({
     checked: 1, disabled: 1, ismap: 1,
@@ -148,6 +136,12 @@
     longdesc: 2, lowsrc: 2, src: 2, usemap: 2
   }),
 
+  INSENSITIVE_MAP = global.Object({
+    'class': 0,
+    'href': 1, 'lang': 1, 'src': 1, 'style': 1, 'title': 1,
+    'type': 1, 'xmlns': 1, 'xml:lang': 1, 'xml:space': 1
+  }),
+
   Selectors = global.Object(),
 
   Operators = global.Object({
@@ -159,69 +153,6 @@
     '$=': "n.substr(n.length-'%m'.length)=='%m'"
   }),
 
-  Optimize = global.Object({
-    ID: global.RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
-    TAG: global.RegExp('^(' + encoding + '+)|' + skipgroup),
-    CLASS: global.RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
-  }),
-
-  Patterns = global.Object({
-    universal: /^\*(.*)/,
-    id: global.RegExp('^#(' + encoding + '+)(.*)'),
-    tagName: global.RegExp('^(' + encoding + '+)(.*)'),
-    className: global.RegExp('^\\.(' + encoding + '+)(.*)'),
-    attribute: global.RegExp('^\\[' + attrmatcher + '\\](.*)'),
-    children: /^[\x20\t\n\r\f]*\>[\x20\t\n\r\f]*(.*)/,
-    adjacent: /^[\x20\t\n\r\f]*\+[\x20\t\n\r\f]*(.*)/,
-    relative: /^[\x20\t\n\r\f]*\~[\x20\t\n\r\f]*(.*)/,
-    ancestor: /^[\x20\t\n\r\f]+(.*)/
-  }),
-
-  QUIRKS_MODE,
-  XML_DOCUMENT,
-
-  GEBTN = 'getElementsByTagName' in doc,
-  GEBCN = 'getElementsByClassName' in doc,
-
-  IE_LT_9 = typeof doc.addEventListener != 'function',
-
-  INSENSITIVE_MAP = global.Object({
-    'class': 0,
-    'href': 1, 'lang': 1, 'src': 1, 'style': 1, 'title': 1,
-    'type': 1, 'xmlns': 1, 'xml:lang': 1, 'xml:space': 1
-  }),
-
-  TO_UPPER_CASE = IE_LT_9 ? '.toUpperCase()' : '',
-
-  ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break main;else continue main;',
-  REJECT_NODE = IE_LT_9 ? 'if(e.nodeName<"A")continue;' : '',
-
-  Config = global.Object({
-    CACHING: false,
-    SIMPLENOT: true,
-    UNIQUE_ID: true,
-    USE_HTML5: true,
-    VERBOSITY: true
-  }),
-
-  configure =
-    function(option) {
-      if (typeof option == 'string') { return Config[option] || Config; }
-      if (typeof option != 'object') { return false; }
-      for (var i in option) {
-        Config[i] = !!option[i];
-        if (i == 'SIMPLENOT') {
-          matchContexts = global.Object();
-          matchResolvers = global.Object();
-          selectContexts = global.Object();
-          selectResolvers = global.Object();
-        }
-      }
-      reValidator = global.RegExp(Config.SIMPLENOT ?
-        standardValidator : extendedValidator);
-      return true;
-    },
-
   concatCall =
     function(data, elements, callback) {
       var i = -1, element;
@@ -229,14 +160,6 @@
         if (false === callback(data[data.length] = element)) { break; }
       }
       return data;
-    },
-
-  emit =
-    function(message) {
-      if (Config.VERBOSITY) { throw global.Error(message); }
-      if (global.console && global.console.log) {
-        global.console.log(message);
-      }
     },
 
   switchContext =
@@ -259,66 +182,80 @@
       }
     },
 
+  codePointToUTF16 =
+    function(codePoint) {
+      if (codePoint < 1 || codePoint > 0x10ffff ||
+        (codePoint > 0xd7ff && codePoint < 0xe000)) {
+        return '\\ufffd';
+      }
+      if (codePoint < 0x10000) {
+        var lowHex = '000' + codePoint.toString(16);
+        return '\\u' + lowHex.substr(lowHex.length - 4);
+      }
+      return '\\u' + (((codePoint - 0x10000) >> 0x0a) + 0xd800).toString(16) +
+             '\\u' + (((codePoint - 0x10000) % 0x400) + 0xdc00).toString(16);
+    },
+
+  stringFromCodePoint =
+    function(codePoint) {
+      if (codePoint < 1 || codePoint > 0x10ffff ||
+        (codePoint > 0xd7ff && codePoint < 0xe000)) {
+        return '\ufffd';
+      }
+      if (codePoint < 0x10000) {
+        return String.fromCharCode(codePoint);
+      }
+      return String.fromCodePoint ?
+        String.fromCodePoint(codePoint) :
+        String.fromCharCode(
+          ((codePoint - 0x10000) >> 0x0a) + 0xd800,
+          ((codePoint - 0x10000) % 0x400) + 0xdc00);
+    },
+
   convertEscapes =
     function(str) {
-      return str.replace(/\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
-        var codePoint, highHex, highSurrogate, lowHex, lowSurrogate;
-
-        if (p2) {
-          return '\\' + p2;
-        }
-
-        if (/^[0-9a-fA-F]/.test(p1)) {
-          codePoint = parseInt(p1, 16);
-
-          if (codePoint < 0 || codePoint > 0x10ffff) {
-            return '\\ufffd';
+      return str.replace(reEscapedChars,
+          function(substring, p1, p2) {
+            return p2 ? '\\' + p2 :
+              /^[0-9a-fA-F]/.test(p1) ? codePointToUTF16(parseInt(p1, 16)) :
+              /^[\\\x22\x27]/.test(p1) ? substring :
+              p1;
           }
+        );
+    },
 
-          if (codePoint <= 0xffff) {
-            lowHex = '000' + codePoint.toString(16);
-            return '\\u' + lowHex.substr(lowHex.length - 4);
+  unescapeIdentifier =
+    function(str) {
+      return str.replace(reEscapedChars,
+          function(substring, p1, p2) {
+            return p2 ? p2 :
+              /^[0-9a-fA-F]/.test(p1) ? stringFromCodePoint(parseInt(p1, 16)) :
+              /^[\\\x22\x27]/.test(p1) ? substring :
+              p1;
           }
-
-          codePoint -= 0x10000;
-          highSurrogate = (codePoint >> 10) + 0xd800;
-          lowSurrogate = (codePoint % 0x400) + 0xdc00;
-          highHex = '000' + highSurrogate.toString(16);
-          lowHex = '000' + lowSurrogate.toString(16);
-
-          return '\\u' + highHex.substr(highHex.length - 4) +
-            '\\u' + lowHex.substr(lowHex.length - 4);
-        }
-
-        if (/^[\\\x22\x27]/.test(p1)) {
-          return substring;
-        }
-
-        return p1;
-      });
+        );
     },
 
   byIdRaw =
     function(id, elements) {
-      var i = 0, element;
-      while ((element = elements[i])) {
+      var i = -1, element;
+      while ((element = elements[++i])) {
         if (element.getAttribute('id') == id) {
           break;
         }
-        ++i;
       }
       return element || null;
     },
 
   _byId = !('fileSize' in doc) ?
     function(id, from) {
-      id = id.replace(/\\([^\\]{1})/g, '$1');
+      id = (/\\/).test(id) ? unescapeIdentifier(id) : id;
       return from.getElementById && from.getElementById(id) ||
         byIdRaw(id, from.getElementsByTagName('*'));
     } :
     function(id, from) {
       var element = null;
-      id = id.replace(/\\([^\\]{1})/g, '$1');
+      id = (/\\/).test(id) ? unescapeIdentifier(id) : id;
       if (XML_DOCUMENT || from.nodeType != 9) {
         return byIdRaw(id, from.getElementsByTagName('*'));
       }
@@ -368,13 +305,134 @@
 
   hasAttribute = root.hasAttribute ?
     function(node, attribute) {
-        return node.hasAttribute(attribute);
+      return node.hasAttribute(attribute);
     } :
     function(node, attribute) {
       var obj = node.getAttributeNode(attribute = attribute.toLowerCase());
       return ATTR_DEFAULT[attribute] && attribute != 'value' ?
         node[ATTR_DEFAULT[attribute]] : obj && obj.specified;
     },
+
+  configure =
+    function(option) {
+      if (typeof option == 'string') { return !!Config[option]; }
+      if (typeof option != 'object') { return Config; }
+      for (var i in option) {
+        Config[i] = !!option[i];
+        if (i == 'SIMPLENOT') {
+          matchContexts = global.Object();
+          matchResolvers = global.Object();
+          selectContexts = global.Object();
+          selectResolvers = global.Object();
+        }
+      }
+      setIdentifierSyntax();
+      reValidator = global.RegExp(Config.SIMPLENOT ?
+        standardValidator : extendedValidator);
+      return true;
+    },
+
+  emit =
+    function(message) {
+      if (Config.VERBOSITY) { throw global.Error(message); }
+      if (global.console && global.console.log) {
+        global.console.log(message);
+      }
+    },
+
+  Config = global.Object({
+    CACHING: false,
+    ESCAPECHR: true,
+    NON_ASCII: true,
+    SELECTOR3: true,
+    UNICODE16: true,
+    SHORTCUTS: false,
+    SIMPLENOT: true,
+    UNIQUE_ID: true,
+    USE_HTML5: true,
+    VERBOSITY: true
+  }),
+
+  initialize =
+    function(doc) {
+      setIdentifierSyntax();
+      switchContext(doc, true);
+    },
+
+  setIdentifierSyntax =
+    function() {
+
+      var syntax = '', start = Config['SELECTOR3'] ? '-{2}|' : '';
+
+      Config['NON_ASCII'] && (syntax += '|' + non_asc_chr);
+      Config['UNICODE16'] && (syntax += '|' + unicode_chr);
+      Config['ESCAPECHR'] && (syntax += '|' + escaped_chr);
+
+      syntax += (Config['UNICODE16'] || Config['ESCAPECHR']) ? '' : '|' + any_esc_chr;
+
+      identifier = '-?(?:' + start + alphalodash + syntax + ')(?:-|[0-9]|' + alphalodash + syntax + ')*';
+
+      attrcheck = '(' + quotedvalue + '|' + identifier + ')';
+      attributes = whitespace + '*(' + identifier + ':?' + identifier + ')' +
+        whitespace + '*(?:' + operators + whitespace + '*' + attrcheck + ')?' + whitespace + '*';
+      attrmatcher = attributes.replace(attrcheck, '([\\x22\\x27]*)((?:\\\\?.)*?)\\3');
+
+      pseudoclass = '((?:' +
+        pseudoparms + '|' + quotedvalue + '|' +
+        prefixes + identifier + '|' +
+        '\\[' + attributes + '\\]|' +
+        '\\(.+\\)|' + whitespace + '*|' +
+        ',)+)';
+
+      standardValidator =
+        '(?=[\\x20\\t\\n\\r\\f]*[^>+~(){}<>])' +
+        '(' +
+        '\\*' +
+        '|(?:' + prefixes + identifier + ')' +
+        '|' + combinators +
+        '|\\[' + attributes + '\\]' +
+        '|\\(' + pseudoclass + '\\)' +
+        '|\\{' + extensions + '\\}' +
+        '|(?:,|' + whitespace + '*)' +
+        ')+';
+
+      reSimpleNot = global.RegExp('^(' +
+        '(?!:not)' +
+        '(' + prefixes + identifier +
+        '|\\([^()]*\\))+' +
+        '|\\[' + attributes + '\\]' +
+        ')$');
+
+      reSplitToken = global.RegExp('(' +
+        prefixes + identifier + '|' +
+        '\\[' + attributes + '\\]|' +
+        '\\(' + pseudoclass + '\\)|' +
+        '\\\\.|[^\\x20\\t\\n\\r\\f>+~])+', 'g');
+
+      reOptimizeSelector = global.RegExp(identifier + '|^$');
+
+      Optimize = global.Object({
+        ID: global.RegExp('^\\*?#(' + identifier + ')|' + skip_groups),
+        TAG: global.RegExp('^(' + identifier + ')|' + skip_groups),
+        CLASS: global.RegExp('^\\.(' + identifier + '$)|' + skip_groups)
+      });
+
+      Patterns.id = global.RegExp('^#(' + identifier + ')(.*)');
+      Patterns.tagName = global.RegExp('^(' + identifier + ')(.*)');
+      Patterns.className = global.RegExp('^\\.(' + identifier + ')(.*)');
+      Patterns.attribute = global.RegExp('^\\[' + attrmatcher + '\\](.*)');
+
+      Tokens.identifier = identifier;
+      Tokens.attributes = attributes;
+
+      extendedValidator = standardValidator.replace(pseudoclass, '.*');
+
+      reValidator = global.RegExp(standardValidator);
+    },
+
+  ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break main;else continue main;',
+  REJECT_NODE = IE_LT_9 ? 'if(e.nodeName<"A")continue;' : '',
+  TO_UPPER_CASE = IE_LT_9 ? '.toUpperCase()' : '',
 
   compile =
     function(selector, source, mode) {
@@ -395,12 +453,13 @@
         }
       }
 
-      if (mode)
+      if (mode) {
         return global.Function('c,s,r,d,h,g,f,v',
           'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
-      else
+      } else {
         return global.Function('e,s,r,d,h,g,f,v',
           'var N,n,x=0,k=e;' + source + 'return false;');
+      }
     },
 
   FILTER =
@@ -412,7 +471,7 @@
   compileSelector =
     function(selector, source, mode) {
 
-      var k = 0, expr, match, name, result, status, test, type;
+      var k = 0, expr, match, result, status, test, type;
 
       while (selector) {
 
@@ -423,6 +482,7 @@
         }
 
         else if ((match = selector.match(Patterns.id))) {
+          match[1] = (/\\/).test(match[1]) ? convertEscapes(match[1]) : match[1];
           source = 'if(' + (XML_DOCUMENT ?
             's.getAttribute(e,"id")' :
             '(e.submit?s.getAttribute(e,"id"):e.id)') +
@@ -438,11 +498,12 @@
         }
 
         else if ((match = selector.match(Patterns.className))) {
+          match[1] = (/\\/).test(match[1]) ? convertEscapes(match[1]) : match[1];
+          match[1] = QUIRKS_MODE ? match[1].toLowerCase() : match[1];
           source = 'if((n=' + (XML_DOCUMENT ?
             'e.getAttribute("class")' : 'e.className') +
             ')&&n.length&&(" "+' + (QUIRKS_MODE ? 'n.toLowerCase()' : 'n') +
-            '.replace(' + reWhiteSpace + '," ")+" ").indexOf(" ' +
-            (QUIRKS_MODE ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
+            '.replace(/' + whitespace + '+/g," ")+" ").indexOf(" ' + match[1] + ' ")>-1' +
             '){' + source + '}';
         }
 
@@ -453,7 +514,7 @@
           }
           test = 'false';
           if (match[2] && match[4] && (test = Operators[match[2]])) {
-            match[4] = convertEscapes(match[4]);
+            match[4] = (/\\/).test(match[4]) ? convertEscapes(match[4]) : match[4];
             INSENSITIVE_MAP['class'] = QUIRKS_MODE ? 1 : 0;
             type = INSENSITIVE_MAP[match[1].toLowerCase()];
             test = test.replace(/\%m/g, type ? match[4].toLowerCase() : match[4]);
@@ -537,7 +598,9 @@
         switchContext(from || (from = element.ownerDocument));
       }
 
-      selector = selector.replace(reTrimSpaces, '');
+      selector = selector.
+        replace(reTrimSpaces, '').
+        replace(/\x00|\\$/g, '\ufffd');
 
       Config.SHORTCUTS && (selector = Dom.shortcuts(selector, element, from));
 
@@ -586,7 +649,9 @@
         return callback ? concatCall([ ], elements, callback) : elements;
       }
 
-      selector = selector.replace(reTrimSpaces, '');
+      selector = selector.
+        replace(reTrimSpaces, '').
+        replace(/\x00|\\$/g, '\ufffd');
 
       Config.SHORTCUTS && (selector = Dom.shortcuts(selector, from));
 
@@ -643,12 +708,12 @@
         }
 
         if (!XML_DOCUMENT && GEBTN && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
-          if ((elements = from.getElementsByTagName(token)).length === 0) return [ ];
+          if ((elements = from.getElementsByTagName(token)).length === 0) { return [ ]; }
           selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace(token, '*');
         }
 
         else if (!XML_DOCUMENT && GEBCN && (parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-          if ((elements = from.getElementsByClassName(token.replace(/\\([^\\]{1})/g, '$1'))).length === 0) return [ ];
+          if ((elements = from.getElementsByClassName(token.replace(/\\([^\\]{1})/g, '$1'))).length === 0) { return [ ]; }
             selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token,
               reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1)) ? '' : '*');
         }
@@ -657,8 +722,7 @@
 
       if (!elements) {
         if (IE_LT_9) {
-          elements = /^(?:applet|object)$/i.test(from.nodeName) ?
-            from.childNodes : from.all;
+          elements = /^(?:applet|object)$/i.test(from.nodeName) ? from.childNodes : from.all;
         } else {
           elements = from.getElementsByTagName('*');
         }
@@ -690,19 +754,6 @@
     select: select,
     getAttribute: getAttribute,
     hasAttribute: hasAttribute
-  });
-
-  Tokens = global.Object({
-    prefixes: prefixes,
-    encoding: encoding,
-    operators: operators,
-    whitespace: whitespace,
-    identifier: identifier,
-    attributes: attributes,
-    combinators: combinators,
-    pseudoclass: pseudoclass,
-    pseudoparms: pseudoparms,
-    quotedvalue: quotedvalue
   });
 
   Dom.ACCEPT_NODE = ACCEPT_NODE;
@@ -742,6 +793,5 @@
       }));
     };
 
-  switchContext(doc, true);
-
+  initialize(doc);
 });
