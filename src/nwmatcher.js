@@ -705,6 +705,7 @@
   byClassRaw =
     function(name, from) {
       var i = -1, j = i, data = new global.Array(), element, elements = _byTag('*', from), n;
+      name = ' ' + (QUIRKS_MODE ? name.toLowerCase() : name) + ' ';
       while ((element = elements[++i])) {
         n = XML_DOCUMENT ? element.getAttribute('class') : element.className;
         if (n && n.length && (' ' + (QUIRKS_MODE ? n.toLowerCase() : n).
