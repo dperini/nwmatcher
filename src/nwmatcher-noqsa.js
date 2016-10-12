@@ -305,7 +305,10 @@
       return false;
     },
 
-  getAttribute =
+  getAttribute = !IE_LT_9 ?
+    function(node, attribute) {
+      return node.getAttribute(attribute);
+    } :
     function(node, attribute) {
       attribute = attribute.toLowerCase();
       if (typeof node[attribute] == 'object') {
@@ -319,7 +322,7 @@
           (node = node.getAttributeNode(attribute)) && node.value);
     },
 
-  hasAttribute = root.hasAttribute ?
+  hasAttribute = !IE_LT_9 && root.hasAttribute ?
     function(node, attribute) {
       return node.hasAttribute(attribute);
     } :

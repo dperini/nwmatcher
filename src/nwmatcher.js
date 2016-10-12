@@ -373,6 +373,8 @@
 
   /*----------------------------- LOOKUP OBJECTS -----------------------------*/
 
+  IE_LT_9 = typeof doc.addEventListener != 'function',
+
   LINK_NODES = new global.Object({ 'a': 1, 'A': 1, 'area': 1, 'AREA': 1, 'link': 1, 'LINK': 1 }),
 
   // boolean attributes should return attribute name instead of true/false
@@ -750,7 +752,7 @@
 
   // attribute value
   // @return string
-  getAttribute = !BUGGY_GET_ATTRIBUTE ?
+  getAttribute = !BUGGY_GET_ATTRIBUTE && !IE_LT_9 ?
     function(node, attribute) {
       return node.getAttribute(attribute);
     } :
@@ -772,7 +774,7 @@
 
   // attribute presence
   // @return boolean
-  hasAttribute = !BUGGY_HAS_ATTRIBUTE ?
+  hasAttribute = !BUGGY_HAS_ATTRIBUTE && !IE_LT_9 ?
     function(node, attribute) {
       return XML_DOCUMENT ?
         !!node.getAttribute(attribute) :
