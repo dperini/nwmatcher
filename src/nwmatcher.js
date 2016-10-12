@@ -1442,8 +1442,9 @@
       // normalize the selector string, remove [\n\r\f]
       // whitespace, replace codepoints 0 with '\ufffd'
       // trim non-relevant leading/trailing whitespaces
-      selector = selector.replace(/\x00|\\$/g, '\ufffd').
-        replace(reTrimSpaces, '').replace(/[\n\r\f]/g, '');
+      selector = selector.
+        replace(reTrimSpaces, '').
+        replace(/\x00|\\$/g, '\ufffd');
 
       Config.SHORTCUTS && (selector = Dom.shortcuts(selector, element, from));
 
@@ -1506,8 +1507,9 @@
       // normalize the selector string, remove [\n\r\f]
       // whitespace, replace codepoints 0 with '\ufffd'
       // trim non-relevant leading/trailing whitespaces
-      selector = selector.replace(/\x00|\\$/g, '\ufffd').
-        replace(reTrimSpaces, '').replace(/[\n\r\f]/g, '');
+      selector = selector.
+        replace(reTrimSpaces, '').
+        replace(/\x00|\\$/g, '\ufffd');
 
       if (!OPERA_QSAPI && reSimpleSelector.test(selector)) {
         switch (selector.charAt(0)) {
