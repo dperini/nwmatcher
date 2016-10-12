@@ -5,9 +5,9 @@
  * nwmatcher-noqsa.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.3.8
+ * Version: 1.3.9beta
  * Created: 20070722
- * Release: 20160613
+ * Release: 20161013
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -47,7 +47,7 @@
 
 })(this, function(global, exports) {
 
-  var version = 'nwmatcher-1.3.8',
+  var version = 'nwmatcher-1.3.9beta',
 
   Dom = exports,
 

@@ -101,9 +101,9 @@
    * nwmatcher.js - A fast CSS selector engine and matcher
    *
    * Author: Diego Perini <diego.perini at gmail com>
-   * Version: 1.3.8
+   * Version: 1.3.9beta
    * Created: 20070722
-   * Release: 20160613
+   * Release: 20161013
    *
    * License:
    *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -116,7 +116,7 @@
     if (typeof module == 'object' && typeof exports == 'object') {
       // in a Node.js environment, the nwmatcher functions will operate on
       // the passed "browserGlobal" and will be returned in an object
-      module.exports = function (browserGlobal) {
+      module.exports = function(browserGlobal) {
         // passed global does not contain
         // references to native objects
         browserGlobal.console = console;
@@ -147,7 +147,7 @@
   
   })(this, function(global, exports) {
   
-    var version = 'nwmatcher-1.3.8',
+    var version = 'nwmatcher-1.3.9beta',
   
     Dom = exports,
   
@@ -181,124 +181,88 @@
     operators = '([~*^$|!]?={1})',
   
     // accepted whitespace characters
-    whitespace = '[\\x20\\t\\n\\r\\f]*',
+    whitespace = '[\\x20\\t\\n\\r\\f]',
   
     // 4 combinators F E, F>E, F+E, F~E
-    combinators = '[\\x20]|[>+~](?=[^>+~])',
+    combinators = '\\x20|[>+~](?=[^>+~])',
   
     // an+b format params for pseudo-classes
     pseudoparms = '(?:[-+]?\\d*n)?[-+]?\\d*',
   
+    // skip [ ], ( ), { } brackets groups
+    skip_groups = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
+  
+    // any escaped char
+    any_esc_chr = '\\\\.',
+    // alpha chars & low dash
+    alphalodash = '[_a-zA-Z]',
+    // non-ascii chars (utf-8)
+    non_asc_chr = '[^\\x00-\\x9f]',
+    // escape sequences in strings
+    escaped_chr = '\\\\[^\\n\\r\\f0-9a-fA-F]',
+    // Unicode chars including trailing whitespace
+    unicode_chr = '\\\\[0-9a-fA-F]{1,6}(?:\\r\\n|' + whitespace + ')?',
+  
     // CSS quoted string values
     quotedvalue = '"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"' + "|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*'",
   
-    // skip round brackets groups
-    skipround = '\\([^()]+\\)|\\(.*\\)',
-    // skip curly brackets groups
-    skipcurly = '\\{[^{}]+\\}|\\{.*\\}',
-    // skip square brackets groups
-    skipsquare = '\\[[^[\\]]*\\]|\\[.*\\]',
+    // regular expression used to skip single/nested brackets groups (round, square, curly)
+    // used to split comma groups excluding commas inside quotes '' "" or brackets () [] {}
+    reSplitGroup = /([^,\\()[\]]+|\[[^[\]]*\]|\[.*\]|\([^()]+\)|\(.*\)|\{[^{}]+\}|\{.*\}|\\.)+/g,
   
-    // skip [ ], ( ), { } brackets groups
-    skipgroup = '\\[.*\\]|\\(.*\\)|\\{.*\\}',
-  
-    // http://www.w3.org/TR/css3-syntax/#characters
-    // unicode/ISO 10646 characters 161 and higher
-    // NOTE: Safari 2.0.x crashes with escaped (\\)
-    // Unicode ranges in regular expressions so we
-    // use a negated character range class instead
-    encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)',
-  
-    // CSS identifier syntax
-    identifier = '(?:-?[_a-zA-Z]{1}[-\\w]*|[^\\x00-\\xa0]+|\\\\.+)+',
-  
-    // build attribute string
-    attrcheck = '(' + quotedvalue + '|' + identifier + ')',
-    attributes = whitespace + '(' + encoding + '*:?' + encoding + '+)' +
-      whitespace + '(?:' + operators + whitespace + attrcheck + ')?' + whitespace,
-    attrmatcher = attributes.replace(attrcheck, '([\\x22\\x27]*)((?:\\\\?.)*?)\\3'),
-  
-    // build pseudoclass string
-    pseudoclass = '((?:' +
-      // an+b parameters or quoted string
-      pseudoparms + '|' + quotedvalue + '|' +
-      // id, class, pseudo-class selector
-      prefixes + '|' + encoding + '+|' +
-      // nested HTML attribute selector
-      '\\[' + attributes + '\\]|' +
-      // nested pseudo-class selector
-      '\\(.+\\)|' + whitespace + '|' +
-      // nested pseudos/separators
-      ',)+)',
-  
-    // placeholder for extensions
-    extensions = '.+',
-  
-    // CSS3: syntax scanner and
-    // one pass validation only
-    // using regular expression
-    standardValidator =
-      // discard start
-      '(?=[\\x20\\t\\n\\r\\f]*[^>+~(){}<>])' +
-      // open match group
-      '(' +
-      //universal selector
-      '\\*' +
-      // id/class/tag/pseudo-class identifier
-      '|(?:' + prefixes + identifier + ')' +
-      // combinator selector
-      '|' + combinators +
-      // HTML attribute selector
-      '|\\[' + attributes + '\\]' +
-      // pseudo-classes parameters
-      '|\\(' + pseudoclass + '\\)' +
-      // dom properties selector (extension)
-      '|\\{' + extensions + '\\}' +
-      // selector group separator (comma)
-      '|(?:,|' + whitespace + ')' +
-      // close match group
-      ')+',
-  
-    // validator for complex selectors in ':not()' pseudo-classes
-    extendedValidator = standardValidator.replace(pseudoclass, '.*'),
-  
-    // validator for standard selectors as default
-    reValidator = new global.RegExp(standardValidator),
-  
+    // regular expression to trim extra leading/trailing whitespace in selector strings
     // whitespace is any combination of these 5 character [\x20\t\n\r\f]
     // http://www.w3.org/TR/css3-selectors/#selector-syntax
-    reTrimSpaces = new global.RegExp('^' +
-      whitespace + '|' + whitespace + '$', 'g'),
+    reTrimSpaces = global.RegExp('[\\n\\r\\f]|^' + whitespace + '+|' + whitespace + '+$', 'g'),
   
-    // only allow simple selectors nested in ':not()' pseudo-classes
-    reSimpleNot = new global.RegExp('^(' +
-      '(?!:not)' +
-      '(' + prefixes +
-      '|' + identifier +
-      '|\\([^()]*\\))+' +
-      '|\\[' + attributes + '\\]' +
-      ')$'),
-  
-    // split comma groups, exclude commas from
-    // quotes '' "" and from brackets () [] {}
-    reSplitGroup = new global.RegExp('(' +
-      '[^,\\\\()[\\]]+' +
-      '|' + skipsquare +
-      '|' + skipround +
-      '|' + skipcurly +
-      '|\\\\.' +
-      ')+', 'g'),
-  
-    // split last, right most, selector group token
-    reSplitToken = new global.RegExp('(' +
-      '\\[' + attributes + '\\]|' +
-      '\\(' + pseudoclass + '\\)|' +
-      '\\\\.|[^\\x20\\t\\r\\n\\f>+~])+', 'g'),
+    // regular expression used in convertEscapes and unescapeIdentifier
+    reEscapedChars = /\\([0-9a-fA-F]{1,6}[\x20\t\n\r\f]?|.)|([\x22\x27])/g,
   
     // for in excess whitespace removal
     reWhiteSpace = /[\x20\t\n\r\f]+/g,
   
-    reOptimizeSelector = new global.RegExp(identifier + '|^$'),
+    standardValidator, extendedValidator, reValidator,
+  
+    attrcheck, attributes, attrmatcher, pseudoclass,
+  
+    reOptimizeSelector, reSimpleNot, reSplitToken,
+  
+    Optimize, reClass, reSimpleSelector,
+  
+    // http://www.w3.org/TR/css3-syntax/#characters
+    // unicode/ISO 10646 characters \xA0 and higher
+    // NOTE: Safari 2.0.x crashes with escaped (\\)
+    // Unicode ranges in regular expressions so we
+    // use a negated character range class instead
+    // now assigned at runtime from config options
+    identifier,
+  
+    // placeholder for extensions
+    extensions = '.+',
+  
+    // precompiled Regular Expressions
+    Patterns = new global.Object({
+      // structural pseudo-classes and child selectors
+      spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
+      // uistates + dynamic + negation pseudo-classes
+      dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
+      // E > F
+      children: new global.RegExp('^' + whitespace + '*\\>' + whitespace + '*(.*)'),
+      // E + F
+      adjacent: new global.RegExp('^' + whitespace + '*\\+' + whitespace + '*(.*)'),
+      // E ~ F
+      relative: new global.RegExp('^' + whitespace + '*\\~' + whitespace + '*(.*)'),
+      // E F
+      ancestor: new global.RegExp('^' + whitespace + '+(.*)'),
+      // all
+      universal: new global.RegExp('^\\*(.*)')
+    }),
+  
+    Tokens = global.Object({
+      prefixes: prefixes,
+      identifier: identifier,
+      attributes: attributes
+    }),
   
     /*----------------------------- FEATURE TESTING ----------------------------*/
   
@@ -503,18 +467,9 @@
       })() :
       true,
   
-    // matches class selectors
-    RE_CLASS = new global.RegExp('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + identifier + ')'),
-  
-    // matches simple id, tag & class selectors
-    RE_SIMPLE_SELECTOR = new global.RegExp(
-      BUGGY_GEBTN && BUGGY_GEBCN || OPERA ?
-        '^#?-?[_a-zA-Z]{1}' + encoding + '*$' : BUGGY_GEBTN ?
-        '^[.#]?-?[_a-zA-Z]{1}' + encoding + '*$' : BUGGY_GEBCN ?
-        '^(?:\\*|#-?[_a-zA-Z]{1}' + encoding + '*)$' :
-        '^(?:\\*|[.#]?-?[_a-zA-Z]{1}' + encoding + '*)$'),
-  
     /*----------------------------- LOOKUP OBJECTS -----------------------------*/
+  
+    IE_LT_9 = typeof doc.addEventListener != 'function',
   
     LINK_NODES = new global.Object({ 'a': 1, 'A': 1, 'area': 1, 'AREA': 1, 'link': 1, 'LINK': 1 }),
   
@@ -589,39 +544,6 @@
       '|=': "(n+'-').indexOf('%m-')==0",
       '~=': "(' '+n+' ').indexOf(' %m ')>-1",
       '$=': "n.substr(n.length-'%m'.length)=='%m'"
-    }),
-  
-    // optimization expressions
-    Optimize = new global.Object({
-      ID: new global.RegExp('^\\*?#(' + encoding + '+)|' + skipgroup),
-      TAG: new global.RegExp('^(' + encoding + '+)|' + skipgroup),
-      CLASS: new global.RegExp('^\\*?\\.(' + encoding + '+$)|' + skipgroup)
-    }),
-  
-    // precompiled Regular Expressions
-    Patterns = new global.Object({
-      // structural pseudo-classes and child selectors
-      spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
-      // uistates + dynamic + negation pseudo-classes
-      dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
-      // element attribute matcher
-      attribute: new global.RegExp('^\\[' + attrmatcher + '\\](.*)'),
-      // E > F
-      children: /^[\x20\t\n\r\f]*\>[\x20\t\n\r\f]*(.*)/,
-      // E + F
-      adjacent: /^[\x20\t\n\r\f]*\+[\x20\t\n\r\f]*(.*)/,
-      // E ~ F
-      relative: /^[\x20\t\n\r\f]*\~[\x20\t\n\r\f]*(.*)/,
-      // E F
-      ancestor: /^[\x20\t\n\r\f]+(.*)/,
-      // all
-      universal: /^\*(.*)/,
-      // id
-      id: new global.RegExp('^#(' + encoding + '+)(.*)'),
-      // tag
-      tagName: new global.RegExp('^(' + encoding + '+)(.*)'),
-      // class
-      className: new global.RegExp('^\\.(' + encoding + '+)(.*)')
     }),
   
     /*------------------------------ UTIL METHODS ------------------------------*/
@@ -700,53 +622,76 @@
         }
       },
   
-    // convert a CSS string or identifier containing escape sequence to a
-    // javascript string with javascript escape sequences
+    // convert single codepoint to UTF-16 encoding
+    codePointToUTF16 =
+      function(codePoint) {
+        // out of range, use replacement character
+        if (codePoint < 1 || codePoint > 0x10ffff ||
+          (codePoint > 0xd7ff && codePoint < 0xe000)) {
+          return '\\ufffd';
+        }
+        // javascript strings are UTF-16 encoded
+        if (codePoint < 0x10000) {
+          var lowHex = '000' + codePoint.toString(16);
+          return '\\u' + lowHex.substr(lowHex.length - 4);
+        }
+        // supplementary high + low surrogates
+        return '\\u' + (((codePoint - 0x10000) >> 0x0a) + 0xd800).toString(16) +
+               '\\u' + (((codePoint - 0x10000) % 0x400) + 0xdc00).toString(16);
+      },
+  
+    // convert single codepoint to string
+    stringFromCodePoint =
+      function(codePoint) {
+        // out of range, use replacement character
+        if (codePoint < 1 || codePoint > 0x10ffff ||
+          (codePoint > 0xd7ff && codePoint < 0xe000)) {
+          return '\ufffd';
+        }
+        if (codePoint < 0x10000) {
+          return String.fromCharCode(codePoint);
+        }
+        return String.fromCodePoint ?
+          String.fromCodePoint(codePoint) :
+          String.fromCharCode(
+            ((codePoint - 0x10000) >> 0x0a) + 0xd800,
+            ((codePoint - 0x10000) % 0x400) + 0xdc00);
+      },
+  
+    // convert escape sequence in a CSS string or identifier
+    // to javascript string with javascript escape sequences
     convertEscapes =
       function(str) {
-        return str.replace(/\\([0-9a-fA-F]{1,6}\x20?|.)|([\x22\x27])/g, function(substring, p1, p2) {
-          var codePoint, highHex, highSurrogate, lowHex, lowSurrogate;
-  
-          if (p2) {
-            // unescaped " or '
-            return '\\' + p2;
-          }
-  
-          if (/^[0-9a-fA-F]/.test(p1)) {
-            // \1f23
-            codePoint = parseInt(p1, 16);
-  
-            if (codePoint < 0 || codePoint > 0x10ffff) {
-              // the replacement character
-              return '\\ufffd';
+        return str.replace(reEscapedChars,
+            function(substring, p1, p2) {
+              // unescaped " or '
+              return p2 ? '\\' + p2 :
+                // javascript strings are UTF-16 encoded
+                /^[0-9a-fA-F]/.test(p1) ? codePointToUTF16(parseInt(p1, 16)) :
+                // \' \"
+                /^[\\\x22\x27]/.test(p1) ? substring :
+                // \g \h \. \# etc
+                p1;
             }
+          );
+      },
   
-            // javascript strings are in UTF-16
-            if (codePoint <= 0xffff) {
-              // Basic
-              lowHex = '000' + codePoint.toString(16);
-              return '\\u' + lowHex.substr(lowHex.length - 4);
+    // convert escape sequence in a CSS string or identifier
+    // to javascript string with characters representations
+    unescapeIdentifier =
+      function(str) {
+        return str.replace(reEscapedChars,
+            function(substring, p1, p2) {
+              // unescaped " or '
+              return p2 ? p2 :
+                // javascript strings are UTF-16 encoded
+                /^[0-9a-fA-F]/.test(p1) ? stringFromCodePoint(parseInt(p1, 16)) :
+                // \' \"
+                /^[\\\x22\x27]/.test(p1) ? substring :
+                // \g \h \. \# etc
+                p1;
             }
-  
-            // Supplementary
-            codePoint -= 0x10000;
-            highSurrogate = (codePoint >> 10) + 0xd800;
-            lowSurrogate = (codePoint % 0x400) + 0xdc00;
-            highHex = '000' + highSurrogate.toString(16);
-            lowHex = '000' + lowSurrogate.toString(16);
-  
-            return '\\u' + highHex.substr(highHex.length - 4) +
-              '\\u' + lowHex.substr(lowHex.length - 4);
-          }
-  
-          if (/^[\\\x22\x27]/.test(p1)) {
-            // \' \"
-            return substring;
-          }
-  
-          // \g \h \. \# etc
-          return p1;
-        });
+          );
       },
   
     /*------------------------------ DOM METHODS -------------------------------*/
@@ -768,13 +713,13 @@
     // @return reference or null
     _byId = !BUGGY_GEBID ?
       function(id, from) {
-        id = id.replace(/\\([^\\]{1})/g, '$1');
+        id = (/\\/).test(id) ? unescapeIdentifier(id) : id;
         return from.getElementById && from.getElementById(id) ||
           byIdRaw(id, from.getElementsByTagName('*'));
       } :
       function(id, from) {
         var element = null;
-        id = id.replace(/\\([^\\]{1})/g, '$1');
+        id = (/\\/).test(id) ? unescapeIdentifier(id) : id;
         if (XML_DOCUMENT || from.nodeType != 9) {
           return byIdRaw(id, from.getElementsByTagName('*'));
         }
@@ -856,7 +801,7 @@
     byClassRaw =
       function(name, from) {
         var i = -1, j = i, data = new global.Array(), element, elements = _byTag('*', from), n;
-        name = ' ' + (QUIRKS_MODE ? name.toLowerCase() : name).replace(/\\([^\\]{1})/g, '$1') + ' ';
+        name = ' ' + (QUIRKS_MODE ? name.toLowerCase() : name) + ' ';
         while ((element = elements[++i])) {
           n = XML_DOCUMENT ? element.getAttribute('class') : element.className;
           if (n && n.length && (' ' + (QUIRKS_MODE ? n.toLowerCase() : n).
@@ -871,8 +816,10 @@
     // @return array
     _byClass =
       function(name, from) {
+        name = QUIRKS_MODE ? name.toLowerCase() : name;
+        name = (/\\/).test(name) ? unescapeIdentifier(name) : name;
         return (BUGGY_GEBCN || BUGGY_QUIRKS_GEBCN || XML_DOCUMENT || !from.getElementsByClassName) ?
-          byClassRaw(name, from) : slice.call(from.getElementsByClassName(name.replace(/\\([^\\]{1})/g, '$1')), 0);
+          byClassRaw(name, from) : slice.call(from.getElementsByClassName(name));
       },
   
     // publicly exposed byClass
@@ -902,7 +849,7 @@
   
     // attribute value
     // @return string
-    getAttribute = !BUGGY_GET_ATTRIBUTE ?
+    getAttribute = !BUGGY_GET_ATTRIBUTE && !IE_LT_9 ?
       function(node, attribute) {
         return node.getAttribute(attribute);
       } :
@@ -924,7 +871,7 @@
   
     // attribute presence
     // @return boolean
-    hasAttribute = !BUGGY_HAS_ATTRIBUTE ?
+    hasAttribute = !BUGGY_HAS_ATTRIBUTE && !IE_LT_9 ?
       function(node, attribute) {
         return XML_DOCUMENT ?
           !!node.getAttribute(attribute) :
@@ -983,8 +930,8 @@
     // get/set (string/object) working modes
     configure =
       function(option) {
-        if (typeof option == 'string') { return Config[option] || Config; }
-        if (typeof option != 'object') { return false; }
+        if (typeof option == 'string') { return !!Config[option]; }
+        if (typeof option != 'object') { return Config; }
         for (var i in option) {
           Config[i] = !!option[i];
           if (i == 'SIMPLENOT') {
@@ -997,6 +944,7 @@
             Config[i] = !!option[i] && NATIVE_QSAPI;
           }
         }
+        setIdentifierSyntax();
         reValidator = new global.RegExp(Config.SIMPLENOT ?
           standardValidator : extendedValidator);
         return true;
@@ -1015,6 +963,18 @@
   
       // used to enable/disable caching of result sets
       CACHING: false,
+  
+      // used to enable/disable CSS escaped identifiers
+      ESCAPECHR: true,
+  
+      // add non-ascii (utf-8) to the identifier syntax RE
+      NON_ASCII: true,
+  
+      // switch between CSS2 and CSS3 identifier syntax RE
+      SELECTOR3: true,
+  
+      // add Unicode (utf-16) to the identifier syntax RE
+      UNICODE16: true,
   
       // by default do not add missing left/right context
       // to selector string shortcuts like "+div" or "ul>"
@@ -1041,6 +1001,121 @@
     }),
   
     /*---------------------------- COMPILER METHODS ----------------------------*/
+  
+    // init REs and context
+    initialize =
+      function(doc) {
+        setIdentifierSyntax();
+        switchContext(doc, true);
+      },
+  
+    // set/reset default identifier syntax
+    // based on user configuration options
+    // rebuild the validator and other REs
+    setIdentifierSyntax =
+      function() {
+  
+        var syntax = '', start = Config['SELECTOR3'] ? '-{2}|' : '';
+  
+        Config['NON_ASCII'] && (syntax += '|' + non_asc_chr);
+        Config['UNICODE16'] && (syntax += '|' + unicode_chr);
+        Config['ESCAPECHR'] && (syntax += '|' + escaped_chr);
+  
+        syntax += (Config['UNICODE16'] || Config['ESCAPECHR']) ? '' : '|' + any_esc_chr;
+  
+        identifier = '-?(?:' + start + alphalodash + syntax + ')(?:-|[0-9]|' + alphalodash + syntax + ')*';
+  
+        // build attribute string
+        attrcheck = '(' + quotedvalue + '|' + identifier + ')';
+        attributes = whitespace + '*(' + identifier + ':?' + identifier + ')' +
+          whitespace + '*(?:' + operators + whitespace + '*' + attrcheck + ')?' + whitespace + '*';
+        attrmatcher = attributes.replace(attrcheck, '([\\x22\\x27]*)((?:\\\\?.)*?)\\3');
+  
+        // build pseudoclass string
+        pseudoclass = '((?:' +
+          // an+b parameters or quoted string
+          pseudoparms + '|' + quotedvalue + '|' +
+          // id, class, pseudo-class selector
+          prefixes + identifier + '|' +
+          // nested HTML attribute selector
+          '\\[' + attributes + '\\]|' +
+          // nested pseudo-class selector
+          '\\(.+\\)|' + whitespace + '*|' +
+          // nested pseudos/separators
+          ',)+)';
+  
+        // CSS3: syntax scanner and
+        // one pass validation only
+        // using regular expression
+        standardValidator =
+          // discard start
+          '(?=[\\x20\\t\\n\\r\\f]*[^>+~(){}<>])' +
+          // open match group
+          '(' +
+          //universal selector
+          '\\*' +
+          // id/class/tag/pseudo-class identifier
+          '|(?:' + prefixes + identifier + ')' +
+          // combinator selector
+          '|' + combinators +
+          // HTML attribute selector
+          '|\\[' + attributes + '\\]' +
+          // pseudo-classes parameters
+          '|\\(' + pseudoclass + '\\)' +
+          // dom properties selector (extension)
+          '|\\{' + extensions + '\\}' +
+          // selector group separator (comma)
+          '|(?:,|' + whitespace + '*)' +
+          // close match group
+          ')+';
+  
+        // only allow simple selectors nested in ':not()' pseudo-classes
+        reSimpleNot = new global.RegExp('^(' +
+          '(?!:not)' +
+          '(' + prefixes + identifier +
+          '|\\([^()]*\\))+' +
+          '|\\[' + attributes + '\\]' +
+          ')$');
+  
+        // split last, right most, selector group token
+        reSplitToken = new global.RegExp('(' +
+          prefixes + identifier + '|' +
+          '\\[' + attributes + '\\]|' +
+          '\\(' + pseudoclass + '\\)|' +
+          '\\\\.|[^\\x20\\t\\n\\r\\f>+~])+', 'g');
+  
+        reOptimizeSelector = new global.RegExp(identifier + '|^$');
+  
+        reSimpleSelector = new global.RegExp(
+          BUGGY_GEBTN && BUGGY_GEBCN || OPERA ?
+            '^#?' + identifier + '$' : BUGGY_GEBTN ?
+            '^[.#]?' + identifier + '$' : BUGGY_GEBCN ?
+            '^(?:\\*|#' + identifier + ')$' :
+            '^(?:\\*|[.#]?' + identifier + ')$');
+  
+        // matches class selectors
+        reClass = new global.RegExp('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + identifier + ')');
+  
+        Optimize = new global.Object({
+          ID: new global.RegExp('^\\*?#(' + identifier + ')|' + skip_groups),
+          TAG: new global.RegExp('^(' + identifier + ')|' + skip_groups),
+          CLASS: new global.RegExp('^\\.(' + identifier + '$)|' + skip_groups)
+        });
+  
+        Patterns.id = new global.RegExp('^#(' + identifier + ')(.*)');
+        Patterns.tagName = new global.RegExp('^(' + identifier + ')(.*)');
+        Patterns.className = new global.RegExp('^\\.(' + identifier + ')(.*)');
+        Patterns.attribute = new global.RegExp('^\\[' + attrmatcher + '\\](.*)');
+  
+        Tokens.identifier = identifier,
+        Tokens.attributes = attributes,
+  
+        // validator for complex selectors in ':not()' pseudo-classes
+        extendedValidator = standardValidator.replace(pseudoclass, '.*');
+  
+        // validator for standard selectors as default
+        reValidator = new global.RegExp(standardValidator);
+      },
   
     // code string reused to build compiled functions
     ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break main;else continue main;',
@@ -1113,6 +1188,7 @@
           else if ((match = selector.match(Patterns.id))) {
             // document can contain conflicting elements (id/name)
             // prototype selector unit need this method to recover bad HTML forms
+            match[1] = (/\\/).test(match[1]) ? convertEscapes(match[1]) : match[1];
             source = 'if(' + (XML_DOCUMENT ?
               's.getAttribute(e,"id")' :
               '(e.submit?s.getAttribute(e,"id"):e.id)') +
@@ -1137,11 +1213,12 @@
             // W3C CSS3 specs: element whose "class" attribute has been assigned a
             // list of whitespace-separated values, see section 6.4 Class selectors
             // and notes at the bottom; explicitly non-normative in this specification.
+            match[1] = (/\\/).test(match[1]) ? convertEscapes(match[1]) : match[1];
+            match[1] = QUIRKS_MODE ? match[1].toLowerCase() : match[1];
             source = 'if((n=' + (XML_DOCUMENT ?
               's.getAttribute(e,"class")' : 'e.className') +
               ')&&n.length&&(" "+' + (QUIRKS_MODE ? 'n.toLowerCase()' : 'n') +
-              '.replace(' + reWhiteSpace + '," ")+" ").indexOf(" ' +
-              (QUIRKS_MODE ? match[1].toLowerCase() : match[1]) + ' ")>-1' +
+              '.replace(/' + whitespace + '+/g," ")+" ").indexOf(" ' + match[1] + ' ")>-1' +
               '){' + source + '}';
           }
   
@@ -1163,7 +1240,7 @@
   
             // replace Operators parameter if needed
             if (match[2] && match[4] && (test = Operators[match[2]])) {
-              match[4] = convertEscapes(match[4]);
+              match[4] = (/\\/).test(match[4]) ? convertEscapes(match[4]) : match[4];
               // case treatment depends on document
               HTML_TABLE['class'] = QUIRKS_MODE ? 1 : 0;
               type = (XML_DOCUMENT ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
@@ -1459,7 +1536,12 @@
           switchContext(from || (from = element.ownerDocument));
         }
   
-        selector = selector.replace(reTrimSpaces, '');
+        // normalize the selector string, remove [\n\r\f]
+        // whitespace, replace codepoints 0 with '\ufffd'
+        // trim non-relevant leading/trailing whitespaces
+        selector = selector.
+          replace(reTrimSpaces, '').
+          replace(/\x00|\\$/g, '\ufffd');
   
         Config.SHORTCUTS && (selector = Dom.shortcuts(selector, element, from));
   
@@ -1519,7 +1601,14 @@
           return callback ? concatCall([ ], elements, callback) : elements;
         }
   
-        if (!OPERA_QSAPI && RE_SIMPLE_SELECTOR.test(selector)) {
+        // normalize the selector string, remove [\n\r\f]
+        // whitespace, replace codepoints 0 with '\ufffd'
+        // trim non-relevant leading/trailing whitespaces
+        selector = selector.
+          replace(reTrimSpaces, '').
+          replace(/\x00|\\$/g, '\ufffd');
+  
+        if (!OPERA_QSAPI && reSimpleSelector.test(selector)) {
           switch (selector.charAt(0)) {
             case '#':
               if (Config.UNIQUE_ID) {
@@ -1536,7 +1625,7 @@
         }
   
         else if (!XML_DOCUMENT && Config.USE_QSAPI &&
-          !(BUGGY_QUIRKS_QSAPI && RE_CLASS.test(selector)) &&
+          !(BUGGY_QUIRKS_QSAPI && reClass.test(selector)) &&
           !RE_BUGGY_QSAPI.test(selector)) {
           try {
             elements = from.querySelectorAll(selector);
@@ -1549,8 +1638,6 @@
           Config.CACHING && Dom.saveResults(original, from, doc, elements);
           return elements;
         }
-  
-        selector = selector.replace(reTrimSpaces, '');
   
         Config.SHORTCUTS && (selector = Dom.shortcuts(selector, from));
   
@@ -1623,11 +1710,8 @@
   
           else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
             if ((elements = _byClass(token, from)).length === 0) { return [ ]; }
-            if (reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1))) {
-              selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '');
-            } else {
-              selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '*');
-            }
+            selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token,
+              reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1)) ? '' : '*');
           }
   
           else if ((parts = selector.match(Optimize.CLASS)) && (token = parts[1])) {
@@ -1636,11 +1720,8 @@
               els = concatList(els, elements[i].getElementsByTagName('*'));
             }
             elements = els;
-            if (reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1))) {
-              selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '');
-            } else {
-              selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '*');
-            }
+            selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token,
+              reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1)) ? '' : '*');
           }
   
           else if (NATIVE_GEBCN && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
@@ -1651,7 +1732,7 @@
         }
   
         if (!elements) {
-          elements = /^(?:applet|object)$/i.test(from.nodeName) ? from.childNodes : _byTag('*', from);
+          elements = /^(?:applet|object)$/i.test(from.nodeName) ? from.children : _byTag('*', from);
         }
         // end of prefiltering pass
   
@@ -1706,19 +1787,6 @@
       // selection/matching
       select: select,
       match: match
-    }),
-  
-    Tokens = new global.Object({
-      prefixes: prefixes,
-      encoding: encoding,
-      operators: operators,
-      whitespace: whitespace,
-      identifier: identifier,
-      attributes: attributes,
-      combinators: combinators,
-      pseudoclass: pseudoclass,
-      pseudoparms: pseudoparms,
-      quotedvalue: quotedvalue
     });
   
     /*------------------------------- PUBLIC API -------------------------------*/
@@ -1793,7 +1861,7 @@
     // for pseudo-class selectors extensions
     Dom.Selectors = Selectors;
   
-    // export string patterns
+    // export validators REs
     Dom.Tokens = Tokens;
   
     // export version string
@@ -1817,8 +1885,7 @@
     /*---------------------------------- INIT ----------------------------------*/
   
     // init context specific variables
-    switchContext(doc, true);
-  
+    initialize(doc);
   });
 
   provide("nwmatcher", module.exports(this));
