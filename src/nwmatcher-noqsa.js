@@ -84,7 +84,7 @@
 
   reSplitGroup = /([^,\\()[\]]+|\[[^[\]]*\]|\[.*\]|\([^()]+\)|\(.*\)|\{[^{}]+\}|\{.*\}|\\.)+/g,
 
-  reTrimSpaces = global.RegExp('^' + whitespace + '+|' + whitespace + '+$', 'g'),
+  reTrimSpaces = global.RegExp('[\\n\\r\\f]|^' + whitespace + '+|' + whitespace + '+$', 'g'),
 
   reEscapedChars = /\\([0-9a-fA-F]{1,6}[\x20\t\n\r\f]?|.)|([\x22\x27])/g,
 

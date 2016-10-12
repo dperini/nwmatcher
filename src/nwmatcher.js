@@ -117,7 +117,7 @@
   // regular expression to trim extra leading/trailing whitespace in selector strings
   // whitespace is any combination of these 5 character [\x20\t\n\r\f]
   // http://www.w3.org/TR/css3-selectors/#selector-syntax
-  reTrimSpaces = global.RegExp('^' + whitespace + '+|' + whitespace + '+$', 'g'),
+  reTrimSpaces = global.RegExp('[\\n\\r\\f]|^' + whitespace + '+|' + whitespace + '+$', 'g'),
 
   // regular expression used in convertEscapes and unescapeIdentifier
   reEscapedChars = /\\([0-9a-fA-F]{1,6}[\x20\t\n\r\f]?|.)|([\x22\x27])/g,
