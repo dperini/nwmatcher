@@ -723,7 +723,7 @@
       name = QUIRKS_MODE ? name.toLowerCase() : name;
       name = (/\\/).test(name) ? unescapeIdentifier(name) : name;
       return (BUGGY_GEBCN || BUGGY_QUIRKS_GEBCN || XML_DOCUMENT || !from.getElementsByClassName) ?
-        byClassRaw(name, from) : slice.call(from.getElementsByClassName(name.replace(/\\([^\\]{1})/g, '$1')), 0);
+        byClassRaw(name, from) : slice.call(from.getElementsByClassName(name));
     },
 
   // publicly exposed byClass
@@ -1614,11 +1614,8 @@
 
         else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
           if ((elements = _byClass(token, from)).length === 0) { return [ ]; }
-          if (reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1))) {
-            selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '');
-          } else {
-            selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '*');
-          }
+          selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token,
+            reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1)) ? '' : '*');
         }
 
         else if ((parts = selector.match(Optimize.CLASS)) && (token = parts[1])) {
@@ -1627,11 +1624,8 @@
             els = concatList(els, elements[i].getElementsByTagName('*'));
           }
           elements = els;
-          if (reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1))) {
-            selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '');
-          } else {
-            selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token, '*');
-          }
+          selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token,
+            reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1)) ? '' : '*');
         }
 
         else if (NATIVE_GEBCN && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
@@ -1642,7 +1636,7 @@
       }
 
       if (!elements) {
-        elements = /^(?:applet|object)$/i.test(from.nodeName) ? from.childNodes : _byTag('*', from);
+        elements = /^(?:applet|object)$/i.test(from.nodeName) ? from.children : _byTag('*', from);
       }
       // end of prefiltering pass
 
