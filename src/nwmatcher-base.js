@@ -47,7 +47,7 @@
 
 })(this, function(global, exports) {
 
-  var version = 'nwmatcher-1.3.8',
+  var version = 'nwmatcher-1.3.9beta',
 
   Dom = exports,
 
