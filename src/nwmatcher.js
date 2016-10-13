@@ -644,12 +644,14 @@
         slice.call(from.getElementsByTagName(tag), 0);
     } :
     function(tag, from) {
-      var i = -1, j = i, data = [ ],
-        element, elements = from.getElementsByTagName(tag);
+      var i = -1, j = i, data = [ ], element,
+        elements = XML_DOCUMENT || from.nodeType == 11 ?
+        byTagRaw(tag, from) : from.getElementsByTagName(tag);
       if (tag == '*') {
         while ((element = elements[++i])) {
-          if (element.nodeName > '@')
+          if (element.nodeName > '@') {
             data[++j] = element;
+          }
         }
       } else {
         while ((element = elements[++i])) {
@@ -1611,7 +1613,11 @@
       }
 
       if (!elements) {
-        elements = /^(?:applet|object)$/i.test(from.nodeName) ? from.children : _byTag('*', from);
+        if (IE_LT_9) {
+          elements = /^(?:applet|object)$/i.test(from.nodeName) ? from.children : byTagRaw('*', from);
+        } else {
+          elements = from.getElementsByTagName('*');
+        }
       }
       // end of prefiltering pass
 

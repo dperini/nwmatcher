@@ -704,7 +704,7 @@
 
       if (!elements) {
         if (IE_LT_9) {
-          elements = /^(?:applet|object)$/i.test(from.nodeName) ? from.childNodes : from.all;
+          elements = /^(?:applet|object)$/i.test(from.nodeName) ? from.children : byTagRaw('*', from);
         } else {
           elements = from.getElementsByTagName('*');
         }
