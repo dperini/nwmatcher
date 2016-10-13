@@ -18,38 +18,17 @@
 (function(global, factory) {
 
   if (typeof module == 'object' && typeof exports == 'object') {
-    module.exports = function(browserGlobal) {
-      // passed global does not contain
-      // references to native objects
-      browserGlobal.console = console;
-      browserGlobal.parseInt = parseInt;
-      browserGlobal.Function = Function;
-      browserGlobal.Boolean = Boolean;
-      browserGlobal.Number = Number;
-      browserGlobal.RegExp = RegExp;
-      browserGlobal.String = String;
-      browserGlobal.Object = Object;
-      browserGlobal.Array = Array;
-      browserGlobal.Error = Error;
-      browserGlobal.Date = Date;
-      browserGlobal.Math = Math;
-      var exports = { };
-      factory(browserGlobal, exports);
-      return exports;
-    };
-    module.factory = factory;
+    module.exports = factory;
+  } else if (typeof define === 'function' && define["amd"]) {
+    define(factory);
   } else {
-    factory(global,
-      (global.NW || (global.NW = { })) &&
-      (global.NW.Dom || (global.NW.Dom = { })));
-    global.NW.Dom.factory = factory;
+    global.NW || (global.NW = { });
+    global.NW.Dom = factory(global);
   }
 
-})(this, function(global, exports) {
+})(this, function(global) {
 
   var version = 'nwmatcher-1.3.9beta',
-
-  Dom = exports,
 
   doc = global.document,
   root = doc.documentElement,
@@ -757,44 +736,50 @@
     select: select,
     getAttribute: getAttribute,
     hasAttribute: hasAttribute
+  },
+
+  Dom = {
+
+    ACCEPT_NODE: ACCEPT_NODE,
+
+    byId: byId,
+    match: match,
+    first: first,
+    select: select,
+    compile: compile,
+    configure: configure,
+
+    setCache: FN,
+    shortcuts: FN,
+    loadResults: FN,
+    saveResults: FN,
+
+    emit: emit,
+    Config: Config,
+    Snapshot: Snapshot,
+
+    Operators: Operators,
+    Selectors: Selectors,
+
+    Tokens: Tokens,
+    Version: version,
+
+    registerOperator:
+      function(symbol, resolver) {
+        Operators[symbol] || (Operators[symbol] = resolver);
+      },
+
+    registerSelector:
+      function(name, rexp, func) {
+        Selectors[name] || (Selectors[name] = {
+          Expression: rexp,
+          Callback: func
+        });
+      }
+
   };
 
-  Dom.ACCEPT_NODE = ACCEPT_NODE;
-
-  Dom.byId = byId;
-  Dom.match = match;
-  Dom.first = first;
-  Dom.select = select;
-  Dom.compile = compile;
-  Dom.configure = configure;
-
-  Dom.setCache = FN;
-  Dom.shortcuts = FN;
-  Dom.loadResults = FN;
-  Dom.saveResults = FN;
-
-  Dom.emit = emit;
-  Dom.Config = Config;
-  Dom.Snapshot = Snapshot;
-
-  Dom.Operators = Operators;
-  Dom.Selectors = Selectors;
-
-  Dom.Tokens = Tokens;
-  Dom.Version = version;
-
-  Dom.registerOperator =
-    function(symbol, resolver) {
-      Operators[symbol] || (Operators[symbol] = resolver);
-    };
-
-  Dom.registerSelector =
-    function(name, rexp, func) {
-      Selectors[name] || (Selectors[name] = {
-        Expression: rexp,
-        Callback: func
-      });
-    };
-
   initialize(doc);
+
+  return Dom;
 });

@@ -18,42 +18,17 @@
 (function(global, factory) {
 
   if (typeof module == 'object' && typeof exports == 'object') {
-    // in a Node.js environment, the nwmatcher functions will operate on
-    // the passed "browserGlobal" and will be returned in an object
-    module.exports = function(browserGlobal) {
-      // passed global does not contain
-      // references to native objects
-      browserGlobal.console = console;
-      browserGlobal.parseInt = parseInt;
-      browserGlobal.Function = Function;
-      browserGlobal.Boolean = Boolean;
-      browserGlobal.Number = Number;
-      browserGlobal.RegExp = RegExp;
-      browserGlobal.String = String;
-      browserGlobal.Object = Object;
-      browserGlobal.Array = Array;
-      browserGlobal.Error = Error;
-      browserGlobal.Date = Date;
-      browserGlobal.Math = Math;
-      var exports = { };
-      factory(browserGlobal, exports);
-      return exports;
-    };
-    module.factory = factory;
+    module.exports = factory;
+  } else if (typeof define === 'function' && define["amd"]) {
+    define(factory);
   } else {
-    // in a browser environment, the nwmatcher functions will operate on
-    // the "global" loading them and be attached to "global.NW.Dom"
-    factory(global,
-      (global.NW || (global.NW = { })) &&
-      (global.NW.Dom || (global.NW.Dom = { })));
-    global.NW.Dom.factory = factory;
+    global.NW || (global.NW = { });
+    global.NW.Dom = factory(global);
   }
 
-})(this, function(global, exports) {
+})(this, function(global) {
 
   var version = 'nwmatcher-1.3.9beta',
-
-  Dom = exports,
 
   // processing context & root element
   doc = global.document,
@@ -1691,103 +1666,109 @@
     // selection/matching
     select: select,
     match: match
-  };
+  },
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
   // code referenced by extensions
-  Dom.ACCEPT_NODE = ACCEPT_NODE;
+  Dom = {
 
-  // retrieve element by id attr
-  Dom.byId = byId;
+    ACCEPT_NODE: ACCEPT_NODE,
 
-  // retrieve elements by tag name
-  Dom.byTag = byTag;
+    // retrieve element by id attr
+    byId: byId,
 
-  // retrieve elements by name attr
-  Dom.byName = byName;
+    // retrieve elements by tag name
+    byTag: byTag,
 
-  // retrieve elements by class name
-  Dom.byClass = byClass;
+    // retrieve elements by name attr
+    byName: byName,
 
-  // read the value of the attribute
-  // as was in the original HTML code
-  Dom.getAttribute = getAttribute;
+    // retrieve elements by class name
+    byClass: byClass,
 
-  // check for the attribute presence
-  // as was in the original HTML code
-  Dom.hasAttribute = hasAttribute;
+    // read the value of the attribute
+    // as was in the original HTML code
+    getAttribute: getAttribute,
 
-  // element match selector, return boolean true/false
-  Dom.match = match;
+    // check for the attribute presence
+    // as was in the original HTML code
+    hasAttribute: hasAttribute,
 
-  // first element match only, return element or null
-  Dom.first = first;
+    // element match selector, return boolean true/false
+    match: match,
 
-  // elements matching selector, starting from element
-  Dom.select = select;
+    // first element match only, return element or null
+    first: first,
 
-  // compile selector into ad-hoc javascript resolver
-  Dom.compile = compile;
+    // elements matching selector, starting from element
+    select: select,
 
-  // check that two elements are ancestor/descendant
-  Dom.contains = contains;
+    // compile selector into ad-hoc javascript resolver
+    compile: compile,
 
-  // handle selector engine configuration settings
-  Dom.configure = configure;
+    // check that two elements are ancestor/descendant
+    contains: contains,
 
-  // initialize caching for each document
-  Dom.setCache = FN;
+    // handle selector engine configuration settings
+    configure: configure,
 
-  // load previously collected result set
-  Dom.loadResults = FN;
+    // initialize caching for each document
+    setCache: FN,
 
-  // save previously collected result set
-  Dom.saveResults = FN;
+    // load previously collected result set
+    loadResults: FN,
 
-  // handle missing context in selector strings
-  Dom.shortcuts = FN;
+    // save previously collected result set
+    saveResults: FN,
 
-  // log resolvers errors/warnings
-  Dom.emit = emit;
+    // handle missing context in selector strings
+    shortcuts: FN,
 
-  // options enabing specific engine functionality
-  Dom.Config = Config;
+    // log resolvers errors/warnings
+    emit: emit,
 
-  // pass methods references to compiled resolvers
-  Dom.Snapshot = Snapshot;
+    // options enabing specific engine functionality
+    Config: Config,
 
-  // operators descriptor
-  // for attribute operators extensions
-  Dom.Operators = Operators;
+    // pass methods references to compiled resolvers
+    Snapshot: Snapshot,
 
-  // selectors descriptor
-  // for pseudo-class selectors extensions
-  Dom.Selectors = Selectors;
+    // operators descriptor
+    // for attribute operators extensions
+    Operators: Operators,
 
-  // export validators REs
-  Dom.Tokens = Tokens;
+    // selectors descriptor
+    // for pseudo-class selectors extensions
+    Selectors: Selectors,
 
-  // export version string
-  Dom.Version = version;
+    // export validators REs
+    Tokens: Tokens,
 
-  // add or overwrite user defined operators
-  Dom.registerOperator =
-    function(symbol, resolver) {
-      Operators[symbol] || (Operators[symbol] = resolver);
-    };
+    // export version string
+    Version: version,
 
-  // add selector patterns for user defined callbacks
-  Dom.registerSelector =
-    function(name, rexp, func) {
-      Selectors[name] || (Selectors[name] = {
-        Expression: rexp,
-        Callback: func
-      });
-    };
+    // add or overwrite user defined operators
+    registerOperator:
+      function(symbol, resolver) {
+        Operators[symbol] || (Operators[symbol] = resolver);
+      },
+
+    // add selector patterns for user defined callbacks
+    registerSelector:
+      function(name, rexp, func) {
+        Selectors[name] || (Selectors[name] = {
+          Expression: rexp,
+          Callback: func
+        });
+      }
+
+  };
 
   /*---------------------------------- INIT ----------------------------------*/
 
   // init context specific variables
   initialize(doc);
+
+  return Dom;
 });
