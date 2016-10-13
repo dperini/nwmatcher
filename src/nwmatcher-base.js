@@ -33,15 +33,15 @@
       browserGlobal.Error = Error;
       browserGlobal.Date = Date;
       browserGlobal.Math = Math;
-      var exports = browserGlobal.Object();
+      var exports = { };
       factory(browserGlobal, exports);
       return exports;
     };
     module.factory = factory;
   } else {
     factory(global,
-      (global.NW || (global.NW = global.Object())) &&
-      (global.NW.Dom || (global.NW.Dom = global.Object())));
+      (global.NW || (global.NW = { })) &&
+      (global.NW.Dom || (global.NW.Dom = { })));
     global.NW.Dom.factory = factory;
   }
 
@@ -84,7 +84,7 @@
 
   reSplitGroup = /([^,\\()[\]]+|\[[^[\]]*\]|\[.*\]|\([^()]+\)|\(.*\)|\{[^{}]+\}|\{.*\}|\\.)+/g,
 
-  reTrimSpaces = global.RegExp('[\\n\\r\\f]|^' + whitespace + '+|' + whitespace + '+$', 'g'),
+  reTrimSpaces = RegExp('[\\n\\r\\f]|^' + whitespace + '+|' + whitespace + '+$', 'g'),
 
   reEscapedChars = /\\([0-9a-fA-F]{1,6}[\x20\t\n\r\f]?|.)|([\x22\x27])/g,
 
@@ -96,19 +96,19 @@
 
   Optimize, identifier, extensions = '.+',
 
-  Patterns = global.Object({
-    children: global.RegExp('^' + whitespace + '*\\>' + whitespace + '*(.*)'),
-    adjacent: global.RegExp('^' + whitespace + '*\\+' + whitespace + '*(.*)'),
-    relative: global.RegExp('^' + whitespace + '*\\~' + whitespace + '*(.*)'),
-    ancestor: global.RegExp('^' + whitespace + '+(.*)'),
-    universal: global.RegExp('^\\*(.*)')
-  }),
+  Patterns = {
+    children: RegExp('^' + whitespace + '*\\>' + whitespace + '*(.*)'),
+    adjacent: RegExp('^' + whitespace + '*\\+' + whitespace + '*(.*)'),
+    relative: RegExp('^' + whitespace + '*\\~' + whitespace + '*(.*)'),
+    ancestor: RegExp('^' + whitespace + '+(.*)'),
+    universal: RegExp('^\\*(.*)')
+  },
 
-  Tokens = global.Object({
+  Tokens = {
     prefixes: prefixes,
     identifier: identifier,
     attributes: attributes
-  }),
+  },
 
   QUIRKS_MODE,
   XML_DOCUMENT,
@@ -118,40 +118,40 @@
 
   IE_LT_9 = typeof doc.addEventListener != 'function',
 
-  LINK_NODES = global.Object({ a: 1, A: 1, area: 1, AREA: 1, link: 1, LINK: 1 }),
+  LINK_NODES = { a: 1, A: 1, area: 1, AREA: 1, link: 1, LINK: 1 },
 
-  ATTR_BOOLEAN = global.Object({
+  ATTR_BOOLEAN = {
     checked: 1, disabled: 1, ismap: 1,
     multiple: 1, readonly: 1, selected: 1
-  }),
+  },
 
-  ATTR_DEFAULT = global.Object({
+  ATTR_DEFAULT = {
     value: 'defaultValue',
     checked: 'defaultChecked',
     selected: 'defaultSelected'
-  }),
+  },
 
-  ATTR_URIDATA = global.Object({
+  ATTR_URIDATA = {
     action: 2, cite: 2, codebase: 2, data: 2, href: 2,
     longdesc: 2, lowsrc: 2, src: 2, usemap: 2
-  }),
+  },
 
-  INSENSITIVE_MAP = global.Object({
+  INSENSITIVE_MAP = {
     'class': 0,
     'href': 1, 'lang': 1, 'src': 1, 'style': 1, 'title': 1,
     'type': 1, 'xmlns': 1, 'xml:lang': 1, 'xml:space': 1
-  }),
+  },
 
-  Selectors = global.Object(),
+  Selectors = { },
 
-  Operators = global.Object({
+  Operators = {
      '=': "n=='%m'",
     '^=': "n.indexOf('%m')==0",
     '*=': "n.indexOf('%m')>-1",
     '|=': "(n+'-').indexOf('%m-')==0",
     '~=': "(' '+n+' ').indexOf(' %m ')>-1",
     '$=': "n.substr(n.length-'%m'.length)=='%m'"
-  }),
+  },
 
   concatCall =
     function(data, elements, callback) {
@@ -275,7 +275,7 @@
 
   byTagRaw =
     function(tag, from) {
-      var any = tag == '*', element = from, elements = global.Array(), next = element.firstChild;
+      var any = tag == '*', element = from, elements = [ ], next = element.firstChild;
       any || (tag = tag.toUpperCase());
       while ((element = next)) {
         if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
@@ -323,27 +323,27 @@
       for (var i in option) {
         Config[i] = !!option[i];
         if (i == 'SIMPLENOT') {
-          matchContexts = global.Object();
-          matchResolvers = global.Object();
-          selectContexts = global.Object();
-          selectResolvers = global.Object();
+          matchContexts = { };
+          matchResolvers = { };
+          selectContexts = { };
+          selectResolvers = { };
         }
       }
       setIdentifierSyntax();
-      reValidator = global.RegExp(Config.SIMPLENOT ?
+      reValidator = RegExp(Config.SIMPLENOT ?
         standardValidator : extendedValidator);
       return true;
     },
 
   emit =
     function(message) {
-      if (Config.VERBOSITY) { throw global.Error(message); }
-      if (global.console && global.console.log) {
-        global.console.log(message);
+      if (Config.VERBOSITY) { throw Error(message); }
+      if (console && console.log) {
+        console.log(message);
       }
     },
 
-  Config = global.Object({
+  Config = {
     CACHING: false,
     ESCAPECHR: true,
     NON_ASCII: true,
@@ -354,7 +354,7 @@
     UNIQUE_ID: true,
     USE_HTML5: true,
     VERBOSITY: true
-  }),
+  },
 
   initialize =
     function(doc) {
@@ -399,38 +399,38 @@
         '|(?:,|' + whitespace + '*)' +
         ')+';
 
-      reSimpleNot = global.RegExp('^(' +
+      reSimpleNot = RegExp('^(' +
         '(?!:not)' +
         '(' + prefixes + identifier +
         '|\\([^()]*\\))+' +
         '|\\[' + attributes + '\\]' +
         ')$');
 
-      reSplitToken = global.RegExp('(' +
+      reSplitToken = RegExp('(' +
         prefixes + identifier + '|' +
         '\\[' + attributes + '\\]|' +
         '\\(' + pseudoclass + '\\)|' +
         '\\\\.|[^\\x20\\t\\n\\r\\f>+~])+', 'g');
 
-      reOptimizeSelector = global.RegExp(identifier + '|^$');
+      reOptimizeSelector = RegExp(identifier + '|^$');
 
-      Optimize = global.Object({
-        ID: global.RegExp('^\\*?#(' + identifier + ')|' + skip_groups),
-        TAG: global.RegExp('^(' + identifier + ')|' + skip_groups),
-        CLASS: global.RegExp('^\\.(' + identifier + '$)|' + skip_groups)
-      });
+      Optimize = {
+        ID: RegExp('^\\*?#(' + identifier + ')|' + skip_groups),
+        TAG: RegExp('^(' + identifier + ')|' + skip_groups),
+        CLASS: RegExp('^\\.(' + identifier + '$)|' + skip_groups)
+      };
 
-      Patterns.id = global.RegExp('^#(' + identifier + ')(.*)');
-      Patterns.tagName = global.RegExp('^(' + identifier + ')(.*)');
-      Patterns.className = global.RegExp('^\\.(' + identifier + ')(.*)');
-      Patterns.attribute = global.RegExp('^\\[' + attrmatcher + '\\](.*)');
+      Patterns.id = RegExp('^#(' + identifier + ')(.*)');
+      Patterns.tagName = RegExp('^(' + identifier + ')(.*)');
+      Patterns.className = RegExp('^\\.(' + identifier + ')(.*)');
+      Patterns.attribute = RegExp('^\\[' + attrmatcher + '\\](.*)');
 
       Tokens.identifier = identifier;
       Tokens.attributes = attributes;
 
       extendedValidator = standardValidator.replace(pseudoclass, '.*');
 
-      reValidator = global.RegExp(standardValidator);
+      reValidator = RegExp(standardValidator);
     },
 
   ACCEPT_NODE = 'r[r.length]=c[k];if(f&&false===f(c[k]))break main;else continue main;',
@@ -447,7 +447,7 @@
       if (parts.length == 1) {
         source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
       } else {
-        var i = -1, seen = global.Object(), token;
+        var i = -1, seen = { }, token;
         while ((token = parts[++i])) {
           token = token.replace(reTrimSpaces, '');
           if (!seen[token] && (seen[token] = true)) {
@@ -457,10 +457,10 @@
       }
 
       if (mode) {
-        return global.Function('c,s,r,d,h,g,f,v',
+        return Function('c,s,r,d,h,g,f,v',
           'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
       } else {
-        return global.Function('e,s,r,d,h,g,f,v',
+        return Function('e,s,r,d,h,g,f,v',
           'var N,n,x=0,k=e;' + source + 'return false;');
       }
     },
@@ -687,8 +687,8 @@
           if ((element = _byId(token, from))) {
             if (match(element, selector)) {
               callback && callback(element);
-              elements = global.Array(element);
-            } else elements = global.Array();
+              elements = [element];
+            } else elements = [ ];
           }
         }
 
@@ -696,13 +696,13 @@
           if ((element = _byId(token, doc))) {
             if ('#' + token == selector) {
               callback && callback(element);
-              elements = global.Array(element);
+              elements = [element];
             } else if (/[>+~]/.test(selector)) {
               from = element.parentNode;
             } else {
               from = element;
             }
-          } else elements = global.Array();
+          } else elements = [ ];
         }
 
         if (elements) {
@@ -745,19 +745,19 @@
 
   FN = function(x) { return x; },
 
-  matchContexts = global.Object(),
-  matchResolvers = global.Object(),
+  matchContexts = { },
+  matchResolvers = { },
 
-  selectContexts = global.Object(),
-  selectResolvers = global.Object(),
+  selectContexts = { },
+  selectResolvers = { },
 
-  Snapshot = global.Object({
+  Snapshot = {
     byId: _byId,
     match: match,
     select: select,
     getAttribute: getAttribute,
     hasAttribute: hasAttribute
-  });
+  };
 
   Dom.ACCEPT_NODE = ACCEPT_NODE;
 
@@ -790,10 +790,10 @@
 
   Dom.registerSelector =
     function(name, rexp, func) {
-      Selectors[name] || (Selectors[name] = global.Object({
+      Selectors[name] || (Selectors[name] = {
         Expression: rexp,
         Callback: func
-      }));
+      });
     };
 
   initialize(doc);

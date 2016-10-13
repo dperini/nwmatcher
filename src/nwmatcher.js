@@ -35,7 +35,7 @@
       browserGlobal.Error = Error;
       browserGlobal.Date = Date;
       browserGlobal.Math = Math;
-      var exports = browserGlobal.Object();
+      var exports = { };
       factory(browserGlobal, exports);
       return exports;
     };
@@ -44,8 +44,8 @@
     // in a browser environment, the nwmatcher functions will operate on
     // the "global" loading them and be attached to "global.NW.Dom"
     factory(global,
-      (global.NW || (global.NW = global.Object())) &&
-      (global.NW.Dom || (global.NW.Dom = global.Object())));
+      (global.NW || (global.NW = { })) &&
+      (global.NW.Dom || (global.NW.Dom = { })));
     global.NW.Dom.factory = factory;
   }
 
@@ -60,8 +60,7 @@
   root = doc.documentElement,
 
   // save utility methods references
-  slice = global.Array.prototype.slice,
-  string = global.Object.prototype.toString,
+  slice = [ ].slice,
 
   // persist previous parsed data
   isSingleMatch,
@@ -117,7 +116,7 @@
   // regular expression to trim extra leading/trailing whitespace in selector strings
   // whitespace is any combination of these 5 character [\x20\t\n\r\f]
   // http://www.w3.org/TR/css3-selectors/#selector-syntax
-  reTrimSpaces = global.RegExp('[\\n\\r\\f]|^' + whitespace + '+|' + whitespace + '+$', 'g'),
+  reTrimSpaces = RegExp('[\\n\\r\\f]|^' + whitespace + '+|' + whitespace + '+$', 'g'),
 
   // regular expression used in convertEscapes and unescapeIdentifier
   reEscapedChars = /\\([0-9a-fA-F]{1,6}[\x20\t\n\r\f]?|.)|([\x22\x27])/g,
@@ -145,35 +144,35 @@
   extensions = '.+',
 
   // precompiled Regular Expressions
-  Patterns = new global.Object({
+  Patterns = {
     // structural pseudo-classes and child selectors
     spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
     // uistates + dynamic + negation pseudo-classes
     dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
     // E > F
-    children: new global.RegExp('^' + whitespace + '*\\>' + whitespace + '*(.*)'),
+    children: RegExp('^' + whitespace + '*\\>' + whitespace + '*(.*)'),
     // E + F
-    adjacent: new global.RegExp('^' + whitespace + '*\\+' + whitespace + '*(.*)'),
+    adjacent: RegExp('^' + whitespace + '*\\+' + whitespace + '*(.*)'),
     // E ~ F
-    relative: new global.RegExp('^' + whitespace + '*\\~' + whitespace + '*(.*)'),
+    relative: RegExp('^' + whitespace + '*\\~' + whitespace + '*(.*)'),
     // E F
-    ancestor: new global.RegExp('^' + whitespace + '+(.*)'),
+    ancestor: RegExp('^' + whitespace + '+(.*)'),
     // all
-    universal: new global.RegExp('^\\*(.*)')
-  }),
+    universal: RegExp('^\\*(.*)')
+  },
 
-  Tokens = global.Object({
+  Tokens = {
     prefixes: prefixes,
     identifier: identifier,
     attributes: attributes
-  }),
+  },
 
   /*----------------------------- FEATURE TESTING ----------------------------*/
 
   // detect native methods
   isNative = (function() {
     var re = / \w+\(/,
-    isnative = String(Object.prototype.toString).replace(re, ' (');
+    isnative = String(({ }).toString).replace(re, ' (');
     return function(method) {
       return method && typeof method != 'string' &&
         isnative == String(method).replace(re, ' (');
@@ -214,7 +213,7 @@
   // detect buggy gEBID
   BUGGY_GEBID = NATIVE_GEBID ?
     (function() {
-      var isBuggy = true, x = 'x' + global.String(+new global.Date),
+      var isBuggy = true, x = 'x' + String(+new Date),
         a = doc.createElementNS ? 'a' : '<a name="' + x + '">';
       (a = doc.createElement(a)).name = x;
       root.insertBefore(a, root.firstChild);
@@ -289,15 +288,16 @@
   XML_DOCUMENT,
 
   // detect Opera browser
-  OPERA = /opera/i.test(string.call(global.opera)),
+  OPERA = typeof global.opera != 'undefined' &&
+    (/opera/i).test(({ }).toString.call(global.opera)),
 
   // skip simple selector optimizations for Opera >= 11
-  OPERA_QSAPI = OPERA && global.parseFloat(global.opera.version()) >= 11,
+  OPERA_QSAPI = OPERA && parseFloat(global.opera.version()) >= 11,
 
   // check Selector API implementations
   RE_BUGGY_QSAPI = NATIVE_QSAPI ?
     (function() {
-      var pattern = new global.Array(), context, element,
+      var pattern = [ ], context, element,
 
       expect = function(selector, element, n) {
         var result = false;
@@ -365,7 +365,7 @@
       }
 
       return pattern.length ?
-        new global.RegExp(pattern.join('|')) :
+        RegExp(pattern.join('|')) :
         { 'test': function() { return false; } };
 
     })() :
@@ -375,30 +375,30 @@
 
   IE_LT_9 = typeof doc.addEventListener != 'function',
 
-  LINK_NODES = new global.Object({ 'a': 1, 'A': 1, 'area': 1, 'AREA': 1, 'link': 1, 'LINK': 1 }),
+  LINK_NODES = { 'a': 1, 'A': 1, 'area': 1, 'AREA': 1, 'link': 1, 'LINK': 1 },
 
   // boolean attributes should return attribute name instead of true/false
-  ATTR_BOOLEAN = new global.Object({
+  ATTR_BOOLEAN = {
     'checked': 1, 'disabled': 1, 'ismap': 1,
     'multiple': 1, 'readonly': 1, 'selected': 1
-  }),
+  },
 
   // dynamic attributes that needs to be checked against original HTML value
-  ATTR_DEFAULT = new global.Object({
+  ATTR_DEFAULT = {
     'value': 'defaultValue',
     'checked': 'defaultChecked',
     'selected': 'defaultSelected'
-  }),
+  },
 
   // attributes referencing URI data values need special treatment in IE
-  ATTR_URIDATA = new global.Object({
+  ATTR_URIDATA = {
     'action': 2, 'cite': 2, 'codebase': 2, 'data': 2, 'href': 2,
     'longdesc': 2, 'lowsrc': 2, 'src': 2, 'usemap': 2
-  }),
+  },
 
   // HTML 5 draft specifications
   // http://www.whatwg.org/specs/web-apps/current-work/#selectors
-  HTML_TABLE = new global.Object({
+  HTML_TABLE = {
     // class attribute must be treated case-insensitive in HTML quirks mode
     // initialized by default to Standard Mode (case-sensitive),
     // set dynamically by the attribute resolver
@@ -411,22 +411,22 @@
     'noresize': 1, 'noshade': 1, 'nowrap': 1, 'readonly': 1, 'rel': 1, 'rev': 1,
     'rules': 1, 'scope': 1, 'scrolling': 1, 'selected': 1, 'shape': 1, 'target': 1,
     'text': 1, 'type': 1, 'valign': 1, 'valuetype': 1, 'vlink': 1
-  }),
+  },
 
   // the following attributes must be treated case-insensitive in XHTML mode
   // Niels Leenheer http://rakaz.nl/item/css_selector_bugs_case_sensitivity
-  XHTML_TABLE = new global.Object({
+  XHTML_TABLE = {
     'accept': 1, 'accept-charset': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'codetype': 1, 'color': 1,
     'enctype': 1, 'face': 1, 'hreflang': 1, 'http-equiv': 1,
     'lang': 1, 'language': 1, 'link': 1, 'media': 1, 'rel': 1,
     'rev': 1, 'target': 1, 'text': 1, 'type': 1, 'vlink': 1
-  }),
+  },
 
   /*-------------------------- REGULAR EXPRESSIONS ---------------------------*/
 
   // placeholder to add functionalities
-  Selectors = new global.Object({
+  Selectors = {
     // as a simple example this will check
     // for chars not in standard ascii table
     //
@@ -438,17 +438,17 @@
     // 'mySelectorCallback' will be invoked
     // only after passing all other standard
     // checks and only if none of them worked
-  }),
+  },
 
   // attribute operators
-  Operators = new global.Object({
+  Operators = {
      '=': "n=='%m'",
     '^=': "n.indexOf('%m')==0",
     '*=': "n.indexOf('%m')>-1",
     '|=': "(n+'-').indexOf('%m-')==0",
     '~=': "(' '+n+' ').indexOf(' %m ')>-1",
     '$=': "n.substr(n.length-'%m'.length)=='%m'"
-  }),
+  },
 
   /*------------------------------ UTIL METHODS ------------------------------*/
 
@@ -456,8 +456,8 @@
   concatList =
     function(data, elements) {
       var i = -1, element;
-      if (!data.length && global.Array.slice)
-        return global.Array.slice(elements);
+      if (!data.length && Array.slice)
+        return Array.slice(elements);
       while ((element = elements[++i]))
         data[data.length] = element;
       return data;
@@ -647,7 +647,7 @@
   // @return array
   byTagRaw =
     function(tag, from) {
-      var any = tag == '*', element = from, elements = new global.Array(), next = element.firstChild;
+      var any = tag == '*', element = from, elements = [ ], next = element.firstChild;
       any || (tag = tag.toUpperCase());
       while ((element = next)) {
         if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
@@ -669,7 +669,7 @@
         slice.call(from.getElementsByTagName(tag), 0);
     } :
     function(tag, from) {
-      var i = -1, j = i, data = new global.Array(),
+      var i = -1, j = i, data = [ ],
         element, elements = from.getElementsByTagName(tag);
       if (tag == '*') {
         while ((element = elements[++i])) {
@@ -704,7 +704,7 @@
   // @return array
   byClassRaw =
     function(name, from) {
-      var i = -1, j = i, data = new global.Array(), element, elements = _byTag('*', from), n;
+      var i = -1, j = i, data = [ ], element, elements = _byTag('*', from), n;
       name = ' ' + (QUIRKS_MODE ? name.toLowerCase() : name) + ' ';
       while ((element = elements[++i])) {
         n = XML_DOCUMENT ? element.getAttribute('class') : element.className;
@@ -839,17 +839,17 @@
       for (var i in option) {
         Config[i] = !!option[i];
         if (i == 'SIMPLENOT') {
-          matchContexts = new global.Object();
-          matchResolvers = new global.Object();
-          selectContexts = new global.Object();
-          selectResolvers = new global.Object();
+          matchContexts = { };
+          matchResolvers = { };
+          selectContexts = { };
+          selectResolvers = { };
           if (!Config[i]) { Config['USE_QSAPI'] = false; }
         } else if (i == 'USE_QSAPI') {
           Config[i] = !!option[i] && NATIVE_QSAPI;
         }
       }
       setIdentifierSyntax();
-      reValidator = new global.RegExp(Config.SIMPLENOT ?
+      reValidator = RegExp(Config.SIMPLENOT ?
         standardValidator : extendedValidator);
       return true;
     },
@@ -857,13 +857,13 @@
   // control user notifications
   emit =
     function(message) {
-      if (Config.VERBOSITY) { throw new global.Error(message); }
-      if (global.console && global.console.log) {
-        global.console.log(message);
+      if (Config.VERBOSITY) { throw Error(message); }
+      if (console && console.log) {
+        console.log(message);
       }
     },
 
-  Config = new global.Object({
+  Config = {
 
     // used to enable/disable caching of result sets
     CACHING: false,
@@ -902,7 +902,7 @@
     // controls the engine error/warning notifications
     VERBOSITY: true
 
-  }),
+  },
 
   /*---------------------------- COMPILER METHODS ----------------------------*/
 
@@ -974,7 +974,7 @@
         ')+';
 
       // only allow simple selectors nested in ':not()' pseudo-classes
-      reSimpleNot = new global.RegExp('^(' +
+      reSimpleNot = RegExp('^(' +
         '(?!:not)' +
         '(' + prefixes + identifier +
         '|\\([^()]*\\))+' +
@@ -982,15 +982,15 @@
         ')$');
 
       // split last, right most, selector group token
-      reSplitToken = new global.RegExp('(' +
+      reSplitToken = RegExp('(' +
         prefixes + identifier + '|' +
         '\\[' + attributes + '\\]|' +
         '\\(' + pseudoclass + '\\)|' +
         '\\\\.|[^\\x20\\t\\n\\r\\f>+~])+', 'g');
 
-      reOptimizeSelector = new global.RegExp(identifier + '|^$');
+      reOptimizeSelector = RegExp(identifier + '|^$');
 
-      reSimpleSelector = new global.RegExp(
+      reSimpleSelector = RegExp(
         BUGGY_GEBTN && BUGGY_GEBCN || OPERA ?
           '^#?' + identifier + '$' : BUGGY_GEBTN ?
           '^[.#]?' + identifier + '$' : BUGGY_GEBCN ?
@@ -998,27 +998,27 @@
           '^(?:\\*|[.#]?' + identifier + ')$');
 
       // matches class selectors
-      reClass = new global.RegExp('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + identifier + ')');
+      reClass = RegExp('(?:\\[[\\x20\\t\\n\\r\\f]*class\\b|\\.' + identifier + ')');
 
-      Optimize = new global.Object({
-        ID: new global.RegExp('^\\*?#(' + identifier + ')|' + skip_groups),
-        TAG: new global.RegExp('^(' + identifier + ')|' + skip_groups),
-        CLASS: new global.RegExp('^\\.(' + identifier + '$)|' + skip_groups)
-      });
+      Optimize = {
+        ID: RegExp('^\\*?#(' + identifier + ')|' + skip_groups),
+        TAG: RegExp('^(' + identifier + ')|' + skip_groups),
+        CLASS: RegExp('^\\.(' + identifier + '$)|' + skip_groups)
+      };
 
-      Patterns.id = new global.RegExp('^#(' + identifier + ')(.*)');
-      Patterns.tagName = new global.RegExp('^(' + identifier + ')(.*)');
-      Patterns.className = new global.RegExp('^\\.(' + identifier + ')(.*)');
-      Patterns.attribute = new global.RegExp('^\\[' + attrmatcher + '\\](.*)');
+      Patterns.id = RegExp('^#(' + identifier + ')(.*)');
+      Patterns.tagName = RegExp('^(' + identifier + ')(.*)');
+      Patterns.className = RegExp('^\\.(' + identifier + ')(.*)');
+      Patterns.attribute = RegExp('^\\[' + attrmatcher + '\\](.*)');
 
-      Tokens.identifier = identifier,
-      Tokens.attributes = attributes,
+      Tokens.identifier = identifier;
+      Tokens.attributes = attributes;
 
       // validator for complex selectors in ':not()' pseudo-classes
       extendedValidator = standardValidator.replace(pseudoclass, '.*');
 
       // validator for standard selectors as default
-      reValidator = new global.RegExp(standardValidator);
+      reValidator = RegExp(standardValidator);
     },
 
   // code string reused to build compiled functions
@@ -1039,7 +1039,7 @@
         source += compileSelector(parts[0], mode ? ACCEPT_NODE : 'f&&f(k);return true;', mode);
       } else {
         // for each selector in the group
-        var i = -1, seen = new global.Object(), token;
+        var i = -1, seen = { }, token;
         while ((token = parts[++i])) {
           token = token.replace(reTrimSpaces, '');
           // avoid repeating the same token
@@ -1052,11 +1052,11 @@
 
       if (mode) {
         // for select method
-        return new global.Function('c,s,r,d,h,g,f,v',
+        return Function('c,s,r,d,h,g,f,v',
           'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
       } else {
         // for match method
-        return new global.Function('e,s,r,d,h,g,f,v',
+        return Function('e,s,r,d,h,g,f,v',
           'var N,n,x=0,k=e;' + source + 'return false;');
       }
     },
@@ -1229,8 +1229,8 @@
                   b = 1;
                 } else {
                   // assumes correct "an+b" format, "b" before "a" to keep "n" values
-                  b = ((n = match[2].match(/(-?\d+)$/)) ? global.parseInt(n[1], 10) : 0);
-                  a = ((n = match[2].match(/(-?\d*)n/i)) ? global.parseInt(n[1], 10) : 0);
+                  b = ((n = match[2].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
+                  a = ((n = match[2].match(/(-?\d*)n/i)) ? parseInt(n[1], 10) : 0);
                   if (n && n[1] == '-') a = -1;
                 }
 
@@ -1468,7 +1468,7 @@
         matchContexts[selector] = from;
       }
 
-      return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback, new global.Object());
+      return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback, { });
     },
 
   // select only the first element
@@ -1583,8 +1583,8 @@
           if ((element = _byId(token, from))) {
             if (match(element, selector)) {
               callback && callback(element);
-              elements = new global.Array(element);
-            } else elements = new global.Array();
+              elements = [element];
+            } else elements = [ ];
           }
         }
 
@@ -1593,13 +1593,13 @@
           if ((element = _byId(token, doc))) {
             if ('#' + token == selector) {
               callback && callback(element);
-              elements = new global.Array(element);
+              elements = [element];
             } else if (/[>+~]/.test(selector)) {
               from = element.parentNode;
             } else {
               from = element;
             }
-          } else elements = new global.Array();
+          } else elements = [ ];
         }
 
         if (elements) {
@@ -1620,7 +1620,7 @@
 
         else if ((parts = selector.match(Optimize.CLASS)) && (token = parts[1])) {
           if ((elements = _byClass(token, from)).length === 0) { return [ ]; }
-          for (i = 0, els = new global.Array(); elements.length > i; ++i) {
+          for (i = 0, els = [ ]; elements.length > i; ++i) {
             els = concatList(els, elements[i].getElementsByTagName('*'));
           }
           elements = els;
@@ -1646,7 +1646,7 @@
         selectContexts[selector] = from;
       }
 
-      elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback, new global.Object());
+      elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback, { });
 
       Config.CACHING && Dom.saveResults(original, from, doc, elements);
 
@@ -1659,15 +1659,15 @@
   FN = function(x) { return x; },
 
   // compiled match functions returning booleans
-  matchContexts = new global.Object(),
-  matchResolvers = new global.Object(),
+  matchContexts = { },
+  matchResolvers = { },
 
   // compiled select functions returning collections
-  selectContexts = new global.Object(),
-  selectResolvers = new global.Object(),
+  selectContexts = { },
+  selectResolvers = { },
 
   // used to pass methods to compiled functions
-  Snapshot = new global.Object({
+  Snapshot = {
 
     // element indexing methods
     nthElement: nthElement,
@@ -1691,7 +1691,7 @@
     // selection/matching
     select: select,
     match: match
-  });
+  };
 
   /*------------------------------- PUBLIC API -------------------------------*/
 
@@ -1780,10 +1780,10 @@
   // add selector patterns for user defined callbacks
   Dom.registerSelector =
     function(name, rexp, func) {
-      Selectors[name] || (Selectors[name] = new global.Object({
+      Selectors[name] || (Selectors[name] = {
         Expression: rexp,
         Callback: func
-      }));
+      });
     };
 
   /*---------------------------------- INIT ----------------------------------*/
