@@ -864,7 +864,7 @@
         }
 
         else if (!XML_DOCUMENT && GEBCN && (parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
-          if ((elements = from.getElementsByClassName(token.replace(/\\([^\\]{1})/g, '$1'))).length === 0) { return [ ]; }
+          if ((elements = from.getElementsByClassName(unescapeIdentifier(token))).length === 0) { return [ ]; }
             selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token,
               reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1)) ? '' : '*');
         }

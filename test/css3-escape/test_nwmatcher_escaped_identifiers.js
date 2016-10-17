@@ -10,20 +10,29 @@ function testMatched(id, selector) {
   var elems = document.createElement("div");
   var a = document.createElement("span");
   a.id = id;
+  a.className = id;
   elems.appendChild(a);
   console.assert(
     NW.Dom.first(selector, elems) === a,
     `${JSON.stringify(id)} should match with ${JSON.stringify(selector)}`);
+  console.assert(
+    NW.Dom.first('.' + selector.slice(1), elems) === a,
+    `${JSON.stringify(id)} should match with ${JSON.stringify('.' + selector.slice(1))}`);
 }
 function testNeverMatched(id, selector) {
   var elems = document.createElement("div");
   var a = document.createElement("span");
   a.id = id;
+  a.className = id;
   elems.appendChild(a);
   console.assert(
     NW.Dom.first(selector, elems) === null,
     `${JSON.stringify(id)} should never match with ${
         JSON.stringify(selector)}`);
+  console.assert(
+    NW.Dom.first('.' + selector.slice(1), elems) === null,
+    `${JSON.stringify(id)} should never match with ${
+        JSON.stringify('.' + selector.slice(1))}`);
 }
 
 // 4.3.7 from https://www.w3.org/TR/css-syntax-3/#consume-an-escaped-code-point
