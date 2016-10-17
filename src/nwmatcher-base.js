@@ -226,7 +226,7 @@
       return element || null;
     },
 
-  _byId = !('fileSize' in doc) ?
+  _byId = !IE_LT_9 ?
     function(id, from) {
       id = (/\\/).test(id) ? unescapeIdentifier(id) : id;
       return from.getElementById && from.getElementById(id) ||

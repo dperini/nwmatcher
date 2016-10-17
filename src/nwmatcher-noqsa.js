@@ -228,7 +228,7 @@
       return element || null;
     },
 
-  _byId = !('fileSize' in doc) ?
+  _byId = !IE_LT_9 ?
     function(id, from) {
       id = (/\\/).test(id) ? unescapeIdentifier(id) : id;
       return from.getElementById && from.getElementById(id) ||
@@ -323,7 +323,7 @@
 
   isLink =
     function(element) {
-      return hasAttribute(element,'href') && LINK_NODES[element.nodeName];
+      return hasAttribute(element, 'href') && LINK_NODES[element.nodeName];
     },
 
   nthElement =
