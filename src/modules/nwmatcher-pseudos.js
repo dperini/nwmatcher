@@ -23,11 +23,11 @@
 
 (function(global) {
 
-  var LINK_NODES = global.Object({
+  var LINK_NODES = {
     'a': 1, 'A': 1,
     'area': 1, 'AREA': 1,
     'link': 1, 'LINK': 1
-  }),
+  },
 
   root = document.documentElement,
 
@@ -122,8 +122,8 @@ NW.Dom.registerSelector(
               a = 2;
               b = 1;
             } else {
-              b = ((n = match[2].match(/(-?\d+)$/)) ? global.parseInt(n[1], 10) : 0);
-              a = ((n = match[2].match(/(-?\d*)n/i)) ? global.parseInt(n[1], 10) : 0);
+              b = ((n = match[2].match(/(-?\d+)$/)) ? parseInt(n[1], 10) : 0);
+              a = ((n = match[2].match(/(-?\d*)n/i)) ? parseInt(n[1], 10) : 0);
               if (n && n[1] == '-') a = -1;
             }
             test = a > 1 ?
@@ -157,10 +157,10 @@ NW.Dom.registerSelector(
           break;
       }
 
-      return global.Object({
+      return {
         'source': source,
         'status': status
-      });
+      };
 
     };
 
@@ -175,9 +175,9 @@ NW.Dom.registerSelector(
     Config = NW.Dom.Config,
     Tokens = NW.Dom.Tokens,
 
-    reTrimSpace = global.RegExp('^\\s+|\\s+$', 'g'),
+    reTrimSpace = RegExp('^\\s+|\\s+$', 'g'),
 
-    reSimpleNot = global.RegExp('^((?!:not)' +
+    reSimpleNot = RegExp('^((?!:not)' +
       '(' + Tokens.prefixes + '|' + Tokens.identifier +
       '|\\([^()]*\\))+|\\[' + Tokens.attributes + '\\])$');
 
@@ -263,10 +263,10 @@ NW.Dom.registerSelector(
           break;
       }
 
-      return global.Object({
+      return {
         'source': source,
         'status': status
-      });
+      };
 
     };
 

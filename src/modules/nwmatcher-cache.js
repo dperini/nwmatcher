@@ -21,11 +21,11 @@
     // as CommonJS/NodeJS module
     typeof exports == 'object' ? exports :
     // create or extend NW namespace
-    ((global.NW || (global.NW = global.Object())) &&
-    (global.NW.Dom || (global.NW.Dom = global.Object()))),
+    ((global.NW || (global.NW = { })) &&
+    (global.NW.Dom || (global.NW.Dom = { })),
 
-  Contexts = global.Object(),
-  Results = global.Object(),
+  Contexts = { },
+  Results = { },
 
   isEnabled = false,
   isExpired = true,
@@ -33,6 +33,9 @@
 
   context = global.document,
   root = context.documentElement,
+
+  // timing pauses
+  now = 0,
 
   // last time cache initialization was called
   lastCalled = 0,
@@ -71,10 +74,10 @@
         } else {
           // pause caching while we are getting
           // hammered by dom mutations (jdalton)
-          now = (new global.Date).getTime();
+          now = (new Date).getTime();
           if ((now - lastCalled) < minCacheRest) {
             isPaused = isExpired = true;
-            global.setTimeout(function() { isPaused = false; }, minCacheRest);
+            setTimeout(function() { isPaused = false; }, minCacheRest);
           } else setCache(true, doc);
           lastCalled = now;
         }
@@ -144,8 +147,8 @@
   expireCache =
     function(d) {
       isExpired = true;
-      Contexts = global.Object();
-      Results = global.Object();
+      Contexts = { };
+      Results = { };
     };
 
   if (!NATIVE_MUTATION_EVENTS && root.addEventListener && Element && Element.prototype) {

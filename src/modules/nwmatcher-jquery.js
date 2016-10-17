@@ -60,10 +60,10 @@ NW.Dom.registerSelector(
       }
 
       // compiler will add this to "source"
-      return global.Object({
+      return {
         'source': source,
         'status': status
-      });
+      };
 
     };
 
@@ -116,10 +116,10 @@ NW.Dom.registerSelector(
       }
 
       // compiler will add this to "source"
-      return global.Object({
+      return {
         'source': source,
         'status': status
-      });
+      };
 
     };
 
