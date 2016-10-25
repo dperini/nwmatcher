@@ -20,7 +20,7 @@
   "license": "MIT",
   "ignore": [
     "**/.*",
-	"*.md",
+    "*.md",
     "bin",
     "lib",
     "test",
