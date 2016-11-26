@@ -1357,6 +1357,7 @@
           for (expr in Selectors) {
             if ((match = selector.match(Selectors[expr].Expression)) && match[1]) {
               result = Selectors[expr].Callback(match, source);
+              if ('match' in result) { match = result.match; }
               source = result.source;
               status = result.status;
               if (status) { break; }
