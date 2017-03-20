@@ -1004,7 +1004,7 @@
   
         // build attribute string
         attrcheck = '(' + quotedvalue + '|' + identifier + ')';
-        attributes = whitespace + '*(' + identifier + ':?' + identifier + ')' +
+        attributes = whitespace + '*(' + identifier + '(?::' + identifier + ')?)' +
           whitespace + '*(?:' + operators + whitespace + '*' + attrcheck + ')?' + whitespace + '*';
         attrmatcher = attributes.replace(attrcheck, '([\\x22\\x27]*)((?:\\\\?.)*?)\\3');
   
