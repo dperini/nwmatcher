@@ -11,7 +11,7 @@
     div { background-color: red; color: red; }
     div.header { background-color: #e0e0e0; color: black; padding: 10px; margin-bottom: 10px;}
     /* class selector */
-    .unitTest { width: 10px; background-color: red; color: red; margin: 0px; margin-right: 2px; float: left; }
+    .unitTest { background-color: red; color: red; margin: 0px; margin-right: 2px; float: left; }
     .test { margin-bottom: 2px; background-color: green; color: green; }
     /* group of selectors */
 
@@ -22,7 +22,7 @@
 
     h1, p { width: 500px; color: #000; }
     a { color: #000; }
-    #results { background: #FFF; width: 600px; padding: 10px 40px; color: #000; font-size: 11px; line-height: 1.3em; }
+    #results { background: #FFF; padding: 10px 40px; color: #000; font-size: 11px; line-height: 1.3em; }
     #root, #root2, #root3 { display: none; }
 
     /* init */
@@ -233,7 +233,18 @@
   <script>
 	window.onload = function(){
 
+		var end_time, start_time, total_time;
+
+		start_time = (new Date).getTime();
+
 		var $ = NW.Dom.select;
+
+		NW.Dom.configure({
+			'USE_QSAPI': false,
+			'ESCAPECHR': true,
+			'NON_ASCII': true,
+			'UNICODE16': true
+		});
 
 		document.getElementById("toggle").onclick = function(){
 			document.documentElement.className = this.checked ? "unitTest nopass" : "unitTest";
@@ -297,6 +308,9 @@
 		jqTests("Document", document, "querySelectorAll");
 		cacheCheck( "Document", document );
 		
+		end_time = (new Date).getTime();
+		total_time = end_time - start_time;
+
 		done();
 
 		function interfaceCheck(obj, type){
@@ -313,7 +327,7 @@
 			var b = document.createElement("b");
 			b.appendChild( document.createTextNode( ((passed / tests) * 100).toFixed(1) + "%" ) );
 			li.appendChild( b );
-			li.appendChild( document.createTextNode( ": " + passed + " passed, " + (tests - passed) + " failed" ) );
+			li.appendChild( document.createTextNode( ": " + passed + " passed, " + (tests - passed) + " failed in " + total_time + "ms") );
 			r.appendChild( li );
 
 			for ( var i = 0; i < results.length; i++ ) {
