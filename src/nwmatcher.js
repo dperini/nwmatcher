@@ -1029,21 +1029,14 @@
 
       if (mode) {
         // for select method
-        return Function('c,s,r,d,h,g,f,v',
-          'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
+        return Function('c,s,d,h,g,f',
+          'var N,n,x=0,k=-1,e,r=[];main:while((e=c[++k])){' + source + '}return r;');
       } else {
         // for match method
-        return Function('e,s,r,d,h,g,f,v',
+        return Function('e,s,d,h,g,f',
           'var N,n,x=0,k=e;' + source + 'return false;');
       }
     },
-
-  // allows to cache already visited nodes
-  FILTER =
-    'var z=v[@]||(v[@]=[]),l=z.length-1;' +
-    'while(l>=0&&z[l]!==e)--l;' +
-    'if(l!==-1){break;}' +
-    'z[z.length]=e;',
 
   // compile a CSS3 string selector into ad-hoc javascript matching function
   // @return string (to be compiled)
@@ -1140,7 +1133,6 @@
         // *** Adjacent sibling combinator
         // E + F (F adiacent sibling of E)
         else if ((match = selector.match(Patterns.adjacent))) {
-          source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
           source = NATIVE_TRAVERSAL_API ?
             'var N' + k + '=e;while(e&&(e=e.previousElementSibling)){' + source + 'break;}e=N' + k + ';' :
             'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}e=N' + k + ';';
@@ -1149,7 +1141,6 @@
         // *** General sibling combinator
         // E ~ F (F relative sibling of E)
         else if ((match = selector.match(Patterns.relative))) {
-          source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
           source = NATIVE_TRAVERSAL_API ?
             ('var N' + k + '=e;e=e.parentNode.firstElementChild;' +
             'while(e&&e!==N' + k + '){' + source + 'e=e.nextElementSibling;}e=N' + k + ';') :
@@ -1160,14 +1151,12 @@
         // *** Child combinator
         // E > F (F children of E)
         else if ((match = selector.match(Patterns.children))) {
-          source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
           source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + 'break;}e=N' + k + ';';
         }
 
         // *** Descendant combinator
         // E F (E ancestor of F)
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
           source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
         }
 
@@ -1266,7 +1255,7 @@
                 return '';
               } else {
                 if ('compatMode' in doc) {
-                  source = 'if(!' + compile(expr, '', false) + '(e,s,r,d,h,g)){' + source + '}';
+                  source = 'if(!' + compile(expr, '', false) + '(e,s,d,h,g)){' + source + '}';
                 } else {
                   source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",g)){' + source +'}';
                 }
@@ -1446,7 +1435,7 @@
         matchContexts[selector] = from;
       }
 
-      return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback, { });
+      return matchResolvers[selector](element, Snapshot, doc, root, from, callback);
     },
 
   // select only the first element
@@ -1628,7 +1617,7 @@
         selectContexts[selector] = from;
       }
 
-      elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback, { });
+      elements = selectResolvers[selector](elements, Snapshot, doc, root, from, callback);
 
       Config.CACHING && Dom.saveResults(original, from, doc, elements);
 

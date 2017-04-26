@@ -193,7 +193,7 @@ NW.Dom.registerSelector(
             NW.Dom.emit('Negation pseudo-class only accepts simple selectors "' + selector + '"');
           } else {
             if ('compatMode' in doc) {
-              source = 'if(!' + NW.Dom.compile(expr, '', false) + '(e,s,r,d,h,g)){' + source + '}';
+              source = 'if(!' + NW.Dom.compile(expr, '', false) + '(e,s,d,h,g)){' + source + '}';
             } else {
               source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",g)){' + source +'}';
             }
