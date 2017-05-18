@@ -271,3 +271,38 @@ NW.Dom.registerSelector(
     };
 
   })(this));
+
+NW.Dom.registerSelector(
+  'nwmatcher:epseudos',
+  /^((?:[:]{1,2}(?:after|before|first-letter|first-line))|(?:[:]{2,2}(?:selection|backdrop|placeholder)))?(.*)/i,
+  (function(global) {
+
+    return function(match, source) {
+
+      var status = true;
+
+      switch (match[1].match(/(\w+)$/)[0]) {
+
+        case 'after':
+        case 'before':
+        case 'first-letter':
+        case 'first-line':
+        case 'selection':
+        case 'backdrop':
+        case 'placeholder':
+          source = 'if(!(/1|11/).test(e.nodeType)){' + source + '}';
+          break;
+
+        default:
+          status = false;
+          break;
+      }
+
+      return {
+        'source': source,
+        'status': status
+      };
+
+    };
+
+  })(this));

@@ -53,7 +53,7 @@
 
   // accepted prefix identifiers
   // (id, class & pseudo-class)
-  prefixes = '[#.:]?',
+  prefixes = '(?:[#.:]|::)?',
 
   // accepted attribute operators
   operators = '([~*^$|!]?={1})',
@@ -124,6 +124,8 @@
     spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
     // uistates + dynamic + negation pseudo-classes
     dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
+    // pseudo-elements selectors
+    epseudos: /^((?:[:]{1,2}(?:after|before|first-letter|first-line))|(?:[:]{2,2}(?:selection|backdrop|placeholder)))?(.*)/i,
     // E > F
     children: RegExp('^' + whitespace + '*\\>' + whitespace + '*(.*)'),
     // E + F
@@ -1335,6 +1337,10 @@
               break;
           }
 
+        }
+
+        else if ((match = selector.match(Patterns.epseudos)) && match[1]) {
+          source = 'if(!(/1|11/).test(e.nodeType)){' + source + '}';
         }
 
         else {

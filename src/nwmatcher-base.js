@@ -46,7 +46,7 @@
   lastPartsMatch,
   lastPartsSelect,
 
-  prefixes = '[#.:]?',
+  prefixes = '(?:[#.:]|::)?',
   operators = '([~*^$|!]?={1})',
   whitespace = '[\\x20\\t\\n\\r\\f]',
   combinators = '\\x20|[>+~](?=[^>+~])',

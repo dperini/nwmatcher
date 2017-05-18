@@ -46,7 +46,7 @@
   lastPartsMatch,
   lastPartsSelect,
 
-  prefixes = '[#.:]?',
+  prefixes = '(?:[#.:]|::)?',
   operators = '([~*^$|!]?={1})',
   whitespace = '[\\x20\\t\\n\\r\\f]',
   combinators = '\\x20|[>+~](?=[^>+~])',
@@ -78,6 +78,7 @@
   Patterns = {
     spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
     dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
+    epseudos: /^((?:[:]{1,2}(?:after|before|first-letter|first-line))|(?:[:]{2,2}(?:selection|backdrop|placeholder)))?(.*)/i,
     children: RegExp('^' + whitespace + '*\\>' + whitespace + '*(.*)'),
     adjacent: RegExp('^' + whitespace + '*\\+' + whitespace + '*(.*)'),
     relative: RegExp('^' + whitespace + '*\\~' + whitespace + '*(.*)'),
@@ -686,6 +687,10 @@
             default:
               break;
           }
+        }
+
+        else if ((match = selector.match(Patterns.epseudos)) && match[1]) {
+          source = 'if(!(/1|11/).test(e.nodeType)){' + source + '}';
         }
 
         else {
