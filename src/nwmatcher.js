@@ -837,7 +837,7 @@
   emit =
     function(message) {
       if (Config.VERBOSITY) { throw Error(message); }
-      if (console && console.log) {
+      if (Config.LOGERRORS && console && console.log) {
         console.log(message);
       }
     },
@@ -879,7 +879,10 @@
     USE_QSAPI: NATIVE_QSAPI,
 
     // controls the engine error/warning notifications
-    VERBOSITY: true
+    VERBOSITY: true,
+
+    // true to print console errors or warnings, false to mute them
+    LOGERRORS: true
 
   },
 

@@ -367,7 +367,7 @@
   emit =
     function(message) {
       if (Config.VERBOSITY) { throw Error(message); }
-      if (console && console.log) {
+      if (Config.LOGERRORS && console && console.log) {
         console.log(message);
       }
     },
@@ -382,7 +382,8 @@
     SIMPLENOT: true,
     UNIQUE_ID: true,
     USE_HTML5: true,
-    VERBOSITY: true
+    VERBOSITY: true,
+    LOGERRORS: true
   },
 
   initialize =
