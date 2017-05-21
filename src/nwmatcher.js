@@ -844,41 +844,42 @@
 
   Config = {
 
-    // used to enable/disable caching of result sets
+    // true to enable caching of result sets, false to disable
     CACHING: false,
 
-    // used to enable/disable CSS escaped identifiers
+    // true to allow CSS escaped identifiers, false to disallow
     ESCAPECHR: true,
 
-    // add non-ascii (utf-8) to the identifier syntax RE
+    // true to allow identifiers containing non-ASCII (utf-8) chars
     NON_ASCII: true,
 
-    // switch between CSS2 and CSS3 identifier syntax RE
+    // switch syntax RE, true to use Level 3, false to use Level 2
     SELECTOR3: true,
 
-    // add Unicode (utf-16) to the identifier syntax RE
+    // true to allow identifiers containing Unicode (utf-16) chars
     UNICODE16: true,
 
     // by default do not add missing left/right context
-    // to selector string shortcuts like "+div" or "ul>"
+    // to mangled selector strings like "+div" or "ul>"
     // callable Dom.shortcuts method has to be available
     SHORTCUTS: false,
 
-    // by default disable complex selectors nested in
-    // ':not()' pseudo-classes, as for specifications
+    // true to disable complex selectors nested in
+    // ':not()' pseudo-classes as for specifications
     SIMPLENOT: true,
 
     // strict QSA match all non-unique IDs (false)
     // speed & libs compat match unique ID (true)
     UNIQUE_ID: true,
 
-    // HTML5 handling for the ":checked" pseudo-class
+    // true to follow HTML5 specs handling of ":checked"
+    // pseudo-class and similar UI states (indeterminate)
     USE_HTML5: true,
 
-    // controls enabling the Query Selector API branch
+    // true to use browsers native Query Selector API if available
     USE_QSAPI: NATIVE_QSAPI,
 
-    // controls the engine error/warning notifications
+    // true to throw exceptions, false to skip throwing exceptions
     VERBOSITY: true,
 
     // true to print console errors or warnings, false to mute them

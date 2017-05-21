@@ -78,15 +78,20 @@ Returns true `element` has an attribute with name `attribute` set; returns `fals
 
 #### `configure( options )`
 
-The following options exist and can be set to `true` or `false`:
+The following is the list of currently available configuration options, their default values and descriptions, they are boolean flags that can be set to `true` or `false`:
 
-* `CACHING`: enable caching of results
-* `SHORTCUTS`: allow accepting mangled selectors
-* `SIMPLENOT`: disallow nested complex `:not()` selectors
-* `UNIQUE_ID`: disallow multiple elements with same ID
-* `USE_QSAPI`: enable native `querySelectorAll` if available
-* `USE_HTML5`: enable special HTML5 rules, related to the relationship between `:checked` and `:selected`
-* `VERBOSITY`: choose between throwing errors or just console warnings
+* `CACHING`:   false - false to disable caching of result sets, true to enable
+* `ESCAPECHR`: true  - true to allow CSS escaped identifiers, false to disallow
+* `NON_ASCII`: true  - true to allow identifiers containing non-ASCII (utf-8) chars
+* `SELECTOR3`: true  - switch syntax RE, true to use Level 3, false to use Level 2
+* `UNICODE16`: true  - true to allow identifiers containing Unicode (utf-16) chars
+* `SHORTCUTS`: false - false to disable mangled selector strings like "+div" or "ul>"
+* `SIMPLENOT`: true  - true to disallow complex selectors nested in ':not()' classes
+* `UNIQUE_ID`: true  - true to disallow multiple elements with the same id (strict)
+* `USE_HTML5`: true  - true to use HTML5 specs for ":checked" and similar UI states
+* `USE_QSAPI`: true  - true to use browsers native Query Selector API if available
+* `VERBOSITY`: true  - true to throw exceptions, false to skip throwing exceptions
+* `LOGERRORS`: true  - true to print console errors or warnings, false to mute them
 
 Example:
 
