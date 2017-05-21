@@ -101,9 +101,9 @@
    * nwmatcher.js - A fast CSS selector engine and matcher
    *
    * Author: Diego Perini <diego.perini at gmail com>
-   * Version: 1.4.0beta
+   * Version: 1.4.0
    * Created: 20070722
-   * Release: 20170320
+   * Release: 20170520
    *
    * License:
    *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -124,7 +124,7 @@
   
   })(this, function(global) {
   
-    var version = 'nwmatcher-1.4.0beta',
+    var version = 'nwmatcher-1.4.0',
   
     // processing context & root element
     doc = global.document,
@@ -149,7 +149,7 @@
   
     // accepted prefix identifiers
     // (id, class & pseudo-class)
-    prefixes = '[#.:]?',
+    prefixes = '(?:[#.:]|::)?',
   
     // accepted attribute operators
     operators = '([~*^$|!]?={1})',
@@ -220,6 +220,8 @@
       spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
       // uistates + dynamic + negation pseudo-classes
       dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
+      // pseudo-elements selectors
+      epseudos: /^((?:[:]{1,2}(?:after|before|first-letter|first-line))|(?:[:]{2,2}(?:selection|backdrop|placeholder)))?(.*)/i,
       // E > F
       children: RegExp('^' + whitespace + '*\\>' + whitespace + '*(.*)'),
       // E + F
@@ -931,49 +933,53 @@
     emit =
       function(message) {
         if (Config.VERBOSITY) { throw Error(message); }
-        if (console && console.log) {
+        if (Config.LOGERRORS && console && console.log) {
           console.log(message);
         }
       },
   
     Config = {
   
-      // used to enable/disable caching of result sets
+      // true to enable caching of result sets, false to disable
       CACHING: false,
   
-      // used to enable/disable CSS escaped identifiers
+      // true to allow CSS escaped identifiers, false to disallow
       ESCAPECHR: true,
   
-      // add non-ascii (utf-8) to the identifier syntax RE
+      // true to allow identifiers containing non-ASCII (utf-8) chars
       NON_ASCII: true,
   
-      // switch between CSS2 and CSS3 identifier syntax RE
+      // switch syntax RE, true to use Level 3, false to use Level 2
       SELECTOR3: true,
   
-      // add Unicode (utf-16) to the identifier syntax RE
+      // true to allow identifiers containing Unicode (utf-16) chars
       UNICODE16: true,
   
       // by default do not add missing left/right context
-      // to selector string shortcuts like "+div" or "ul>"
+      // to mangled selector strings like "+div" or "ul>"
       // callable Dom.shortcuts method has to be available
       SHORTCUTS: false,
   
-      // by default disable complex selectors nested in
-      // ':not()' pseudo-classes, as for specifications
+      // true to disable complex selectors nested in
+      // ':not()' pseudo-classes as for specifications
       SIMPLENOT: true,
   
       // strict QSA match all non-unique IDs (false)
       // speed & libs compat match unique ID (true)
       UNIQUE_ID: true,
   
-      // HTML5 handling for the ":checked" pseudo-class
+      // true to follow HTML5 specs handling of ":checked"
+      // pseudo-class and similar UI states (indeterminate)
       USE_HTML5: true,
   
-      // controls enabling the Query Selector API branch
+      // true to use browsers native Query Selector API if available
       USE_QSAPI: NATIVE_QSAPI,
   
-      // controls the engine error/warning notifications
-      VERBOSITY: true
+      // true to throw exceptions, false to skip throwing exceptions
+      VERBOSITY: true,
+  
+      // true to print console errors or warnings, false to mute them
+      LOGERRORS: true
   
     },
   
@@ -1125,21 +1131,14 @@
   
         if (mode) {
           // for select method
-          return Function('c,s,r,d,h,g,f,v',
-            'var N,n,x=0,k=-1,e;main:while((e=c[++k])){' + source + '}return r;');
+          return Function('c,s,d,h,g,f',
+            'var N,n,x=0,k=-1,e,r=[];main:while((e=c[++k])){' + source + '}return r;');
         } else {
           // for match method
-          return Function('e,s,r,d,h,g,f,v',
+          return Function('e,s,d,h,g,f',
             'var N,n,x=0,k=e;' + source + 'return false;');
         }
       },
-  
-    // allows to cache already visited nodes
-    FILTER =
-      'var z=v[@]||(v[@]=[]),l=z.length-1;' +
-      'while(l>=0&&z[l]!==e)--l;' +
-      'if(l!==-1){break;}' +
-      'z[z.length]=e;',
   
     // compile a CSS3 string selector into ad-hoc javascript matching function
     // @return string (to be compiled)
@@ -1236,7 +1235,6 @@
           // *** Adjacent sibling combinator
           // E + F (F adiacent sibling of E)
           else if ((match = selector.match(Patterns.adjacent))) {
-            source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
             source = NATIVE_TRAVERSAL_API ?
               'var N' + k + '=e;while(e&&(e=e.previousElementSibling)){' + source + 'break;}e=N' + k + ';' :
               'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}e=N' + k + ';';
@@ -1245,7 +1243,6 @@
           // *** General sibling combinator
           // E ~ F (F relative sibling of E)
           else if ((match = selector.match(Patterns.relative))) {
-            source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
             source = NATIVE_TRAVERSAL_API ?
               ('var N' + k + '=e;e=e.parentNode.firstElementChild;' +
               'while(e&&e!==N' + k + '){' + source + 'e=e.nextElementSibling;}e=N' + k + ';') :
@@ -1256,14 +1253,12 @@
           // *** Child combinator
           // E > F (F children of E)
           else if ((match = selector.match(Patterns.children))) {
-            source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
             source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + 'break;}e=N' + k + ';';
           }
   
           // *** Descendant combinator
           // E F (E ancestor of F)
           else if ((match = selector.match(Patterns.ancestor))) {
-            source = (mode ? '' : FILTER.replace(/@/g, k)) + source;
             source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
           }
   
@@ -1362,7 +1357,7 @@
                   return '';
                 } else {
                   if ('compatMode' in doc) {
-                    source = 'if(!' + compile(expr, '', false) + '(e,s,r,d,h,g)){' + source + '}';
+                    source = 'if(!' + compile(expr, '', false) + '(e,s,d,h,g)){' + source + '}';
                   } else {
                     source = 'if(!s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",g)){' + source +'}';
                   }
@@ -1444,6 +1439,10 @@
   
           }
   
+          else if ((match = selector.match(Patterns.epseudos)) && match[1]) {
+            source = 'if(!(/1|11/).test(e.nodeType)){' + source + '}';
+          }
+  
           else {
   
             // this is where external extensions are
@@ -1453,6 +1452,7 @@
             for (expr in Selectors) {
               if ((match = selector.match(Selectors[expr].Expression)) && match[1]) {
                 result = Selectors[expr].Callback(match, source);
+                if ('match' in result) { match = result.match; }
                 source = result.source;
                 status = result.status;
                 if (status) { break; }
@@ -1541,7 +1541,7 @@
           matchContexts[selector] = from;
         }
   
-        return matchResolvers[selector](element, Snapshot, [ ], doc, root, from, callback, { });
+        return matchResolvers[selector](element, Snapshot, doc, root, from, callback);
       },
   
     // select only the first element
@@ -1723,7 +1723,7 @@
           selectContexts[selector] = from;
         }
   
-        elements = selectResolvers[selector](elements, Snapshot, [ ], doc, root, from, callback, { });
+        elements = selectResolvers[selector](elements, Snapshot, doc, root, from, callback);
   
         Config.CACHING && Dom.saveResults(original, from, doc, elements);
   
@@ -1874,7 +1874,7 @@
   
     return Dom;
   });
-  
+
   provide("nwmatcher", module.exports(this));
 
   !function (doc, $) {
