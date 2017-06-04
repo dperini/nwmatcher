@@ -118,10 +118,24 @@
     longdesc: 2, lowsrc: 2, src: 2, usemap: 2
   },
 
-  INSENSITIVE_MAP = {
+  HTML_TABLE = {
     'class': 0,
-    'href': 1, 'lang': 1, 'src': 1, 'style': 1, 'title': 1,
-    'type': 1, 'xmlns': 1, 'xml:lang': 1, 'xml:space': 1
+    'accept': 1, 'accept-charset': 1, 'align': 1, 'alink': 1, 'axis': 1,
+    'bgcolor': 1, 'charset': 1, 'checked': 1, 'clear': 1, 'codetype': 1, 'color': 1,
+    'compact': 1, 'declare': 1, 'defer': 1, 'dir': 1, 'direction': 1, 'disabled': 1,
+    'enctype': 1, 'face': 1, 'frame': 1, 'hreflang': 1, 'http-equiv': 1, 'lang': 1,
+    'language': 1, 'link': 1, 'media': 1, 'method': 1, 'multiple': 1, 'nohref': 1,
+    'noresize': 1, 'noshade': 1, 'nowrap': 1, 'readonly': 1, 'rel': 1, 'rev': 1,
+    'rules': 1, 'scope': 1, 'scrolling': 1, 'selected': 1, 'shape': 1, 'target': 1,
+    'text': 1, 'type': 1, 'valign': 1, 'valuetype': 1, 'vlink': 1
+  },
+
+  XHTML_TABLE = {
+    'accept': 1, 'accept-charset': 1, 'alink': 1, 'axis': 1,
+    'bgcolor': 1, 'charset': 1, 'codetype': 1, 'color': 1,
+    'enctype': 1, 'face': 1, 'hreflang': 1, 'http-equiv': 1,
+    'lang': 1, 'language': 1, 'link': 1, 'media': 1, 'rel': 1,
+    'rev': 1, 'target': 1, 'text': 1, 'type': 1, 'vlink': 1
   },
 
   Selectors = { },
@@ -535,6 +549,9 @@
         }
 
         else if ((match = selector.match(Patterns.attribute))) {
+          expr = match[1].split(':');
+          expr = expr.length == 2 ? expr[1] : expr[0] + '';
+
           if (match[2] && !Operators[match[2]]) {
             emit('Unsupported operator in attribute selectors "' + selector + '"');
             return '';
@@ -542,8 +559,8 @@
           test = 'false';
           if (match[2] && match[4] && (test = Operators[match[2]])) {
             match[4] = (/\\/).test(match[4]) ? convertEscapes(match[4]) : match[4];
-            INSENSITIVE_MAP['class'] = QUIRKS_MODE ? 1 : 0;
-            type = INSENSITIVE_MAP[match[1].toLowerCase()];
+            HTML_TABLE['class'] = QUIRKS_MODE ? 1 : 0;
+            type = (XML_DOCUMENT ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
             test = test.replace(/\%m/g, type ? match[4].toLowerCase() : match[4]);
           } else if (match[2] == '!=' || match[2] == '=') {
             test = 'n' + match[2] + '=""';
