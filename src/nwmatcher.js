@@ -190,11 +190,11 @@
   // detect buggy gEBID
   BUGGY_GEBID = NATIVE_GEBID ?
     (function() {
-      var isBuggy = true, x = 'x' + String(+new Date),
+      var x = 'x' + String(+new Date),
         a = doc.createElementNS ? 'a' : '<a name="' + x + '">';
       (a = doc.createElement(a)).name = x;
       root.insertBefore(a, root.firstChild);
-      isBuggy = !!doc.getElementById(x);
+      var isBuggy = !!doc.getElementById(x);
       root.removeChild(a);
       return isBuggy;
     })() :
