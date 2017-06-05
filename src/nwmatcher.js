@@ -376,10 +376,8 @@
   // HTML 5 draft specifications
   // http://www.whatwg.org/specs/web-apps/current-work/#selectors
   HTML_TABLE = {
-    // class attribute must be treated case-insensitive in HTML quirks mode
-    // initialized by default to Standard Mode (case-sensitive),
-    // set dynamically by the attribute resolver
-    'class': 0,
+    // NOTE: class name attribute selectors must always be treated using a
+    // case-sensitive match, this has changed from previous specifications
     'accept': 1, 'accept-charset': 1, 'align': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'checked': 1, 'clear': 1, 'codetype': 1, 'color': 1,
     'compact': 1, 'declare': 1, 'defer': 1, 'dir': 1, 'direction': 1, 'disabled': 1,
@@ -1121,8 +1119,7 @@
           // replace Operators parameter if needed
           if (match[2] && match[4] && (test = Operators[match[2]])) {
             match[4] = (/\\/).test(match[4]) ? convertEscapes(match[4]) : match[4];
-            // case treatment depends on document
-            HTML_TABLE['class'] = QUIRKS_MODE ? 1 : 0;
+            // case treatment depends on document type
             type = (XML_DOCUMENT ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
             test = test.replace(/\%m/g, type ? match[4].toLowerCase() : match[4]);
           } else if (match[2] == '!=' || match[2] == '=') {

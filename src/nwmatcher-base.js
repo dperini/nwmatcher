@@ -116,7 +116,6 @@
   },
 
   HTML_TABLE = {
-    'class': 0,
     'accept': 1, 'accept-charset': 1, 'align': 1, 'alink': 1, 'axis': 1,
     'bgcolor': 1, 'charset': 1, 'checked': 1, 'clear': 1, 'codetype': 1, 'color': 1,
     'compact': 1, 'declare': 1, 'defer': 1, 'dir': 1, 'direction': 1, 'disabled': 1,
@@ -509,7 +508,6 @@
           test = 'false';
           if (match[2] && match[4] && (test = Operators[match[2]])) {
             match[4] = (/\\/).test(match[4]) ? convertEscapes(match[4]) : match[4];
-            HTML_TABLE['class'] = QUIRKS_MODE ? 1 : 0;
             type = (XML_DOCUMENT ? XHTML_TABLE : HTML_TABLE)[expr.toLowerCase()];
             test = test.replace(/\%m/g, type ? match[4].toLowerCase() : match[4]);
           } else if (match[2] == '!=' || match[2] == '=') {
