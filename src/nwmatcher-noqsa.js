@@ -542,6 +542,7 @@
         else if ((match = selector.match(Patterns.attribute))) {
           expr = match[1].split(':');
           expr = expr.length == 2 ? expr[1] : expr[0] + '';
+
           if (match[2] && !Operators[match[2]]) {
             emit('Unsupported operator in attribute selectors "' + selector + '"');
             return '';
@@ -561,19 +562,19 @@
         }
 
         else if ((match = selector.match(Patterns.adjacent))) {
-          source = 'var N' + k + '=e;while(e&&(e=e.previousSibling)){if(e.nodeName>"@"){' + source + 'break;}}e=N' + k + ';';
+          source = 'var N' + k + '=e;while((e=e.previousSibling)){if(e.nodeType==1){' + source + 'break;}}e=N' + k + ';';
         }
 
         else if ((match = selector.match(Patterns.relative))) {
-          source = 'var N' + k + '=e;e=e.parentNode.firstChild;while(e&&e!==N' + k + '){if(e.nodeName>"@"){' + source + '}e=e.nextSibling;}e=N' + k + ';';
+          source = 'var N' + k + '=e;while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}e=N' + k + ';';
         }
 
         else if ((match = selector.match(Patterns.children))) {
-          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + 'break;}e=N' + k + ';';
+          source = 'var N' + k + '=e;if((e=e.parentNode)&&e.nodeType==1){' + source + '}e=N' + k + ';';
         }
 
         else if ((match = selector.match(Patterns.ancestor))) {
-          source = 'var N' + k + '=e;while(e&&e!==h&&e!==g&&(e=e.parentNode)){' + source + '}e=N' + k + ';';
+          source = 'var N' + k + '=e;while((e=e.parentNode)&&e.nodeType==1){' + source + '}e=N' + k + ';';
         }
 
         else if ((match = selector.match(Patterns.spseudos)) && match[1]) {
