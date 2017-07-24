@@ -129,6 +129,10 @@
     'text': 1, 'type': 1, 'valign': 1, 'valuetype': 1, 'vlink': 1
   },
 
+  NATIVE_TRAVERSAL_API =
+    'nextElementSibling' in root &&
+    'previousElementSibling' in root,
+
   Selectors = { },
 
   Operators = {
@@ -562,11 +566,15 @@
         }
 
         else if ((match = selector.match(Patterns.adjacent))) {
-          source = 'var N' + k + '=e;while((e=e.previousSibling)){if(e.nodeType==1){' + source + 'break;}}e=N' + k + ';';
+          source = NATIVE_TRAVERSAL_API ?
+            'var N' + k + '=e;if((e=e.previousElementSibling)){' + source + '}e=N' + k + ';' :
+            'var N' + k + '=e;while((e=e.previousSibling)){if(e.nodeType==1){' + source + 'break;}}e=N' + k + ';';
         }
 
         else if ((match = selector.match(Patterns.relative))) {
-          source = 'var N' + k + '=e;while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}e=N' + k + ';';
+          source = NATIVE_TRAVERSAL_API ?
+            'var N' + k + '=e;while((e=e.previousElementSibling)){' + source + '}e=N' + k + ';' :
+            'var N' + k + '=e;while((e=e.previousSibling)){if(e.nodeType==1){' + source + '}}e=N' + k + ';';
         }
 
         else if ((match = selector.match(Patterns.children))) {
