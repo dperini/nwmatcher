@@ -5,9 +5,9 @@
  * nwmatcher-base.js - A fast CSS selector engine and matcher
  *
  * Author: Diego Perini <diego.perini at gmail com>
- * Version: 1.4.1
+ * Version: 1.4.2
  * Created: 20070722
- * Release: 20170610
+ * Release: 20170804
  *
  * License:
  *  http://javascript.nwbox.com/NWMatcher/MIT-LICENSE
@@ -28,7 +28,7 @@
 
 })(this, function(global) {
 
-  var version = 'nwmatcher-1.4.1',
+  var version = 'nwmatcher-1.4.2',
 
   doc = global.document,
   root = doc.documentElement,
