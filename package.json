@@ -10,12 +10,7 @@
     "selector",
     "ender"
   ],
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "http://javascript.nwbox.com/NWMatcher/MIT-LICENSE"
-    }
-  ],
+  "license": "MIT",
   "author": {
     "name": "Diego Perini",
     "email": "diego.perini@gmail.com",
