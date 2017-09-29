@@ -477,9 +477,10 @@
         }
 
         else if ((match = selector.match(Patterns.tagName))) {
-          source = 'if(e.nodeName' + (XML_DOCUMENT ?
-            '=="' + match[1] + '"' : TO_UPPER_CASE +
-            '=="' + match[1].toUpperCase() + '"') +
+          source = 'if(e.localName=="' + match[1] + '"' + (XML_DOCUMENT ?
+            '' :
+            '||e.namespaceURI="http://www.w3.org/1999/xhtml"&&' +
+              'e.localName.toLowerCase()=="' + match[1].toLowerCase() + '"') +
             '){' + source + '}';
         }
 
