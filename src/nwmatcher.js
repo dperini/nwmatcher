@@ -123,7 +123,7 @@
     // structural pseudo-classes and child selectors
     spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
     // uistates + dynamic + negation pseudo-classes
-    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|not\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
+    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|(?:matches|not)\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
     // pseudo-elements selectors
     epseudos: /^((?:[:]{1,2}(?:after|before|first-letter|first-line))|(?:[:]{2,2}(?:selection|backdrop|placeholder)))?(.*)/i,
     // E > F
@@ -1227,12 +1227,19 @@
 
         // *** negation, user action and target pseudo-classes
         // *** UI element states and dynamic pseudo-classes
+        // CSS4 :matches 
         // CSS3 :not, :checked, :enabled, :disabled, :target
         // CSS3 :active, :hover, :focus
         // CSS3 :link, :visited
         else if ((match = selector.match(Patterns.dpseudos)) && match[1]) {
 
           switch (match[1].match(/^\w+/)[0]) {
+            // CSS4 matches pseudo-class
+            case 'matches':
+              expr = match[3].replace(reTrimSpaces, '');
+              source = 'if(s.match(e, "' + expr.replace(/\x22/g, '\\"') + '",g)){' + source +'}';
+              break;
+
             // CSS3 negation pseudo-class
             case 'not':
               // compile nested selectors, DO NOT pass the callback parameter
