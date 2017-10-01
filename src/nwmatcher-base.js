@@ -669,7 +669,7 @@
           lastPosition = selector.length - token.length;
         }
 
-        if (Config.UNIQUE_ID && (parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
+        if (Config.UNIQUE_ID && lastSlice && (parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
           if ((element = _byId(token, from))) {
             if (match(element, selector)) {
               callback && callback(element);
@@ -696,12 +696,12 @@
           return elements;
         }
 
-        if (!XML_DOCUMENT && GEBTN && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
+        if (!XML_DOCUMENT && GEBTN && lastSlice && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
           if ((elements = from.getElementsByTagName(token)).length === 0) { return [ ]; }
           selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace(token, '*');
         }
 
-        else if (!XML_DOCUMENT && GEBCN && (parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
+        else if (!XML_DOCUMENT && GEBCN && lastSlice && (parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
           if ((elements = from.getElementsByClassName(unescapeIdentifier(token))).length === 0) { return [ ]; }
             selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token,
               reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1)) ? '' : '*');

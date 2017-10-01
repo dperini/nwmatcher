@@ -1541,7 +1541,7 @@
         }
 
         // ID optimization RTL, to reduce number of elements to visit
-        if (Config.UNIQUE_ID && (parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
+        if (Config.UNIQUE_ID && lastSlice && (parts = lastSlice.match(Optimize.ID)) && (token = parts[1])) {
           if ((element = _byId(token, from))) {
             if (match(element, selector)) {
               callback && callback(element);
@@ -1569,12 +1569,12 @@
           return elements;
         }
 
-        if (!NATIVE_GEBCN && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
+        if (!NATIVE_GEBCN && lastSlice && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
           if ((elements = _byTag(token, from)).length === 0) { return [ ]; }
           selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace(token, '*');
         }
 
-        else if ((parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
+        else if (lastSlice && (parts = lastSlice.match(Optimize.CLASS)) && (token = parts[1])) {
           if ((elements = _byClass(token, from)).length === 0) { return [ ]; }
           selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace('.' + token,
             reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1)) ? '' : '*');
@@ -1590,7 +1590,7 @@
             reOptimizeSelector.test(selector.charAt(selector.indexOf(token) - 1)) ? '' : '*');
         }
 
-        else if (NATIVE_GEBCN && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
+        else if (NATIVE_GEBCN && lastSlice && (parts = lastSlice.match(Optimize.TAG)) && (token = parts[1])) {
           if ((elements = _byTag(token, from)).length === 0) { return [ ]; }
           selector = selector.slice(0, lastPosition) + selector.slice(lastPosition).replace(token, '*');
         }
