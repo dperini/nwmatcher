@@ -1067,11 +1067,27 @@
         // *** Type selector
         // Foo Tag (case insensitive)
         else if ((match = selector.match(Patterns.tagName))) {
-          // both tagName and nodeName properties may be upper/lower case
-          // depending on their creation NAMESPACE in createElementNS()
-          source = 'if(e.nodeName' + (XML_DOCUMENT ?
-            '=="' + match[1] + '"' : '.toUpperCase()' +
-            '=="' + match[1].toUpperCase() + '"') +
+          // From the HTML Standard:
+          // > When comparing a CSS element type selector to the names of HTML
+          // > elements in HTML documents, the CSS element type selector must
+          // > first be converted to ASCII lowercase. The same selector when
+          // > compared to other elements must be compared according to its
+          // > original case. In both cases, the comparison is case-sensitive.
+
+          // For both HTML and XML documents, first check localName w/o any
+          // additional transformations. This will be the majority of
+          // successful cases. Next, if that fails and we are in an HTML
+          // document, check if a lower-cased version of the element's
+          // localName matches.
+
+          // We cannot use tagName (or its equivalent, nodeName), since that
+          // always returns the qualified name. And since localName can contain
+          // ":" characters, we cannot split tagName by ":" to get the
+          // upper-cased localName.
+          source = 'if(e.localName=="' + match[1] + '"' + (XML_DOCUMENT ?
+            '' :
+            '||e.namespaceURI="http://www.w3.org/1999/xhtml"&&' +
+              'e.localName.toLowerCase()=="' + match[1].toLowerCase() + '"') +
             '){' + source + '}';
         }
 

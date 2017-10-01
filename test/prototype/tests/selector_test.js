@@ -8,6 +8,7 @@ new Test.Unit.Runner({
   
   testSelectorWithTagName: function() {
     this.assertEnumEqual($A(document.getElementsByTagName('li')), $$('li'));
+    this.assertEnumEqual($A(document.getElementsByTagName('svg')), $$('svg'));
     this.assertEnumEqual([$('strong')], $$('strong'));
     this.assertEnumEqual([], $$('nonexistent'));
     
