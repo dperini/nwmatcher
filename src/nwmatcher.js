@@ -903,7 +903,7 @@
       // build attribute string
       attrcheck = '(' + quotedvalue + '|' + identifier + ')';
       attributes = whitespace + '*(' + identifier + '(?::' + identifier + ')?)' +
-        whitespace + '*(?:' + operators + whitespace + '*' + attrcheck + ')?' + whitespace + '*';
+        whitespace + '*(?:' + operators + whitespace + '*' + attrcheck + ')?' + whitespace + '*' + '(i)?' + whitespace + '*';
       attrmatcher = attributes.replace(attrcheck, '([\\x22\\x27]*)((?:\\\\?.)*?)\\3');
 
       // build pseudoclass string
@@ -1110,7 +1110,7 @@
           if (match[2] && match[4] && (test = Operators[match[2]])) {
             match[4] = (/\\/).test(match[4]) ? convertEscapes(match[4]) : match[4];
             // case treatment depends on document type
-            type = XML_DOCUMENT ? 0 : HTML_TABLE[expr.toLowerCase()];
+            type = match[5] == 'i' || HTML_TABLE[expr.toLowerCase()];
             test = test.replace(/\%m/g, type ? match[4].toLowerCase() : match[4]);
           } else if (match[2] == '!=' || match[2] == '=') {
             test = 'n' + match[2] + '=""';
