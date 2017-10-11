@@ -856,6 +856,9 @@
     // ':not()' pseudo-classes as for specifications
     SIMPLENOT: true,
 
+    // true to match lowercase tag names of SVG elements in HTML
+    SVG_LCASE: false,
+
     // strict QSA match all non-unique IDs (false)
     // speed & libs compat match unique ID (true)
     UNIQUE_ID: true,
@@ -1069,9 +1072,10 @@
         else if ((match = selector.match(Patterns.tagName))) {
           // both tagName and nodeName properties may be upper/lower case
           // depending on their creation NAMESPACE in createElementNS()
+          test = Config.SVG_LCASE ? '||e.nodeName=="' + match[1].toLowerCase() + '"' : '';
           source = 'if(e.nodeName' + (XML_DOCUMENT ?
             '=="' + match[1] + '"' : '.toUpperCase()' +
-            '=="' + match[1].toUpperCase() + '"') +
+            '=="' + match[1].toUpperCase() + '"' + test) +
             '){' + source + '}';
         }
 

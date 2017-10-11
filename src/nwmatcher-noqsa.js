@@ -389,6 +389,7 @@
     UNICODE16: true,
     SHORTCUTS: false,
     SIMPLENOT: true,
+    SVG_LCASE: false,
     UNIQUE_ID: true,
     USE_HTML5: true,
     VERBOSITY: true,
@@ -527,9 +528,10 @@
         }
 
         else if ((match = selector.match(Patterns.tagName))) {
+          test = Config.SVG_LCASE ? '||e.nodeName=="' + match[1].toLowerCase() + '"' : '';
           source = 'if(e.nodeName' + (XML_DOCUMENT ?
             '=="' + match[1] + '"' : TO_UPPER_CASE +
-            '=="' + match[1].toUpperCase() + '"') +
+            '=="' + match[1].toUpperCase() + '"' + test) +
             '){' + source + '}';
         }
 
