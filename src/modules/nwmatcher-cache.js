@@ -22,7 +22,7 @@
     typeof exports == 'object' ? exports :
     // create or extend NW namespace
     ((global.NW || (global.NW = { })) &&
-    (global.NW.Dom || (global.NW.Dom = { })),
+    (global.NW.Dom || (global.NW.Dom = { }))),
 
   Contexts = { },
   Results = { },

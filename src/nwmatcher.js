@@ -536,9 +536,9 @@
             // unescaped " or '
             return p2 ? '\\' + p2 :
               // javascript strings are UTF-16 encoded
-              /^[0-9a-fA-F]/.test(p1) ? codePointToUTF16(parseInt(p1, 16)) :
+              (/^[0-9a-fA-F]/).test(p1) ? codePointToUTF16(parseInt(p1, 16)) :
               // \' \"
-              /^[\\\x22\x27]/.test(p1) ? substring :
+              (/^[\\\x22\x27]/).test(p1) ? substring :
               // \g \h \. \# etc
               p1;
           }
@@ -554,9 +554,9 @@
             // unescaped " or '
             return p2 ? p2 :
               // javascript strings are UTF-16 encoded
-              /^[0-9a-fA-F]/.test(p1) ? stringFromCodePoint(parseInt(p1, 16)) :
+              (/^[0-9a-fA-F]/).test(p1) ? stringFromCodePoint(parseInt(p1, 16)) :
               // \' \"
-              /^[\\\x22\x27]/.test(p1) ? substring :
+              (/^[\\\x22\x27]/).test(p1) ? substring :
               // \g \h \. \# etc
               p1;
           }

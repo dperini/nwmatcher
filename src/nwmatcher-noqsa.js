@@ -208,8 +208,8 @@
       return str.replace(reEscapedChars,
           function(substring, p1, p2) {
             return p2 ? '\\' + p2 :
-              /^[0-9a-fA-F]/.test(p1) ? codePointToUTF16(parseInt(p1, 16)) :
-              /^[\\\x22\x27]/.test(p1) ? substring :
+              (/^[0-9a-fA-F]/).test(p1) ? codePointToUTF16(parseInt(p1, 16)) :
+              (/^[\\\x22\x27]/).test(p1) ? substring :
               p1;
           }
         );
@@ -220,8 +220,8 @@
       return str.replace(reEscapedChars,
           function(substring, p1, p2) {
             return p2 ? p2 :
-              /^[0-9a-fA-F]/.test(p1) ? stringFromCodePoint(parseInt(p1, 16)) :
-              /^[\\\x22\x27]/.test(p1) ? substring :
+              (/^[0-9a-fA-F]/).test(p1) ? stringFromCodePoint(parseInt(p1, 16)) :
+              (/^[\\\x22\x27]/).test(p1) ? substring :
               p1;
           }
         );
