@@ -76,12 +76,12 @@
   Optimize, identifier, extensions = '.+',
 
   Patterns = {
-    spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
-    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|(?:matches|not)\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
+    spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s?(even|odd|(?:[-+]{0,1}\d*n\s?)?[-+]{0,1}\s?\d*)\s?\))?(.*)/i,
+    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|(?:matches|not)\(\s?(:nth(?:-last)?(?:-child|-of-type)\(\s?(?:even|odd|(?:[-+]{0,1}\d*n\s?)?[-+]{0,1}\s?\d*)\s?\)|[^()]*)\s?\))?(.*)/i,
     epseudos: /^((?:[:]{1,2}(?:after|before|first-letter|first-line))|(?:[:]{2,2}(?:selection|backdrop|placeholder)))?(.*)/i,
-    children: RegExp('^' + whitespace + '*\\>' + whitespace + '*(.*)'),
-    adjacent: RegExp('^' + whitespace + '*\\+' + whitespace + '*(.*)'),
-    relative: RegExp('^' + whitespace + '*\\~' + whitespace + '*(.*)'),
+    children: RegExp('^' + whitespace + '?\\>' + whitespace + '?(.*)'),
+    adjacent: RegExp('^' + whitespace + '?\\+' + whitespace + '?(.*)'),
+    relative: RegExp('^' + whitespace + '?\\~' + whitespace + '?(.*)'),
     ancestor: RegExp('^' + whitespace + '+(.*)'),
     universal: RegExp('^\\*(.*)')
   },

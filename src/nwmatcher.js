@@ -121,17 +121,17 @@
   // precompiled Regular Expressions
   Patterns = {
     // structural pseudo-classes and child selectors
-    spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s*(even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\))?(.*)/i,
+    spseudos: /^\:(root|empty|(?:first|last|only)(?:-child|-of-type)|nth(?:-last)?(?:-child|-of-type)\(\s?(even|odd|(?:[-+]{0,1}\d*n\s?)?[-+]{0,1}\s?\d*)\s?\))?(.*)/i,
     // uistates + dynamic + negation pseudo-classes
-    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|(?:matches|not)\(\s*(:nth(?:-last)?(?:-child|-of-type)\(\s*(?:even|odd|(?:[-+]{0,1}\d*n\s*)?[-+]{0,1}\s*\d*)\s*\)|[^()]*)\s*\))?(.*)/i,
+    dpseudos: /^\:(link|visited|target|active|focus|hover|checked|disabled|enabled|selected|lang\(([-\w]{2,})\)|(?:matches|not)\(\s?(:nth(?:-last)?(?:-child|-of-type)\(\s?(?:even|odd|(?:[-+]{0,1}\d*n\s?)?[-+]{0,1}\s?\d*)\s?\)|[^()]*)\s?\))?(.*)/i,
     // pseudo-elements selectors
     epseudos: /^((?:[:]{1,2}(?:after|before|first-letter|first-line))|(?:[:]{2,2}(?:selection|backdrop|placeholder)))?(.*)/i,
     // E > F
-    children: RegExp('^' + whitespace + '*\\>' + whitespace + '*(.*)'),
+    children: RegExp('^' + whitespace + '?\\>' + whitespace + '?(.*)'),
     // E + F
-    adjacent: RegExp('^' + whitespace + '*\\+' + whitespace + '*(.*)'),
+    adjacent: RegExp('^' + whitespace + '?\\+' + whitespace + '?(.*)'),
     // E ~ F
-    relative: RegExp('^' + whitespace + '*\\~' + whitespace + '*(.*)'),
+    relative: RegExp('^' + whitespace + '?\\~' + whitespace + '?(.*)'),
     // E F
     ancestor: RegExp('^' + whitespace + '+(.*)'),
     // all
