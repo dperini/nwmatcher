@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2017 Diego Perini
+ * Copyright (C) 2007-2018 Diego Perini
  * All rights reserved.
  *
  * CSS3 pseudo-classes extension for NWMatcher
